@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A customizable neon profile link page inspired by modern biolink sites."
+    />
+    <title>NightCard Bio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body data-theme="black">
+    <div id="backgroundImage" class="background-image" aria-hidden="true"></div>
+    <video id="backgroundVideo" class="background-video" muted loop playsinline></video>
+    <div class="backdrop-shade" aria-hidden="true"></div>
+
+    <main class="shell">
+      <section class="profile" aria-label="Profile card">
+        <div class="glass profile-card">
+          <div class="profile-top">
+            <div class="avatar-wrap">
+              <img
+                id="avatar"
+                class="avatar"
+                src="https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=320&q=80"
+                alt="Profile avatar"
+              />
+            </div>
+            <button class="icon-button" id="copyLink" type="button" aria-label="Copy profile link">
+              <svg aria-hidden="true" viewBox="0 0 24 24">
+                <path d="M10 13a5 5 0 0 0 7.1 0l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1" />
+                <path d="M14 11a5 5 0 0 0-7.1 0l-2 2a5 5 0 0 0 7.1 7.1l1.1-1.1" />
+              </svg>
+            </button>
+          </div>
+
+          <p class="handle" id="handle">@nightcard</p>
+          <h1 id="name">Nova</h1>
+          <p class="uid" id="uid">UID 74071</p>
+          <p class="bio" id="bio">
+            Designer, editor, and late-night internet person. Building sharp little corners of the web.
+          </p>
+
+          <div class="meta-row" aria-label="Profile stats">
+            <span id="location">Sydney, Australia</span>
+            <span>&bull;</span>
+            <span id="views">3,520 views</span>
+          </div>
+
+          <div class="music-player" id="musicPlayer" hidden>
+            <button class="media-button" id="musicToggle" type="button" aria-label="Play music">
+              <span id="musicIcon" aria-hidden="true">Play</span>
+            </button>
+            <div class="track-info">
+              <span>Now playing</span>
+              <strong id="trackName">Background track</strong>
+            </div>
+            <input id="volumeInput" type="range" min="0" max="100" value="55" aria-label="Music volume" />
+          </div>
+
+          <nav class="socials" aria-label="Social links">
+            <a href="#" aria-label="Discord" title="Discord">
+              <svg class="social-icon" aria-hidden="true" viewBox="0 0 24 24">
+                <path d="M8.6 8.9c-.7 0-1.3.6-1.3 1.4s.6 1.4 1.3 1.4 1.3-.6 1.3-1.4-.6-1.4-1.3-1.4Z" />
+                <path d="M15.4 8.9c-.7 0-1.3.6-1.3 1.4s.6 1.4 1.3 1.4 1.3-.6 1.3-1.4-.6-1.4-1.3-1.4Z" />
+                <path d="M19.1 5.3A16.1 16.1 0 0 0 15.1 4l-.5 1.1a14.5 14.5 0 0 0-5.2 0L8.9 4a16.1 16.1 0 0 0-4 1.3C2.4 9 1.8 12.6 2.1 16.1a16.4 16.4 0 0 0 4.9 2.5l1-1.6c-.5-.2-1-.5-1.5-.7l.4-.3a11.7 11.7 0 0 0 10.2 0l.4.3c-.5.3-1 .5-1.5.7l1 1.6a16.4 16.4 0 0 0 4.9-2.5c.4-4.1-.7-7.6-2.8-10.8Zm-3.1 8.8s-.9-1.1-1.7-2.1c3.3-.9 4.5 1.3 4.5 1.3a8.4 8.4 0 0 1-5.1 1.7 8.4 8.4 0 0 1-5.1-1.7s1.3-2.2 4.5-1.3c-.8 1-1.7 2.1-1.7 2.1h4.6Z" />
+              </svg>
+            </a>
+            <a href="#" aria-label="TikTok" title="TikTok">
+              <svg class="social-icon" aria-hidden="true" viewBox="0 0 24 24">
+                <path d="M15.2 3c.3 2.3 1.6 3.7 3.8 3.9v3.2a7.6 7.6 0 0 1-3.8-1.2v5.8c0 3.1-2.1 5.3-5.2 5.3A5 5 0 0 1 5 15a5 5 0 0 1 6.2-4.9v3.4a1.9 1.9 0 0 0-2.9 1.6c0 1.1.8 1.9 1.9 1.9s1.9-.8 1.9-2V3h3.1Z" />
+              </svg>
+            </a>
+            <a href="#" aria-label="X" title="X">
+              <svg class="social-icon" aria-hidden="true" viewBox="0 0 24 24">
+                <path d="M14.4 10.4 21.7 2h-2.1l-6.1 7-4.9-7H2.3l7.7 11-7.7 9h2.1l6.6-7.6 5.3 7.6h6.4l-8.3-11.6Zm-2.3 2.7-.8-1.1-6.2-8.3h2.5l5 6.7.8 1.1 6.5 8.8h-2.5l-5.3-7.2Z" />
+              </svg>
+            </a>
+            <a href="#" aria-label="GitHub" title="GitHub">
+              <svg class="social-icon" aria-hidden="true" viewBox="0 0 24 24">
+                <path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.5-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 0 1.6 1.1 1.6 1.1.9 1.5 2.4 1.1 2.9.8.1-.7.4-1.1.7-1.3-2.2-.3-4.6-1.1-4.6-5A3.9 3.9 0 0 1 6.8 9c-.1-.3-.5-1.3.1-2.7 0 0 .9-.3 2.8 1.1A9.7 9.7 0 0 1 12 7c.8 0 1.6.1 2.3.3 1.9-1.3 2.8-1.1 2.8-1.1.6 1.4.2 2.4.1 2.7a3.9 3.9 0 0 1 1.1 2.7c0 3.9-2.4 4.7-4.6 5 .4.3.7.9.7 1.8V21c0 .3.2.6.7.5A10 10 0 0 0 12 2Z" />
+              </svg>
+            </a>
+          </nav>
+        </div>
+      </section>
+
+      <aside class="editor glass" aria-label="Customize profile">
+        <div class="editor-heading">
+          <p>Customize</p>
+          <h2>Profile style</h2>
+        </div>
+
+        <button class="preview-button" id="previewButton" type="button">Visitor preview</button>
+        <button class="save-button" id="saveButton" type="button">Publish profile</button>
+        <a class="public-link" id="publicLink" href="/u/nightcard" target="_blank" rel="noreferrer">
+          /u/nightcard
+        </a>
+
+        <label>
+          Display name
+          <input id="nameInput" type="text" value="Nova" maxlength="24" />
+        </label>
+
+        <label>
+          Handle
+          <input id="handleInput" type="text" value="nightcard" maxlength="24" />
+        </label>
+
+        <label>
+          Bio
+          <textarea id="bioInput" rows="3" maxlength="130">Designer, editor, and late-night internet person. Building sharp little corners of the web.</textarea>
+        </label>
+
+        <label>
+          Location
+          <input id="locationInput" type="text" value="Sydney, Australia" maxlength="42" />
+        </label>
+
+        <div class="field">
+          <span>Theme</span>
+          <div class="theme-grid" role="group" aria-label="Choose theme">
+            <button class="swatch black active" type="button" data-theme="black" aria-label="Black theme"></button>
+            <button class="swatch" type="button" data-theme="violet" aria-label="Violet theme"></button>
+            <button class="swatch aqua" type="button" data-theme="aqua" aria-label="Aqua theme"></button>
+            <button class="swatch ember" type="button" data-theme="ember" aria-label="Ember theme"></button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span>Background photo or video</span>
+          <label class="file-drop">
+            <input id="backgroundInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm,video/ogg" />
+            <span id="backgroundFileName">Choose an image or video</span>
+          </label>
+        </div>
+
+        <div class="field">
+          <span>Background music</span>
+          <label class="file-drop">
+            <input id="musicInput" type="file" accept="audio/mpeg,audio/wav,audio/ogg,audio/mp4" />
+            <span id="musicFileName">Choose an audio file</span>
+          </label>
+        </div>
+
+        <div class="toggles">
+          <label class="toggle">
+            <input id="particlesToggle" type="checkbox" checked />
+            <span>Animated background</span>
+          </label>
+          <label class="toggle">
+            <input id="compactToggle" type="checkbox" />
+            <span>Compact links</span>
+          </label>
+          <label class="toggle">
+            <input id="darkenVideoToggle" type="checkbox" checked />
+            <span>Dark video overlay</span>
+          </label>
+        </div>
+      </aside>
+    </main>
+
+    <div class="preview-toolbar glass" id="previewToolbar" hidden>
+      <span>Visitor preview</span>
+      <button id="exitPreview" type="button">Back to editing</button>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite">Profile link copied</div>
+    <audio id="backgroundMusic" loop></audio>
+    <canvas id="stars" aria-hidden="true"></canvas>
+    <script src="/script.js"></script>
+  </body>
+</html>
