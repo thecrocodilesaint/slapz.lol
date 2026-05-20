@@ -66,6 +66,14 @@ body.no-motion #stars {
   display: none;
 }
 
+body.auth-required .shell {
+  display: none;
+}
+
+body.auth-required .auth-screen {
+  display: grid;
+}
+
 .background-image,
 .background-video,
 .backdrop-shade {
@@ -113,6 +121,40 @@ body.video-dark .backdrop-shade {
   justify-content: center;
   min-height: 100vh;
   padding: 2rem;
+}
+
+.auth-screen {
+  position: relative;
+  z-index: 2;
+  display: none;
+  width: min(92vw, 28rem);
+  gap: 1.25rem;
+  margin: min(14vh, 7rem) auto 0;
+  border-radius: 8px;
+  padding: 1.2rem;
+}
+
+.auth-copy p {
+  color: var(--accent-2);
+  font-weight: 900;
+  text-shadow: 0 0 1rem color-mix(in srgb, var(--accent-2) 70%, transparent);
+}
+
+.auth-copy h1 {
+  margin-top: 0.3rem;
+  font-size: clamp(2.4rem, 12vw, 4.25rem);
+}
+
+.auth-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.auth-message {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  text-align: center;
 }
 
 .glass {
@@ -371,6 +413,7 @@ body.compact .socials {
 }
 
 .preview-button,
+.logout-button,
 .save-button {
   width: 100%;
   min-height: 2.8rem;
@@ -385,6 +428,13 @@ body.compact .socials {
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
   text-shadow: 0 0 0.75rem rgba(255, 255, 255, 0.55);
   cursor: pointer;
+}
+
+.logout-button {
+  margin-bottom: 0.65rem;
+  border: 1px solid var(--line);
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .save-button {

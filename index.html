@@ -21,6 +21,27 @@
     <video id="backgroundVideo" class="background-video" muted loop playsinline></video>
     <div class="backdrop-shade" aria-hidden="true"></div>
 
+    <section class="auth-screen glass" id="authScreen" aria-label="Sign up or log in">
+      <div class="auth-copy">
+        <p>fun.lol</p>
+        <h1>Make your profile</h1>
+      </div>
+
+      <form class="auth-form" id="authForm">
+        <label>
+          Email address
+          <input id="authEmail" type="email" autocomplete="email" required />
+        </label>
+        <label>
+          Password
+          <input id="authPassword" type="password" autocomplete="current-password" minlength="6" required />
+        </label>
+        <button class="preview-button" id="signupButton" type="submit">Sign up</button>
+        <button class="save-button" id="loginButton" type="button">Log in</button>
+        <p class="auth-message" id="authMessage">Create an account to start editing your public profile.</p>
+      </form>
+    </section>
+
     <main class="shell">
       <section class="profile" aria-label="Profile card">
         <div class="glass profile-card">
@@ -98,6 +119,7 @@
           <h2>Profile style</h2>
         </div>
 
+        <button class="logout-button" id="logoutButton" type="button">Log out</button>
         <button class="preview-button" id="previewButton" type="button">Visitor preview</button>
         <button class="save-button" id="saveButton" type="button">Publish profile</button>
         <a class="public-link" id="publicLink" href="/u/nightcard" target="_blank" rel="noreferrer">

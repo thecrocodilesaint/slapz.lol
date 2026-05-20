@@ -1,10 +1,12 @@
 const http = require("http");
+const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 
 const root = __dirname;
 const dataDir = path.join(root, "data");
 const profilesPath = path.join(dataDir, "profiles.json");
+const usersPath = path.join(dataDir, "users.json");
 const port = Number(process.env.PORT) || 4174;
 
 const mimeTypes = {
@@ -22,6 +24,7 @@ const mimeTypes = {
 function ensureStore() {
   if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
   if (!fs.existsSync(profilesPath)) fs.writeFileSync(profilesPath, "{}", "utf8");
+  if (!fs.existsSync(usersPath)) fs.writeFileSync(usersPath, '{"users":{},"sessions":{}}', "utf8");
 }
 
 function readProfiles() {
@@ -32,6 +35,55 @@ function readProfiles() {
 function writeProfiles(profiles) {
   ensureStore();
   fs.writeFileSync(profilesPath, JSON.stringify(profiles, null, 2), "utf8");
+}
+
+function readUsers() {
+  ensureStore();
+  return JSON.parse(fs.readFileSync(usersPath, "utf8"));
+}
+
+function writeUsers(users) {
+  ensureStore();
+  fs.writeFileSync(usersPath, JSON.stringify(users, null, 2), "utf8");
+}
+
+function cleanEmail(email) {
+  return String(email || "").trim().toLowerCase();
+}
+
+function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
+  const hash = crypto.scryptSync(String(password), salt, 64).toString("hex");
+  return `${salt}:${hash}`;
+}
+
+function verifyPassword(password, storedHash) {
+  const [salt, hash] = String(storedHash || "").split(":");
+  if (!salt || !hash) return false;
+  const testHash = hashPassword(password, salt).split(":")[1];
+  return crypto.timingSafeEqual(Buffer.from(hash, "hex"), Buffer.from(testHash, "hex"));
+}
+
+function createSession(users, userId) {
+  const token = crypto.randomBytes(32).toString("hex");
+  users.sessions[token] = {
+    userId,
+    createdAt: new Date().toISOString(),
+  };
+  return token;
+}
+
+function getAuthedUser(req) {
+  const authHeader = req.headers.authorization || "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!token) return null;
+
+  const store = readUsers();
+  const session = store.sessions[token];
+  if (!session) return null;
+
+  const user = store.users[session.userId];
+  if (!user) return null;
+  return { token, userId: session.userId, email: user.email };
 }
 
 function sanitizeHandle(handle) {
@@ -88,6 +140,69 @@ function readBody(req) {
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
 
+  if (req.method === "POST" && url.pathname === "/api/signup") {
+    try {
+      const body = JSON.parse((await readBody(req)) || "{}");
+      const email = cleanEmail(body.email);
+      const password = String(body.password || "");
+      if (!email.includes("@") || password.length < 6) {
+        sendJson(res, 400, { error: "Enter a valid email and a password with at least 6 characters" });
+        return;
+      }
+
+      const store = readUsers();
+      const existingUser = Object.values(store.users).find((user) => user.email === email);
+      if (existingUser) {
+        sendJson(res, 409, { error: "An account with that email already exists" });
+        return;
+      }
+
+      const userId = crypto.randomUUID();
+      store.users[userId] = {
+        email,
+        passwordHash: hashPassword(password),
+        createdAt: new Date().toISOString(),
+      };
+      const token = createSession(store, userId);
+      writeUsers(store);
+      sendJson(res, 201, { token, email });
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/login") {
+    try {
+      const body = JSON.parse((await readBody(req)) || "{}");
+      const email = cleanEmail(body.email);
+      const password = String(body.password || "");
+      const store = readUsers();
+      const entry = Object.entries(store.users).find(([, user]) => user.email === email);
+      if (!entry || !verifyPassword(password, entry[1].passwordHash)) {
+        sendJson(res, 401, { error: "Email or password is incorrect" });
+        return;
+      }
+
+      const token = createSession(store, entry[0]);
+      writeUsers(store);
+      sendJson(res, 200, { token, email });
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+    }
+    return;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/me") {
+    const authed = getAuthedUser(req);
+    if (!authed) {
+      sendJson(res, 401, { error: "Not signed in" });
+      return;
+    }
+    sendJson(res, 200, { email: authed.email });
+    return;
+  }
+
   if (req.method === "GET" && url.pathname === "/robots.txt") {
     sendText(
       res,
@@ -129,7 +244,7 @@ const server = http.createServer(async (req, res) => {
       profiles[handle] = profile;
       writeProfiles(profiles);
     }
-    const { ownerToken, ...publicProfile } = profile;
+    const { ownerToken, ownerUserId, ...publicProfile } = profile;
     sendJson(res, 200, publicProfile);
     return;
   }
@@ -146,28 +261,28 @@ const server = http.createServer(async (req, res) => {
 
       const profiles = readProfiles();
       const existingProfile = profiles[handle];
-      const ownerToken = String(incoming.ownerToken || "");
-      if (!ownerToken) {
-        sendJson(res, 401, { error: "Profile owner token is required" });
+      const authed = getAuthedUser(req);
+      if (!authed) {
+        sendJson(res, 401, { error: "Sign in before publishing a profile" });
         return;
       }
 
-      if (existingProfile && !existingProfile.ownerToken) {
+      if (existingProfile && !existingProfile.ownerUserId && !existingProfile.ownerToken) {
         sendJson(res, 403, {
           error: "This profile was created before edit protection. Create a new handle or reset it on the server.",
         });
         return;
       }
 
-      if (existingProfile?.ownerToken && existingProfile.ownerToken !== ownerToken) {
-        sendJson(res, 403, { error: "You can only edit profiles created in this browser" });
+      if (existingProfile?.ownerUserId && existingProfile.ownerUserId !== authed.userId) {
+        sendJson(res, 403, { error: "You can only edit profiles created by your account" });
         return;
       }
 
       profiles[handle] = {
         ...incoming,
         handle,
-        ownerToken,
+        ownerUserId: authed.userId,
         views: Number(existingProfile?.views || incoming.views || 0),
         updatedAt: new Date().toISOString(),
       };

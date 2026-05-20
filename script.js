@@ -15,6 +15,20 @@ const inputs = {
   location: $("#locationInput"),
 };
 
+const auth = {
+  screen: $("#authScreen"),
+  form: $("#authForm"),
+  email: $("#authEmail"),
+  password: $("#authPassword"),
+  signupButton: $("#signupButton"),
+  loginButton: $("#loginButton"),
+  message: $("#authMessage"),
+  logoutButton: $("#logoutButton"),
+};
+
+const sessionKey = "nightcard-session-token";
+let sessionToken = localStorage.getItem(sessionKey) || "";
+
 const mediaState = {
   backgroundData: "",
   backgroundName: "",
@@ -43,6 +57,43 @@ const showToast = (message) => {
   toast.textContent = message;
   toast.classList.add("show");
   window.setTimeout(() => toast.classList.remove("show"), 1700);
+};
+
+const setAuthMessage = (message) => {
+  auth.message.textContent = message;
+};
+
+const showEditor = () => {
+  document.body.classList.remove("auth-required");
+};
+
+const showAuth = () => {
+  if (!isPublicProfilePage) document.body.classList.add("auth-required");
+};
+
+const authHeaders = () => (sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {});
+
+const submitAuth = async (mode) => {
+  const email = auth.email.value.trim();
+  const password = auth.password.value;
+  setAuthMessage(mode === "signup" ? "Creating your account..." : "Logging in...");
+
+  try {
+    const response = await fetch(`/api/${mode}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Could not sign in");
+
+    sessionToken = data.token;
+    localStorage.setItem(sessionKey, sessionToken);
+    setAuthMessage(`Signed in as ${data.email}`);
+    showEditor();
+  } catch (error) {
+    setAuthMessage(error.message);
+  }
 };
 
 const tokenKeyForHandle = (handle) => `nightcard-owner-token:${handle}`;
@@ -79,6 +130,20 @@ const formatViews = (count) => {
 };
 
 Object.values(inputs).forEach((input) => input.addEventListener("input", syncProfile));
+
+auth.form.addEventListener("submit", (event) => {
+  event.preventDefault();
+  submitAuth("signup");
+});
+
+auth.loginButton.addEventListener("click", () => submitAuth("login"));
+
+auth.logoutButton.addEventListener("click", () => {
+  sessionToken = "";
+  localStorage.removeItem(sessionKey);
+  showAuth();
+  setAuthMessage("Logged out. Sign in again to edit your profile.");
+});
 
 document.querySelectorAll(".swatch").forEach((button) => {
   button.addEventListener("click", () => {
@@ -287,14 +352,14 @@ const applyProfile = (data) => {
 
 $("#saveButton").addEventListener("click", async () => {
   const payload = collectProfile();
-  payload.ownerToken = getOwnerToken(payload.handle);
   $("#saveButton").textContent = "Publishing...";
   $("#saveButton").disabled = true;
 
   try {
+    if (!sessionToken) throw new Error("Sign in before publishing a profile");
     const response = await fetch(`/api/profiles/${payload.handle}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authHeaders() },
       body: JSON.stringify(payload),
     });
     const result = await response.json();
@@ -332,7 +397,30 @@ async function loadPublicProfile() {
 
 document.body.classList.add("video-dark");
 syncProfile();
-loadPublicProfile();
+
+async function bootApp() {
+  if (isPublicProfilePage) {
+    await loadPublicProfile();
+    return;
+  }
+
+  showAuth();
+  if (!sessionToken) return;
+
+  try {
+    const response = await fetch("/api/me", { headers: authHeaders() });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Not signed in");
+    setAuthMessage(`Signed in as ${data.email}`);
+    showEditor();
+  } catch {
+    sessionToken = "";
+    localStorage.removeItem(sessionKey);
+    showAuth();
+  }
+}
+
+bootApp();
 
 const canvas = $("#stars");
 const context = canvas.getContext("2d");
