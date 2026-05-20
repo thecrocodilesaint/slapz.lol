@@ -71,6 +71,17 @@ body.cursor-effect * {
   cursor: none;
 }
 
+body.loading .shell,
+body.loading .auth-screen,
+body.loading .preview-toolbar,
+body.loading .music-gate {
+  display: none;
+}
+
+body.loading .loading-screen {
+  display: grid;
+}
+
 body.auth-required .shell {
   display: none;
 }
@@ -81,6 +92,15 @@ body.auth-required .auth-screen {
 
 body.auth-required .preview-toolbar {
   display: none;
+}
+
+body.public-locked .shell {
+  opacity: 0;
+  pointer-events: none;
+}
+
+body.public-locked .music-gate {
+  display: grid;
 }
 
 .background-image,
@@ -130,6 +150,62 @@ body.video-dark .backdrop-shade {
   justify-content: center;
   min-height: 100vh;
   padding: 2rem;
+}
+
+.loading-screen {
+  position: fixed;
+  z-index: 6;
+  inset: 0;
+  display: none;
+  place-items: center;
+  padding: 1.5rem;
+}
+
+.loading-copy {
+  display: grid;
+  gap: 0.35rem;
+  text-align: center;
+}
+
+.loading-copy p {
+  color: var(--accent-2);
+  font-weight: 900;
+  text-shadow: 0 0 1rem color-mix(in srgb, var(--accent-2) 72%, transparent);
+}
+
+.loading-copy h1 {
+  font-size: clamp(2.5rem, 10vw, 5.2rem);
+}
+
+.loading-copy span {
+  color: var(--muted);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.loading-bar {
+  position: fixed;
+  left: 1.25rem;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  height: 0.45rem;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 0 1rem color-mix(in srgb, var(--accent) 20%, transparent),
+    inset 0 0 1rem rgba(255, 255, 255, 0.05);
+}
+
+.loading-bar span {
+  display: block;
+  width: var(--progress, 8%);
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent-2), var(--accent));
+  box-shadow: 0 0 1.2rem color-mix(in srgb, var(--accent) 55%, transparent);
+  transition: width 260ms ease;
 }
 
 .auth-screen {
@@ -788,6 +864,7 @@ textarea:focus {
   min-height: 3.5rem;
   transform: translate(-50%, -50%);
   border-radius: 8px;
+  place-items: center;
   color: var(--text);
   font: inherit;
   font-weight: 900;

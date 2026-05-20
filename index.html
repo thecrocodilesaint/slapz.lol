@@ -16,10 +16,21 @@
     />
     <link rel="stylesheet" href="/styles.css" />
   </head>
-  <body data-theme="black">
+  <body class="loading" data-theme="black">
     <div id="backgroundImage" class="background-image" aria-hidden="true"></div>
     <video id="backgroundVideo" class="background-video" muted loop playsinline></video>
     <div class="backdrop-shade" aria-hidden="true"></div>
+
+    <section class="loading-screen" id="loadingScreen" aria-label="Loading">
+      <div class="loading-copy">
+        <p>fun.lol</p>
+        <h1>Loading profile</h1>
+        <span id="loadingText">Checking session...</span>
+      </div>
+      <div class="loading-bar" aria-hidden="true">
+        <span id="loadingProgress"></span>
+      </div>
+    </section>
 
     <section class="auth-screen glass" id="authScreen" aria-label="Sign up or log in">
       <div class="auth-copy">
@@ -225,7 +236,7 @@
 
     <button class="music-gate glass" id="musicGate" type="button" hidden>
       <span>Enter profile</span>
-      <small id="musicGateHint">Click to start</small>
+      <small id="musicGateHint">Click to enter</small>
     </button>
     <div class="toast" id="toast" role="status" aria-live="polite">Profile link copied</div>
     <audio id="backgroundMusic" loop></audio>

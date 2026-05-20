@@ -29,6 +29,8 @@ const auth = {
 
 const sessionKey = "nightcard-session-token";
 let sessionToken = localStorage.getItem(sessionKey) || "";
+let loadingTimer = null;
+let loadingPercent = 8;
 
 const mediaState = {
   avatarData: "",
@@ -64,6 +66,28 @@ const showToast = (message) => {
 
 const setAuthMessage = (message) => {
   auth.message.textContent = message;
+};
+
+const setLoading = (percent, message) => {
+  loadingPercent = Math.max(0, Math.min(100, percent));
+  $("#loadingProgress").style.setProperty("--progress", `${loadingPercent}%`);
+  if (message) $("#loadingText").textContent = message;
+};
+
+const startLoading = (message = "Loading...") => {
+  clearInterval(loadingTimer);
+  document.body.classList.add("loading");
+  setLoading(8, message);
+  loadingTimer = setInterval(() => {
+    if (loadingPercent < 88) setLoading(loadingPercent + 4);
+  }, 180);
+};
+
+const finishLoading = async () => {
+  clearInterval(loadingTimer);
+  setLoading(100, "Ready");
+  await new Promise((resolve) => setTimeout(resolve, 260));
+  document.body.classList.remove("loading");
 };
 
 const showEditor = () => {
@@ -364,6 +388,7 @@ $("#musicToggle").addEventListener("click", async () => {
 $("#musicGate").addEventListener("click", async () => {
   const audio = $("#backgroundMusic");
   if (!audio.src) {
+    document.body.classList.remove("public-locked");
     $("#musicGate").hidden = true;
     return;
   }
@@ -373,6 +398,7 @@ $("#musicGate").addEventListener("click", async () => {
     await audio.play();
     $("#musicIcon").textContent = "Pause";
     $("#musicToggle").setAttribute("aria-label", "Pause music");
+    document.body.classList.remove("public-locked");
     $("#musicGate").hidden = true;
   } catch {
     showToast("Tap again to start the music");
@@ -391,6 +417,7 @@ const enterPreview = (isPublic = false) => {
 
 const showPublicEntryGate = (hasMusic) => {
   if (!isPublicProfilePage) return;
+  document.body.classList.add("public-locked");
   $("#musicGate").hidden = false;
   $("#musicGateHint").textContent = hasMusic ? "Click to start music" : "Click to enter";
 };
