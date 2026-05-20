@@ -101,6 +101,7 @@ const submitAuth = async (mode) => {
     localStorage.setItem(sessionKey, sessionToken);
     setAuthMessage(`Signed in as ${data.email}`);
     showEditor();
+    await loadMyProfile();
   } catch (error) {
     setAuthMessage(error.message);
   }
@@ -443,6 +444,21 @@ async function loadPublicProfile() {
   }
 }
 
+async function loadMyProfile() {
+  if (!sessionToken || isPublicProfilePage) return;
+
+  try {
+    const response = await fetch("/api/my-profile", { headers: authHeaders() });
+    const data = await response.json();
+    if (response.status === 404) return;
+    if (!response.ok) throw new Error(data.error || "Could not load your profile");
+    applyProfile(data);
+    showToast("Loaded your saved profile");
+  } catch (error) {
+    setAuthMessage(error.message);
+  }
+}
+
 document.body.classList.add("video-dark");
 syncProfile();
 
@@ -461,6 +477,7 @@ async function bootApp() {
     if (!response.ok) throw new Error(data.error || "Not signed in");
     setAuthMessage(`Signed in as ${data.email}`);
     showEditor();
+    await loadMyProfile();
   } catch {
     sessionToken = "";
     localStorage.removeItem(sessionKey);

@@ -114,6 +114,21 @@ async function getProfile(handle) {
   return readProfilesFile()[handle] || null;
 }
 
+async function getProfileByOwner(userId) {
+  if (hasSupabase) {
+    const rows = await supabaseRequest("app_profiles", {
+      query: `?owner_user_id=eq.${encodeURIComponent(userId)}&select=*&order=updated_at.desc&limit=1`,
+    });
+    return rowToProfile(rows[0]);
+  }
+
+  return (
+    Object.values(readProfilesFile())
+      .filter((profile) => profile.ownerUserId === userId)
+      .sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")))[0] || null
+  );
+}
+
 async function saveProfile(profile) {
   if (hasSupabase) {
     await supabaseRequest("app_profiles", {
@@ -340,6 +355,24 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     sendJson(res, 200, { email: authed.email });
+    return;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/my-profile") {
+    const authed = await getAuthedUser(req);
+    if (!authed) {
+      sendJson(res, 401, { error: "Not signed in" });
+      return;
+    }
+
+    const profile = await getProfileByOwner(authed.userId);
+    if (!profile) {
+      sendJson(res, 404, { error: "No profile yet" });
+      return;
+    }
+
+    const { ownerToken, ownerUserId, ...safeProfile } = profile;
+    sendJson(res, 200, safeProfile);
     return;
   }
 
