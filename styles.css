@@ -79,6 +79,10 @@ body.auth-required .auth-screen {
   display: grid;
 }
 
+body.auth-required .preview-toolbar {
+  display: none;
+}
+
 .background-image,
 .background-video,
 .backdrop-shade {

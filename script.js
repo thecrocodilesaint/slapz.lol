@@ -69,7 +69,10 @@ const showEditor = () => {
 };
 
 const showAuth = () => {
-  if (!isPublicProfilePage) document.body.classList.add("auth-required");
+  if (!isPublicProfilePage) {
+    exitPreview();
+    document.body.classList.add("auth-required");
+  }
 };
 
 const authHeaders = () => (sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {});
@@ -323,6 +326,7 @@ $("#volumeInput").addEventListener("input", (event) => {
 });
 
 const enterPreview = (isPublic = false) => {
+  if (document.body.classList.contains("auth-required")) return;
   document.body.classList.add("previewing");
   $("#previewToolbar").hidden = isPublic;
 };
