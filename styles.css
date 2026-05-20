@@ -102,6 +102,7 @@ body.welcoming .music-gate {
 }
 
 body.welcoming .shell {
+  display: none;
   opacity: 0;
   transform: scale(0.96) translateY(1.1rem);
   pointer-events: none;
@@ -114,11 +115,16 @@ body.welcome-leaving .welcome-screen {
 
 body.welcoming .welcome-screen {
   animation: welcomeFadeIn 1000ms ease both;
+  background: #020204;
+  backdrop-filter: none;
 }
 
 body.welcome-leaving .welcome-screen {
   pointer-events: none;
   animation: welcomeFadeOut 1000ms ease forwards;
+  background:
+    radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 23rem),
+    rgba(2, 2, 4, 0.78);
 }
 
 body.owner-entering .shell {

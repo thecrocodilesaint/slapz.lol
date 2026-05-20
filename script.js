@@ -166,6 +166,7 @@ const setLoading = (percent, message) => {
 };
 
 const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 
 const startLoading = (message = "Loading...") => {
   clearInterval(loadingTimer);
@@ -187,8 +188,10 @@ const finishLoading = async () => {
 const playOwnerWelcome = async () => {
   if (isPublicProfilePage) return;
 
-  document.body.classList.remove("auth-required", "loading", "previewing", "welcome-leaving", "owner-entering");
+  document.body.classList.remove("auth-required", "previewing", "welcome-leaving", "owner-entering");
   document.body.classList.add("welcoming");
+  await nextFrame();
+  document.body.classList.remove("loading");
   await wait(1000);
   document.body.classList.remove("welcoming");
   document.body.classList.add("welcome-leaving", "owner-entering");
