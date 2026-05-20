@@ -62,6 +62,11 @@ const publicHandleFromPath = () => {
 
 const isPublicProfilePage = Boolean(publicHandleFromPath());
 
+if (isPublicProfilePage) {
+  document.body.classList.add("public-profile", "previewing");
+  $("#previewToolbar").hidden = true;
+}
+
 const cleanHandle = (value) =>
   value
     .trim()

@@ -94,6 +94,17 @@ body.auth-required .preview-toolbar {
   display: none;
 }
 
+body.public-profile .auth-screen,
+body.public-profile .editor,
+body.public-profile .preview-toolbar,
+body.public-profile .music-player {
+  display: none !important;
+}
+
+body.public-profile .shell {
+  grid-template-columns: minmax(18rem, 30rem);
+}
+
 body.loading.auth-required .auth-screen,
 body.loading.auth-required .shell {
   display: none;
