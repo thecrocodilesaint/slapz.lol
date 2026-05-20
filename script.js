@@ -40,6 +40,7 @@ const mediaState = {
   backgroundType: "",
   musicData: "",
   musicName: "",
+  musicObjectUrl: "",
 };
 
 const publicHandleFromPath = () => {
@@ -281,6 +282,17 @@ const fileToDataUrl = (file) =>
     reader.readAsDataURL(file);
   });
 
+const dataUrlToObjectUrl = (dataUrl) => {
+  const [header, base64] = dataUrl.split(",");
+  const mime = header.match(/data:(.*?);base64/)?.[1] || "audio/mpeg";
+  const binary = atob(base64 || "");
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return URL.createObjectURL(new Blob([bytes], { type: mime }));
+};
+
 const setAvatarSource = (src, name = "") => {
   const avatar = $("#avatar");
   avatar.src =
@@ -332,6 +344,10 @@ const setBackgroundSource = (src, name = "", type = "") => {
 const setMusicSource = (src, name = "") => {
   const audio = $("#backgroundMusic");
   audio.pause();
+  if (mediaState.musicObjectUrl) {
+    URL.revokeObjectURL(mediaState.musicObjectUrl);
+    mediaState.musicObjectUrl = "";
+  }
 
   if (!src) {
     audio.removeAttribute("src");
@@ -341,7 +357,9 @@ const setMusicSource = (src, name = "") => {
     return;
   }
 
-  audio.src = src;
+  mediaState.musicObjectUrl = src.startsWith("data:") ? dataUrlToObjectUrl(src) : "";
+  audio.src = mediaState.musicObjectUrl || src;
+  audio.preload = "auto";
   audio.load();
   audio.volume = Number($("#volumeInput").value) / 100;
   $("#trackName").textContent = name || "Background track";
@@ -397,7 +415,10 @@ $("#musicToggle").addEventListener("click", async () => {
   }
 });
 
-$("#musicGate").addEventListener("click", async () => {
+let publicMusicStarting = false;
+
+const startPublicMusic = async () => {
+  if (publicMusicStarting) return;
   const audio = $("#backgroundMusic");
   if (!audio.src) {
     document.body.classList.remove("public-locked");
@@ -405,17 +426,26 @@ $("#musicGate").addEventListener("click", async () => {
     return;
   }
 
+  publicMusicStarting = true;
   try {
     audio.currentTime = 0;
-    audio.load();
+    audio.muted = false;
     await audio.play();
     $("#musicIcon").textContent = "Pause";
     $("#musicToggle").setAttribute("aria-label", "Pause music");
     document.body.classList.remove("public-locked");
     $("#musicGate").hidden = true;
-  } catch {
-    showToast("Music could not start. Re-upload a smaller MP3 and publish again.");
+  } catch (error) {
+    publicMusicStarting = false;
+    showToast(`Music failed: ${error.name || "playback blocked"}`);
   }
+};
+
+$("#musicGate").addEventListener("pointerdown", startPublicMusic);
+$("#musicGate").addEventListener("click", startPublicMusic);
+
+$("#backgroundMusic").addEventListener("error", () => {
+  showToast("Music file could not load. Re-upload a smaller MP3 and publish again.");
 });
 
 $("#volumeInput").addEventListener("input", (event) => {
