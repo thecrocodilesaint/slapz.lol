@@ -207,7 +207,22 @@ $("#darkenVideoToggle").addEventListener("change", (event) => {
 });
 
 inputs.cursorTrail.addEventListener("change", () => {
-  applyCursorTrail(inputs.cursorTrail.checked);
+  applyCursorTrail(inputs.cursorTrail.value === "dot");
+});
+
+const setCursorMode = (mode) => {
+  const nextMode = mode === "dot" ? "dot" : "normal";
+  inputs.cursorTrail.value = nextMode;
+  document.querySelectorAll(".cursor-option").forEach((button) => {
+    const isActive = button.dataset.cursor === nextMode;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-checked", String(isActive));
+  });
+  applyCursorTrail(nextMode === "dot");
+};
+
+document.querySelectorAll(".cursor-option").forEach((button) => {
+  button.addEventListener("click", () => setCursorMode(button.dataset.cursor));
 });
 
 $("#copyLink").addEventListener("click", async () => {
@@ -358,7 +373,7 @@ const collectProfile = () => ({
   compactLinks: $("#compactToggle").checked,
   animatedBackground: $("#particlesToggle").checked,
   darkVideo: $("#darkenVideoToggle").checked,
-  cursorTrail: inputs.cursorTrail.checked,
+  cursorTrail: inputs.cursorTrail.value === "dot",
   backgroundData: mediaState.backgroundData,
   backgroundName: mediaState.backgroundName,
   backgroundType: mediaState.backgroundType,
@@ -380,12 +395,11 @@ const applyProfile = (data) => {
   $("#compactToggle").checked = Boolean(data.compactLinks);
   $("#particlesToggle").checked = data.animatedBackground !== false;
   $("#darkenVideoToggle").checked = data.darkVideo !== false;
-  inputs.cursorTrail.checked = data.cursorTrail === true || data.cursorTrail === "dot";
+  setCursorMode(data.cursorTrail === true || data.cursorTrail === "dot" ? "dot" : "normal");
 
   document.body.classList.toggle("compact", $("#compactToggle").checked);
   document.body.classList.toggle("no-motion", !$("#particlesToggle").checked);
   document.body.classList.toggle("video-dark", $("#darkenVideoToggle").checked);
-  applyCursorTrail(inputs.cursorTrail.checked);
 
   mediaState.backgroundData = data.backgroundData || data.videoData || "";
   mediaState.backgroundName = data.backgroundName || data.videoName || "";

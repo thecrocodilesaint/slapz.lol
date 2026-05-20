@@ -164,10 +164,18 @@
           </div>
         </div>
 
-        <label class="toggle cursor-toggle">
-          <input id="cursorTrailInput" type="checkbox" />
-          <span>White dot cursor trail</span>
-        </label>
+        <div class="field cursor-field">
+          <span>Cursor</span>
+          <div class="cursor-segment" role="radiogroup" aria-label="Choose cursor style">
+            <button class="cursor-option active" type="button" data-cursor="normal" role="radio" aria-checked="true">
+              Normal pointer
+            </button>
+            <button class="cursor-option" type="button" data-cursor="dot" role="radio" aria-checked="false">
+              White dot trail
+            </button>
+          </div>
+          <input id="cursorTrailInput" type="hidden" value="normal" />
+        </div>
 
         <div class="field">
           <span>Background photo or video</span>
