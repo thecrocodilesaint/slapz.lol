@@ -275,6 +275,37 @@ async function saveProfile(profile) {
   writeProfilesFile(profiles);
 }
 
+async function saveUserProfileLink(userId, { handle, origin }) {
+  const profilePath = `/u/${handle}`;
+  const profileUrl = `${origin}${profilePath}`;
+
+  if (hasSupabase) {
+    try {
+      await supabaseRequest("app_users", {
+        method: "PATCH",
+        query: `?id=eq.${encodeURIComponent(userId)}`,
+        body: {
+          profile_handle: handle,
+          profile_path: profilePath,
+          profile_url: profileUrl,
+        },
+        prefer: "return=minimal",
+      });
+    } catch (error) {
+      console.warn("Could not save profile link on app_users. Run the latest supabase-schema.sql.", error.message);
+    }
+    return;
+  }
+
+  const store = readUsersFile();
+  if (store.users[userId]) {
+    store.users[userId].profileHandle = handle;
+    store.users[userId].profilePath = profilePath;
+    store.users[userId].profileUrl = profileUrl;
+    writeUsersFile(store);
+  }
+}
+
 async function incrementProfileViews(profile) {
   const views = Number(profile.views || 0) + 1;
   profile.views = views;
@@ -661,15 +692,22 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      const origin = siteOrigin(req);
+      const profilePath = `/u/${handle}`;
+      const profileUrl = `${origin}${profilePath}`;
       const profile = await prepareProfileForSave({
         ...incoming,
         handle,
+        profileHandle: handle,
+        profilePath,
+        profileUrl,
         ownerUserId: authed.userId,
         views: Number(existingProfile?.views || incoming.views || 0),
         updatedAt: new Date().toISOString(),
       }, existingProfile);
       await saveProfile(profile);
-      sendJson(res, 200, { handle, url: `/u/${handle}` });
+      await saveUserProfileLink(authed.userId, { handle, origin });
+      sendJson(res, 200, { handle, url: profilePath, fullUrl: profileUrl });
     } catch (error) {
       sendJson(res, 400, { error: error.message });
     }
