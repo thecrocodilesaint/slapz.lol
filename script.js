@@ -96,6 +96,7 @@ const showEditor = () => {
 
 const showAuth = () => {
   if (!isPublicProfilePage) {
+    document.body.classList.remove("loading");
     exitPreview();
     document.body.classList.add("auth-required");
   }
