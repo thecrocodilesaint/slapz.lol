@@ -113,16 +113,16 @@ body.welcome-leaving .welcome-screen {
 }
 
 body.welcoming .welcome-screen {
-  animation: welcomeFadeIn 420ms ease both;
+  animation: welcomeFadeIn 1000ms ease both;
 }
 
 body.welcome-leaving .welcome-screen {
   pointer-events: none;
-  animation: welcomeFadeOut 720ms ease forwards;
+  animation: welcomeFadeOut 1000ms ease forwards;
 }
 
 body.owner-entering .shell {
-  animation: ownerProfilePop 760ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: ownerProfilePop 1000ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 body.public-profile .auth-screen,

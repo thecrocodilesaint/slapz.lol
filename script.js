@@ -189,10 +189,10 @@ const playOwnerWelcome = async () => {
 
   document.body.classList.remove("auth-required", "loading", "previewing", "welcome-leaving", "owner-entering");
   document.body.classList.add("welcoming");
-  await wait(950);
+  await wait(1000);
   document.body.classList.remove("welcoming");
   document.body.classList.add("welcome-leaving", "owner-entering");
-  await wait(760);
+  await wait(1000);
   document.body.classList.remove("welcome-leaving", "owner-entering");
 };
 
