@@ -5,6 +5,7 @@ const profile = {
   handle: $("#handle"),
   bio: $("#bio"),
   location: $("#location"),
+  views: $("#views"),
 };
 
 const inputs = {
@@ -70,6 +71,11 @@ const syncProfile = () => {
   profile.bio.textContent = inputs.bio.value.trim() || "No bio yet.";
   profile.location.textContent = inputs.location.value.trim() || "Somewhere online";
   updatePublicLink();
+};
+
+const formatViews = (count) => {
+  const safeCount = Number(count || 0);
+  return `${safeCount.toLocaleString()} ${safeCount === 1 ? "view" : "views"}`;
 };
 
 Object.values(inputs).forEach((input) => input.addEventListener("input", syncProfile));
@@ -275,6 +281,7 @@ const applyProfile = (data) => {
 
   setBackgroundSource(mediaState.backgroundData, mediaState.backgroundName, mediaState.backgroundType);
   setMusicSource(mediaState.musicData, mediaState.musicName);
+  profile.views.textContent = formatViews(data.views);
   syncProfile();
 };
 
@@ -309,7 +316,7 @@ async function loadPublicProfile() {
   if (!publicHandle) return;
 
   try {
-    const response = await fetch(`/api/profiles/${publicHandle}`);
+    const response = await fetch(`/api/profiles/${publicHandle}?view=1`);
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Profile not found");
     applyProfile(data);

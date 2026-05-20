@@ -117,10 +117,17 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "GET" && url.pathname.startsWith("/api/profiles/")) {
     const handle = sanitizeHandle(decodeURIComponent(url.pathname.split("/").pop()));
-    const profile = readProfiles()[handle];
+    const profiles = readProfiles();
+    const profile = profiles[handle];
     if (!profile) {
       sendJson(res, 404, { error: "Profile not found" });
       return;
+    }
+    if (url.searchParams.get("view") === "1") {
+      profile.views = Number(profile.views || 0) + 1;
+      profile.updatedAt = profile.updatedAt || new Date().toISOString();
+      profiles[handle] = profile;
+      writeProfiles(profiles);
     }
     const { ownerToken, ...publicProfile } = profile;
     sendJson(res, 200, publicProfile);
@@ -161,6 +168,7 @@ const server = http.createServer(async (req, res) => {
         ...incoming,
         handle,
         ownerToken,
+        views: Number(existingProfile?.views || incoming.views || 0),
         updatedAt: new Date().toISOString(),
       };
       writeProfiles(profiles);
