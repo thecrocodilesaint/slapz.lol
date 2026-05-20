@@ -126,9 +126,12 @@ const submitAuth = async (mode) => {
     sessionToken = data.token;
     localStorage.setItem(sessionKey, sessionToken);
     setAuthMessage(`Signed in as ${data.email}`);
-    showEditor();
+    startLoading("Loading your profile...");
     await loadMyProfile();
+    showEditor();
+    await finishLoading();
   } catch (error) {
+    document.body.classList.remove("loading");
     setAuthMessage(error.message);
   }
 };
@@ -331,6 +334,7 @@ const setMusicSource = (src, name = "") => {
   }
 
   audio.src = src;
+  audio.load();
   audio.volume = Number($("#volumeInput").value) / 100;
   $("#trackName").textContent = name || "Background track";
   $("#musicFileName").textContent = name || "Saved background music";
@@ -395,13 +399,14 @@ $("#musicGate").addEventListener("click", async () => {
 
   try {
     audio.currentTime = 0;
+    audio.load();
     await audio.play();
     $("#musicIcon").textContent = "Pause";
     $("#musicToggle").setAttribute("aria-label", "Pause music");
     document.body.classList.remove("public-locked");
     $("#musicGate").hidden = true;
   } catch {
-    showToast("Tap again to start the music");
+    showToast("Music could not start. Re-upload a smaller MP3 and publish again.");
   }
 });
 
@@ -559,32 +564,31 @@ document.body.classList.add("video-dark");
 syncProfile();
 
 async function bootApp() {
-  startLoading(isPublicProfilePage ? "Loading public profile..." : "Checking session...");
   if (isPublicProfilePage) {
+    startLoading("Loading public profile...");
     await loadPublicProfile();
     await finishLoading();
     return;
   }
 
   showAuth();
-  if (!sessionToken) {
-    await finishLoading();
-    return;
-  }
+  if (!sessionToken) return;
 
   try {
+    startLoading("Loading your profile...");
     const response = await fetch("/api/me", { headers: authHeaders() });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Not signed in");
     setAuthMessage(`Signed in as ${data.email}`);
-    showEditor();
     await loadMyProfile();
+    showEditor();
+    await finishLoading();
   } catch {
     sessionToken = "";
     localStorage.removeItem(sessionKey);
+    document.body.classList.remove("loading");
     showAuth();
   }
-  await finishLoading();
 }
 
 bootApp();
