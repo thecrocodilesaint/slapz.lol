@@ -165,8 +165,11 @@ const setLoading = (percent, message) => {
   if (message) $("#loadingText").textContent = message;
 };
 
+const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
 const startLoading = (message = "Loading...") => {
   clearInterval(loadingTimer);
+  document.body.classList.remove("welcoming", "welcome-leaving", "owner-entering");
   document.body.classList.add("loading");
   setLoading(8, message);
   loadingTimer = setInterval(() => {
@@ -177,20 +180,32 @@ const startLoading = (message = "Loading...") => {
 const finishLoading = async () => {
   clearInterval(loadingTimer);
   setLoading(100, "Ready");
-  await new Promise((resolve) => setTimeout(resolve, 260));
+  await wait(260);
   document.body.classList.remove("loading");
+};
+
+const playOwnerWelcome = async () => {
+  if (isPublicProfilePage) return;
+
+  document.body.classList.remove("auth-required", "loading", "previewing", "welcome-leaving", "owner-entering");
+  document.body.classList.add("welcoming");
+  await wait(950);
+  document.body.classList.remove("welcoming");
+  document.body.classList.add("welcome-leaving", "owner-entering");
+  await wait(760);
+  document.body.classList.remove("welcome-leaving", "owner-entering");
 };
 
 const finishLoadingIntoEditor = async () => {
   clearInterval(loadingTimer);
   setLoading(100, "Ready");
-  await new Promise((resolve) => setTimeout(resolve, 260));
-  document.body.classList.remove("auth-required", "loading");
+  await wait(260);
+  await playOwnerWelcome();
 };
 
 const showEditor = () => {
   clearInterval(loadingTimer);
-  document.body.classList.remove("auth-required", "loading");
+  document.body.classList.remove("auth-required", "loading", "welcoming", "welcome-leaving", "owner-entering");
 };
 
 const showAuth = () => {
