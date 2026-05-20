@@ -109,7 +109,7 @@ body.public-locked .shell {
 }
 
 body.public-locked .music-gate {
-  display: grid;
+  display: flex;
 }
 
 .background-image,
@@ -867,14 +867,17 @@ textarea:focus {
 .music-gate {
   position: fixed;
   z-index: 5;
-  left: 50%;
-  top: 50%;
-  min-width: min(18rem, 82vw);
-  min-height: 3.5rem;
-  transform: translate(-50%, -50%);
-  border-radius: 8px;
-  place-items: center;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 0;
   color: var(--text);
+  background:
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.08), transparent 24rem),
+    rgba(0, 0, 0, 0.48);
+  backdrop-filter: blur(12px) saturate(140%);
   font: inherit;
   font-weight: 900;
   letter-spacing: 0;
@@ -887,6 +890,10 @@ textarea:focus {
 .music-gate span,
 .music-gate small {
   display: block;
+}
+
+.music-gate span {
+  font-size: clamp(2rem, 8vw, 5rem);
 }
 
 .music-gate small {

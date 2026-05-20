@@ -428,11 +428,13 @@ const startPublicMusic = async () => {
 
   publicMusicStarting = true;
   try {
-    audio.currentTime = 0;
-    audio.muted = false;
-    await audio.play();
-    $("#musicIcon").textContent = "Pause";
-    $("#musicToggle").setAttribute("aria-label", "Pause music");
+    if (audio.src) {
+      audio.currentTime = 0;
+      audio.muted = false;
+      await audio.play();
+      $("#musicIcon").textContent = "Pause";
+      $("#musicToggle").setAttribute("aria-label", "Pause music");
+    }
     document.body.classList.remove("public-locked");
     $("#musicGate").hidden = true;
   } catch (error) {
