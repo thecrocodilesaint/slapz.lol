@@ -16,6 +16,15 @@ const inputs = {
   cursorTrail: $("#cursorTrailInput"),
 };
 
+const socialInputs = {
+  discord: $("#discordInput"),
+  instagram: $("#instagramInput"),
+  tiktok: $("#tiktokInput"),
+  youtube: $("#youtubeInput"),
+  x: $("#xInput"),
+  github: $("#githubInput"),
+};
+
 const auth = {
   screen: $("#authScreen"),
   form: $("#authForm"),
@@ -60,6 +69,79 @@ const cleanHandle = (value) =>
     .toLowerCase()
     .replace(/[^a-z0-9_-]/g, "")
     .slice(0, 24);
+
+const socialLabels = {
+  discord: "Discord",
+  instagram: "Instagram",
+  tiktok: "TikTok",
+  youtube: "YouTube",
+  x: "X",
+  github: "GitHub",
+};
+
+const cleanSocialHandle = (value) =>
+  value
+    .trim()
+    .replace(/^@+/, "")
+    .replace(/^\/+/, "");
+
+const isFullUrl = (value) => /^(https?:)?\/\//i.test(value);
+const looksLikeDomain = (value) => /^[a-z0-9.-]+\.[a-z]{2,}(\/.*)?$/i.test(value);
+
+const socialUrlFor = (platform, value) => {
+  const raw = value.trim();
+  if (!raw) return "";
+  if (isFullUrl(raw)) return raw.startsWith("//") ? `https:${raw}` : raw;
+  if (looksLikeDomain(raw)) return `https://${raw}`;
+
+  const handle = cleanSocialHandle(raw);
+  if (!handle) return "";
+
+  const encoded = encodeURIComponent(handle);
+  const routes = {
+    discord: `https://discord.com/users/${encoded}`,
+    instagram: `https://www.instagram.com/${encoded}`,
+    tiktok: `https://www.tiktok.com/@${encoded}`,
+    youtube: `https://www.youtube.com/${raw.trim().startsWith("@") ? raw.trim() : `@${handle}`}`,
+    x: `https://x.com/${encoded}`,
+    github: `https://github.com/${encoded}`,
+  };
+
+  return routes[platform] || "";
+};
+
+const collectSocialLinks = () =>
+  Object.fromEntries(
+    Object.entries(socialInputs).map(([platform, input]) => [platform, input.value.trim()])
+  );
+
+const applySocialInputs = (links = {}) => {
+  Object.entries(socialInputs).forEach(([platform, input]) => {
+    input.value = links[platform] || "";
+  });
+};
+
+const syncSocialLinks = () => {
+  const socials = $("#socials");
+  let activeCount = 0;
+
+  Object.entries(socialInputs).forEach(([platform, input]) => {
+    const link = socials.querySelector(`[data-social="${platform}"]`);
+    const url = socialUrlFor(platform, input.value);
+    if (!link || !url) {
+      if (link) link.hidden = true;
+      return;
+    }
+
+    activeCount += 1;
+    link.hidden = false;
+    link.href = url;
+    link.setAttribute("aria-label", socialLabels[platform]);
+    link.title = socialLabels[platform];
+  });
+
+  socials.classList.toggle("is-empty", activeCount === 0);
+};
 
 const showToast = (message) => {
   const toast = $("#toast");
@@ -175,6 +257,7 @@ const syncProfile = () => {
   profile.location.textContent = inputs.location.value.trim() || "Somewhere online";
   $("#featuredTitle").textContent = `${profile.name.textContent}'s profile`;
   $("#featuredText").textContent = profile.bio.textContent;
+  syncSocialLinks();
   updatePublicLink();
 };
 
@@ -183,7 +266,9 @@ const formatViews = (count) => {
   return `${safeCount.toLocaleString()} ${safeCount === 1 ? "view" : "views"}`;
 };
 
-Object.values(inputs).forEach((input) => input.addEventListener("input", syncProfile));
+[...Object.values(inputs), ...Object.values(socialInputs)].forEach((input) =>
+  input.addEventListener("input", syncProfile)
+);
 
 auth.form.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -525,6 +610,7 @@ const collectProfile = () => ({
   animatedBackground: $("#particlesToggle").checked,
   darkVideo: $("#darkenVideoToggle").checked,
   cursorTrail: inputs.cursorTrail.value === "dot",
+  socialLinks: collectSocialLinks(),
   avatarData: mediaState.avatarData,
   avatarName: mediaState.avatarName,
   avatarPath: mediaState.avatarPath,
@@ -542,6 +628,7 @@ const applyProfile = (data) => {
   inputs.handle.value = data.handle || "nightcard";
   inputs.bio.value = data.bio || "No bio yet.";
   inputs.location.value = data.location || "Somewhere online";
+  applySocialInputs(data.socialLinks || data.socials || {});
 
   document.body.dataset.theme = data.theme || "black";
   document.querySelectorAll(".swatch").forEach((swatch) => {
