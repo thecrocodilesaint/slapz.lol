@@ -86,7 +86,13 @@ const submitAuth = async (mode) => {
       body: JSON.stringify({ email, password }),
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Could not sign in");
+    if (!response.ok) {
+      if (mode === "signup" && response.status === 409) {
+        setAuthMessage("That email already exists. Trying to log you in...");
+        return submitAuth("login");
+      }
+      throw new Error(data.error || "Could not sign in");
+    }
 
     sessionToken = data.token;
     localStorage.setItem(sessionKey, sessionToken);

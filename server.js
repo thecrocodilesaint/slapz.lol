@@ -39,7 +39,10 @@ function writeProfiles(profiles) {
 
 function readUsers() {
   ensureStore();
-  return JSON.parse(fs.readFileSync(usersPath, "utf8"));
+  const store = JSON.parse(fs.readFileSync(usersPath, "utf8"));
+  store.users = store.users || {};
+  store.sessions = store.sessions || {};
+  return store;
 }
 
 function writeUsers(users) {
@@ -49,6 +52,10 @@ function writeUsers(users) {
 
 function cleanEmail(email) {
   return String(email || "").trim().toLowerCase();
+}
+
+function findUserByEmail(store, email) {
+  return Object.entries(store.users).find(([, user]) => user.email === email);
 }
 
 function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
@@ -151,9 +158,9 @@ const server = http.createServer(async (req, res) => {
       }
 
       const store = readUsers();
-      const existingUser = Object.values(store.users).find((user) => user.email === email);
+      const existingUser = findUserByEmail(store, email);
       if (existingUser) {
-        sendJson(res, 409, { error: "An account with that email already exists" });
+        sendJson(res, 409, { error: "That email already has an account. Use Log in instead." });
         return;
       }
 
@@ -178,9 +185,9 @@ const server = http.createServer(async (req, res) => {
       const email = cleanEmail(body.email);
       const password = String(body.password || "");
       const store = readUsers();
-      const entry = Object.entries(store.users).find(([, user]) => user.email === email);
+      const entry = findUserByEmail(store, email);
       if (!entry || !verifyPassword(password, entry[1].passwordHash)) {
-        sendJson(res, 401, { error: "Email or password is incorrect" });
+        sendJson(res, 401, { error: "Email or password is incorrect. If this is Render, your free server may have reset its saved accounts." });
         return;
       }
 
