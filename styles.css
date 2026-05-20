@@ -66,6 +66,10 @@ body.no-motion #stars {
   display: none;
 }
 
+body.cursor-effect {
+  cursor: none;
+}
+
 body.auth-required .shell {
   display: none;
 }
@@ -557,6 +561,7 @@ label,
 }
 
 input,
+select,
 textarea {
   width: 100%;
   border: 1px solid var(--line);
@@ -567,6 +572,18 @@ textarea {
   font: inherit;
   outline: none;
   box-shadow: inset 0 0 1rem rgba(255, 255, 255, 0.035);
+}
+
+select {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:
+    calc(100% - 1.05rem) 50%,
+    calc(100% - 0.72rem) 50%;
+  background-size: 0.35rem 0.35rem, 0.35rem 0.35rem;
+  background-repeat: no-repeat;
 }
 
 input[type="file"] {
@@ -586,11 +603,64 @@ textarea {
 }
 
 input:focus,
+select:focus,
 textarea:focus {
   border-color: var(--accent-2);
   box-shadow:
     0 0 0 3px color-mix(in srgb, var(--accent-2) 20%, transparent),
     0 0 1.2rem color-mix(in srgb, var(--accent-2) 35%, transparent);
+}
+
+.cursor-dot {
+  position: fixed;
+  z-index: 9999;
+  left: 0;
+  top: 0;
+  width: 0.72rem;
+  height: 0.72rem;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 0 0.75rem rgba(255, 255, 255, 0.9),
+    0 0 1.45rem color-mix(in srgb, var(--accent) 55%, transparent);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.cursor-particle {
+  position: fixed;
+  z-index: 9998;
+  left: 0;
+  top: 0;
+  width: var(--particle-size, 0.45rem);
+  height: var(--particle-size, 0.45rem);
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: cursor-particle-fade 720ms ease-out forwards;
+}
+
+.cursor-particle.frost {
+  border-radius: 20% 50% 20% 50%;
+  background: rgba(220, 247, 255, 0.92);
+  box-shadow:
+    0 0 0.55rem rgba(134, 225, 255, 0.95),
+    0 0 1rem rgba(255, 255, 255, 0.55);
+}
+
+.cursor-particle.fire {
+  background: radial-gradient(circle, #fff6a8 0 18%, #ff8a2a 45%, rgba(255, 56, 20, 0.2) 72%);
+  box-shadow:
+    0 0 0.65rem rgba(255, 120, 20, 0.95),
+    0 0 1.2rem rgba(255, 30, 0, 0.55);
+}
+
+@keyframes cursor-particle-fade {
+  to {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--particle-x, 0px)), calc(-50% + var(--particle-y, 0px))) scale(0.25);
+  }
 }
 
 .theme-grid {

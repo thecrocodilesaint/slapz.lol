@@ -13,6 +13,7 @@ const inputs = {
   handle: $("#handleInput"),
   bio: $("#bioInput"),
   location: $("#locationInput"),
+  cursorTrail: $("#cursorTrailInput"),
 };
 
 const auth = {
@@ -195,6 +196,10 @@ $("#darkenVideoToggle").addEventListener("change", (event) => {
   document.body.classList.toggle("video-dark", event.target.checked);
 });
 
+inputs.cursorTrail.addEventListener("change", () => {
+  applyCursorTrail(inputs.cursorTrail.value);
+});
+
 $("#copyLink").addEventListener("click", async () => {
   const handle = profile.handle.textContent.slice(1);
   const link = `${location.origin}/u/${handle}`;
@@ -342,6 +347,7 @@ const collectProfile = () => ({
   compactLinks: $("#compactToggle").checked,
   animatedBackground: $("#particlesToggle").checked,
   darkVideo: $("#darkenVideoToggle").checked,
+  cursorTrail: inputs.cursorTrail.value,
   backgroundData: mediaState.backgroundData,
   backgroundName: mediaState.backgroundName,
   backgroundType: mediaState.backgroundType,
@@ -363,10 +369,12 @@ const applyProfile = (data) => {
   $("#compactToggle").checked = Boolean(data.compactLinks);
   $("#particlesToggle").checked = data.animatedBackground !== false;
   $("#darkenVideoToggle").checked = data.darkVideo !== false;
+  inputs.cursorTrail.value = data.cursorTrail || "off";
 
   document.body.classList.toggle("compact", $("#compactToggle").checked);
   document.body.classList.toggle("no-motion", !$("#particlesToggle").checked);
   document.body.classList.toggle("video-dark", $("#darkenVideoToggle").checked);
+  applyCursorTrail(inputs.cursorTrail.value);
 
   mediaState.backgroundData = data.backgroundData || data.videoData || "";
   mediaState.backgroundName = data.backgroundName || data.videoName || "";
@@ -451,6 +459,65 @@ async function bootApp() {
 }
 
 bootApp();
+
+const cursorDot = document.createElement("div");
+cursorDot.className = "cursor-dot";
+cursorDot.hidden = true;
+document.body.append(cursorDot);
+
+let activeCursorTrail = "off";
+let lastParticleAt = 0;
+let lastCursorX = 0;
+let lastCursorY = 0;
+
+function applyCursorTrail(mode) {
+  activeCursorTrail = mode || "off";
+  const enabled = activeCursorTrail !== "off";
+  document.body.classList.toggle("cursor-effect", enabled);
+  cursorDot.hidden = !enabled;
+}
+
+function spawnCursorParticle(x, y) {
+  if (activeCursorTrail !== "frost" && activeCursorTrail !== "fire") return;
+
+  const particle = document.createElement("span");
+  const size = activeCursorTrail === "fire" ? Math.random() * 7 + 4 : Math.random() * 6 + 3;
+  const driftX = (Math.random() - 0.5) * 44;
+  const driftY = activeCursorTrail === "fire" ? Math.random() * -42 - 8 : Math.random() * 34 - 10;
+
+  particle.className = `cursor-particle ${activeCursorTrail}`;
+  particle.style.left = `${x}px`;
+  particle.style.top = `${y}px`;
+  particle.style.setProperty("--particle-size", `${size}px`);
+  particle.style.setProperty("--particle-x", `${driftX}px`);
+  particle.style.setProperty("--particle-y", `${driftY}px`);
+  document.body.append(particle);
+  particle.addEventListener("animationend", () => particle.remove(), { once: true });
+}
+
+window.addEventListener("pointermove", (event) => {
+  lastCursorX = event.clientX;
+  lastCursorY = event.clientY;
+
+  if (activeCursorTrail === "off") return;
+
+  cursorDot.style.left = `${lastCursorX}px`;
+  cursorDot.style.top = `${lastCursorY}px`;
+
+  const now = performance.now();
+  if (now - lastParticleAt > 28) {
+    lastParticleAt = now;
+    spawnCursorParticle(lastCursorX, lastCursorY);
+  }
+});
+
+window.addEventListener("pointerleave", () => {
+  cursorDot.hidden = true;
+});
+
+window.addEventListener("pointerenter", () => {
+  cursorDot.hidden = activeCursorTrail === "off";
+});
 
 const canvas = $("#stars");
 const context = canvas.getContext("2d");
