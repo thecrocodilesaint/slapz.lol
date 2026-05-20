@@ -11,6 +11,8 @@ const port = Number(process.env.PORT) || 4174;
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const hasSupabase = Boolean(supabaseUrl && supabaseServiceKey);
+const mediaBucket = "profile-media";
+let mediaBucketReady = false;
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -74,6 +76,91 @@ async function supabaseRequest(table, { method = "GET", query = "", body, prefer
   return response.json();
 }
 
+async function supabaseStorageRequest(pathname, { method = "GET", body, contentType, extraHeaders = {} } = {}) {
+  const response = await fetch(`${supabaseUrl}/storage/v1${pathname}`, {
+    method,
+    headers: {
+      apikey: supabaseServiceKey,
+      Authorization: `Bearer ${supabaseServiceKey}`,
+      ...(contentType ? { "Content-Type": contentType } : {}),
+      ...extraHeaders,
+    },
+    body,
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Supabase storage request failed with ${response.status}`);
+  }
+
+  return response;
+}
+
+async function ensureMediaBucket() {
+  if (!hasSupabase || mediaBucketReady) return;
+
+  const response = await fetch(`${supabaseUrl}/storage/v1/bucket/${mediaBucket}`, {
+    headers: {
+      apikey: supabaseServiceKey,
+      Authorization: `Bearer ${supabaseServiceKey}`,
+    },
+  });
+
+  if (response.status === 404) {
+    await supabaseStorageRequest("/bucket", {
+      method: "POST",
+      contentType: "application/json",
+      body: JSON.stringify({
+        id: mediaBucket,
+        name: mediaBucket,
+        public: false,
+      }),
+    });
+  } else if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || "Could not check Supabase media bucket");
+  }
+
+  mediaBucketReady = true;
+}
+
+function extensionFromMime(mime) {
+  const map = {
+    "audio/mpeg": "mp3",
+    "audio/mp3": "mp3",
+    "audio/wav": "wav",
+    "audio/ogg": "ogg",
+    "audio/mp4": "m4a",
+    "image/png": "png",
+    "image/jpeg": "jpg",
+    "image/webp": "webp",
+    "image/gif": "gif",
+    "video/mp4": "mp4",
+    "video/webm": "webm",
+    "video/ogg": "ogv",
+  };
+  return map[mime] || "bin";
+}
+
+async function uploadMediaDataUrl({ ownerUserId, handle, field, dataUrl }) {
+  const parsed = parseDataUrl(dataUrl);
+  if (!parsed) return "";
+
+  await ensureMediaBucket();
+  const ext = extensionFromMime(parsed.mime);
+  const objectPath = `${ownerUserId}/${handle}/${field}.${ext}`;
+  await supabaseStorageRequest(`/object/${mediaBucket}/${objectPath}`, {
+    method: "POST",
+    contentType: parsed.mime,
+    body: parsed.buffer,
+    extraHeaders: {
+      "x-upsert": "true",
+      "cache-control": "3600",
+    },
+  });
+  return objectPath;
+}
+
 function rowToProfile(row) {
   if (!row) return null;
   return {
@@ -94,6 +181,49 @@ function profileToRow(profile) {
     updated_at: updatedAt || new Date().toISOString(),
     data,
   };
+}
+
+async function prepareProfileForSave(profile, existingProfile) {
+  if (!hasSupabase) return profile;
+
+  const next = { ...profile };
+  const mediaFields = [
+    { data: "avatarData", path: "avatarPath", name: "avatarName", field: "avatar" },
+    { data: "backgroundData", path: "backgroundPath", name: "backgroundName", field: "background" },
+    { data: "musicData", path: "musicPath", name: "musicName", field: "music" },
+  ];
+
+  for (const item of mediaFields) {
+    const value = next[item.data];
+    if (typeof value === "string" && value.startsWith("data:")) {
+      next[item.path] = await uploadMediaDataUrl({
+        ownerUserId: next.ownerUserId,
+        handle: next.handle,
+        field: item.field,
+        dataUrl: value,
+      });
+      delete next[item.data];
+      continue;
+    }
+
+    if (next[item.path]) {
+      delete next[item.data];
+      continue;
+    }
+
+    if (value === "") {
+      delete next[item.path];
+      delete next[item.data];
+      continue;
+    }
+
+    if (existingProfile?.[item.path]) {
+      next[item.path] = existingProfile[item.path];
+      delete next[item.data];
+    }
+  }
+
+  return next;
 }
 
 async function listProfiles() {
@@ -143,6 +273,26 @@ async function saveProfile(profile) {
   const profiles = readProfilesFile();
   profiles[profile.handle] = profile;
   writeProfilesFile(profiles);
+}
+
+async function incrementProfileViews(profile) {
+  const views = Number(profile.views || 0) + 1;
+  profile.views = views;
+
+  if (hasSupabase) {
+    await supabaseRequest("app_profiles", {
+      method: "PATCH",
+      query: `?handle=eq.${encodeURIComponent(profile.handle)}`,
+      body: {
+        views,
+        updated_at: profile.updatedAt || new Date().toISOString(),
+      },
+      prefer: "return=minimal",
+    });
+    return;
+  }
+
+  await saveProfile(profile);
 }
 
 async function findUserByEmail(email) {
@@ -282,6 +432,44 @@ function parseDataUrl(dataUrl) {
   };
 }
 
+async function sendProfileMedia(res, profile, mediaType) {
+  const fieldMap = {
+    music: { data: "musicData", path: "musicPath", fallbackMime: "audio/mpeg" },
+    avatar: { data: "avatarData", path: "avatarPath", fallbackMime: "image/jpeg" },
+    background: { data: "backgroundData", path: "backgroundPath", fallbackMime: profile?.backgroundType || "application/octet-stream" },
+  };
+  const fields = fieldMap[mediaType];
+  if (!profile || !fields) {
+    sendJson(res, 404, { error: "Media not found" });
+    return;
+  }
+
+  if (hasSupabase && profile[fields.path]) {
+    const response = await supabaseStorageRequest(`/object/${mediaBucket}/${profile[fields.path]}`);
+    const buffer = Buffer.from(await response.arrayBuffer());
+    res.writeHead(200, {
+      "Content-Type": response.headers.get("content-type") || fields.fallbackMime,
+      "Content-Length": buffer.length,
+      "Cache-Control": "public, max-age=300",
+    });
+    res.end(buffer);
+    return;
+  }
+
+  const media = parseDataUrl(profile[fields.data]);
+  if (!media) {
+    sendJson(res, 404, { error: "Media not found" });
+    return;
+  }
+
+  res.writeHead(200, {
+    "Content-Type": media.mime,
+    "Content-Length": media.buffer.length,
+    "Cache-Control": "public, max-age=300",
+  });
+  res.end(media.buffer);
+}
+
 function sendFile(res, filePath) {
   fs.readFile(filePath, (error, content) => {
     if (error) {
@@ -412,22 +600,12 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  if (req.method === "GET" && url.pathname.startsWith("/api/profiles/") && url.pathname.endsWith("/music")) {
+  if (req.method === "GET" && url.pathname.startsWith("/api/profiles/") && /\/(music|avatar|background)$/.test(url.pathname)) {
     const parts = url.pathname.split("/");
     const handle = sanitizeHandle(decodeURIComponent(parts[3] || ""));
+    const mediaType = parts[4];
     const profile = await getProfile(handle);
-    const audio = parseDataUrl(profile?.musicData);
-    if (!audio) {
-      sendJson(res, 404, { error: "Music not found" });
-      return;
-    }
-
-    res.writeHead(200, {
-      "Content-Type": audio.mime,
-      "Content-Length": audio.buffer.length,
-      "Cache-Control": "public, max-age=300",
-    });
-    res.end(audio.buffer);
+    await sendProfileMedia(res, profile, mediaType);
     return;
   }
 
@@ -439,12 +617,15 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     if (url.searchParams.get("view") === "1") {
-      profile.views = Number(profile.views || 0) + 1;
-      await saveProfile(profile);
+      await incrementProfileViews(profile);
     }
     const { ownerToken, ownerUserId, ...publicProfile } = profile;
     if (url.searchParams.get("view") === "1") {
-      publicProfile.hasMusic = Boolean(publicProfile.musicData);
+      publicProfile.hasAvatar = Boolean(publicProfile.avatarPath || publicProfile.avatarData);
+      publicProfile.hasBackground = Boolean(publicProfile.backgroundPath || publicProfile.backgroundData);
+      publicProfile.hasMusic = Boolean(publicProfile.musicPath || publicProfile.musicData);
+      delete publicProfile.avatarData;
+      delete publicProfile.backgroundData;
       delete publicProfile.musicData;
     }
     sendJson(res, 200, publicProfile);
@@ -480,13 +661,13 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      const profile = {
+      const profile = await prepareProfileForSave({
         ...incoming,
         handle,
         ownerUserId: authed.userId,
         views: Number(existingProfile?.views || incoming.views || 0),
         updatedAt: new Date().toISOString(),
-      };
+      }, existingProfile);
       await saveProfile(profile);
       sendJson(res, 200, { handle, url: `/u/${handle}` });
     } catch (error) {

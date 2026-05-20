@@ -35,11 +35,14 @@ let loadingPercent = 8;
 const mediaState = {
   avatarData: "",
   avatarName: "",
+  avatarPath: "",
   backgroundData: "",
   backgroundName: "",
   backgroundType: "",
+  backgroundPath: "",
   musicData: "",
   musicName: "",
+  musicPath: "",
   musicObjectUrl: "",
 };
 
@@ -306,12 +309,14 @@ $("#avatarInput").addEventListener("change", async (event) => {
   if (!file) {
     mediaState.avatarData = "";
     mediaState.avatarName = "";
+    mediaState.avatarPath = "";
     setAvatarSource("");
     return;
   }
 
   mediaState.avatarData = await fileToDataUrl(file);
   mediaState.avatarName = file.name;
+  mediaState.avatarPath = "";
   setAvatarSource(mediaState.avatarData, file.name);
 });
 
@@ -374,6 +379,7 @@ $("#backgroundInput").addEventListener("change", async (event) => {
     mediaState.backgroundData = "";
     mediaState.backgroundName = "";
     mediaState.backgroundType = "";
+    mediaState.backgroundPath = "";
     setBackgroundSource("");
     return;
   }
@@ -381,6 +387,7 @@ $("#backgroundInput").addEventListener("change", async (event) => {
   mediaState.backgroundData = await fileToDataUrl(file);
   mediaState.backgroundName = file.name;
   mediaState.backgroundType = file.type;
+  mediaState.backgroundPath = "";
   setBackgroundSource(mediaState.backgroundData, file.name, file.type);
   document.body.classList.add("video-dark");
   $("#darkenVideoToggle").checked = true;
@@ -391,6 +398,7 @@ $("#clearBackgroundButton").addEventListener("click", () => {
   mediaState.backgroundData = "";
   mediaState.backgroundName = "";
   mediaState.backgroundType = "";
+  mediaState.backgroundPath = "";
   setBackgroundSource("");
   showToast("Background file removed");
 });
@@ -400,12 +408,14 @@ $("#musicInput").addEventListener("change", async (event) => {
   if (!file) {
     mediaState.musicData = "";
     mediaState.musicName = "";
+    mediaState.musicPath = "";
     setMusicSource("");
     return;
   }
 
   mediaState.musicData = await fileToDataUrl(file);
   mediaState.musicName = file.name;
+  mediaState.musicPath = "";
   setMusicSource(mediaState.musicData, file.name);
 });
 
@@ -413,6 +423,7 @@ $("#clearMusicButton").addEventListener("click", () => {
   $("#musicInput").value = "";
   mediaState.musicData = "";
   mediaState.musicName = "";
+  mediaState.musicPath = "";
   setMusicSource("");
   showToast("Music file removed");
 });
@@ -516,11 +527,14 @@ const collectProfile = () => ({
   cursorTrail: inputs.cursorTrail.value === "dot",
   avatarData: mediaState.avatarData,
   avatarName: mediaState.avatarName,
+  avatarPath: mediaState.avatarPath,
   backgroundData: mediaState.backgroundData,
   backgroundName: mediaState.backgroundName,
   backgroundType: mediaState.backgroundType,
+  backgroundPath: mediaState.backgroundPath,
   musicData: mediaState.musicData,
   musicName: mediaState.musicName,
+  musicPath: mediaState.musicPath,
 });
 
 const applyProfile = (data) => {
@@ -545,15 +559,23 @@ const applyProfile = (data) => {
 
   mediaState.avatarData = data.avatarData || "";
   mediaState.avatarName = data.avatarName || "";
+  mediaState.avatarPath = data.avatarPath || "";
   mediaState.backgroundData = data.backgroundData || data.videoData || "";
   mediaState.backgroundName = data.backgroundName || data.videoName || "";
   mediaState.backgroundType = data.backgroundType || (data.videoData ? "video/mp4" : "");
+  mediaState.backgroundPath = data.backgroundPath || "";
   mediaState.musicData = data.musicData || "";
   mediaState.musicName = data.musicName || "";
+  mediaState.musicPath = data.musicPath || "";
 
-  setAvatarSource(mediaState.avatarData, mediaState.avatarName);
-  setBackgroundSource(mediaState.backgroundData, mediaState.backgroundName, mediaState.backgroundType);
-  setMusicSource(mediaState.musicData, mediaState.musicName);
+  const profileHandle = cleanHandle(data.handle || inputs.handle.value);
+  const avatarSource = mediaState.avatarPath ? `/api/profiles/${profileHandle}/avatar` : mediaState.avatarData;
+  const backgroundSource = mediaState.backgroundPath ? `/api/profiles/${profileHandle}/background` : mediaState.backgroundData;
+  const musicSource = mediaState.musicPath ? `/api/profiles/${profileHandle}/music` : mediaState.musicData;
+
+  setAvatarSource(avatarSource, mediaState.avatarName);
+  setBackgroundSource(backgroundSource, mediaState.backgroundName, mediaState.backgroundType);
+  setMusicSource(musicSource, mediaState.musicName);
   profile.views.textContent = formatViews(data.views);
   syncProfile();
 };
@@ -593,7 +615,7 @@ async function loadPublicProfile() {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Profile not found");
     applyProfile(data);
-    if (data.hasMusic) {
+    if (data.hasMusic && !mediaState.musicData && !mediaState.musicPath) {
       mediaState.musicData = `/api/profiles/${publicHandle}/music`;
       mediaState.musicName = data.musicName || "Background music";
       setMusicSource(mediaState.musicData, mediaState.musicName);
