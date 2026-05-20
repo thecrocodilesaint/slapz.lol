@@ -434,16 +434,21 @@ $("#musicToggle").addEventListener("click", async () => {
 
 let publicMusicStarting = false;
 
+const hidePublicEntryGate = () => {
+  document.body.classList.remove("public-locked");
+  $("#musicGate").classList.remove("entry-active");
+};
+
 const startPublicMusic = async () => {
   if (publicMusicStarting) return;
   const audio = $("#backgroundMusic");
   if (!audio.src) {
-    document.body.classList.remove("public-locked");
-    $("#musicGate").hidden = true;
+    hidePublicEntryGate();
     return;
   }
 
   publicMusicStarting = true;
+  hidePublicEntryGate();
   try {
     if (audio.src) {
       audio.currentTime = 0;
@@ -452,8 +457,6 @@ const startPublicMusic = async () => {
       $("#musicIcon").textContent = "Pause";
       $("#musicToggle").setAttribute("aria-label", "Pause music");
     }
-    document.body.classList.remove("public-locked");
-    $("#musicGate").hidden = true;
   } catch (error) {
     publicMusicStarting = false;
     showToast(`Music failed: ${error.name || "playback blocked"}`);
@@ -480,7 +483,7 @@ const enterPreview = (isPublic = false) => {
 const showPublicEntryGate = (hasMusic) => {
   if (!isPublicProfilePage) return;
   document.body.classList.add("public-locked");
-  $("#musicGate").hidden = false;
+  $("#musicGate").classList.add("entry-active");
   $("#musicGateHint").textContent = hasMusic ? "Click to start music" : "Click to enter";
 };
 
@@ -590,8 +593,13 @@ async function loadPublicProfile() {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Profile not found");
     applyProfile(data);
+    if (data.hasMusic) {
+      mediaState.musicData = `/api/profiles/${publicHandle}/music`;
+      mediaState.musicName = data.musicName || "Background music";
+      setMusicSource(mediaState.musicData, mediaState.musicName);
+    }
     enterPreview(true);
-    showPublicEntryGate(Boolean(data.musicData));
+    showPublicEntryGate(Boolean(data.hasMusic));
     document.title = `${data.name || data.handle} | NightCard`;
   } catch (error) {
     profile.name.textContent = "Profile not found";

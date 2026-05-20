@@ -112,6 +112,14 @@ body.public-locked .music-gate {
   display: flex;
 }
 
+body.public-locked .music-gate:not(.entry-active) {
+  display: none;
+}
+
+body.loading.public-locked .music-gate {
+  display: none;
+}
+
 .background-image,
 .background-video,
 .backdrop-shade {

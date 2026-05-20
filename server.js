@@ -273,6 +273,15 @@ function sendText(res, status, contentType, text) {
   res.end(text);
 }
 
+function parseDataUrl(dataUrl) {
+  const match = String(dataUrl || "").match(/^data:([^;,]+);base64,(.*)$/);
+  if (!match) return null;
+  return {
+    mime: match[1],
+    buffer: Buffer.from(match[2], "base64"),
+  };
+}
+
 function sendFile(res, filePath) {
   fs.readFile(filePath, (error, content) => {
     if (error) {
@@ -403,6 +412,25 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (req.method === "GET" && url.pathname.startsWith("/api/profiles/") && url.pathname.endsWith("/music")) {
+    const parts = url.pathname.split("/");
+    const handle = sanitizeHandle(decodeURIComponent(parts[3] || ""));
+    const profile = await getProfile(handle);
+    const audio = parseDataUrl(profile?.musicData);
+    if (!audio) {
+      sendJson(res, 404, { error: "Music not found" });
+      return;
+    }
+
+    res.writeHead(200, {
+      "Content-Type": audio.mime,
+      "Content-Length": audio.buffer.length,
+      "Cache-Control": "public, max-age=300",
+    });
+    res.end(audio.buffer);
+    return;
+  }
+
   if (req.method === "GET" && url.pathname.startsWith("/api/profiles/")) {
     const handle = sanitizeHandle(decodeURIComponent(url.pathname.split("/").pop()));
     const profile = await getProfile(handle);
@@ -415,6 +443,10 @@ const server = http.createServer(async (req, res) => {
       await saveProfile(profile);
     }
     const { ownerToken, ownerUserId, ...publicProfile } = profile;
+    if (url.searchParams.get("view") === "1") {
+      publicProfile.hasMusic = Boolean(publicProfile.musicData);
+      delete publicProfile.musicData;
+    }
     sendJson(res, 200, publicProfile);
     return;
   }
