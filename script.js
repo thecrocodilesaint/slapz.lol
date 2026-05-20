@@ -296,7 +296,6 @@ const setBackgroundSource = (src, name = "", type = "") => {
 
 const setMusicSource = (src, name = "") => {
   const audio = $("#backgroundMusic");
-  const gate = $("#musicGate");
   audio.pause();
 
   if (!src) {
@@ -304,7 +303,6 @@ const setMusicSource = (src, name = "") => {
     $("#musicPlayer").hidden = true;
     $("#musicFileName").textContent = "Choose an audio file";
     $("#musicIcon").textContent = "Play";
-    gate.hidden = true;
     return;
   }
 
@@ -314,7 +312,6 @@ const setMusicSource = (src, name = "") => {
   $("#musicFileName").textContent = name || "Saved background music";
   $("#musicPlayer").hidden = false;
   $("#musicIcon").textContent = "Play";
-  gate.hidden = !isPublicProfilePage;
 };
 
 $("#backgroundInput").addEventListener("change", async (event) => {
@@ -366,9 +363,13 @@ $("#musicToggle").addEventListener("click", async () => {
 
 $("#musicGate").addEventListener("click", async () => {
   const audio = $("#backgroundMusic");
-  if (!audio.src) return;
+  if (!audio.src) {
+    $("#musicGate").hidden = true;
+    return;
+  }
 
   try {
+    audio.currentTime = 0;
     await audio.play();
     $("#musicIcon").textContent = "Pause";
     $("#musicToggle").setAttribute("aria-label", "Pause music");
@@ -386,6 +387,12 @@ const enterPreview = (isPublic = false) => {
   if (document.body.classList.contains("auth-required")) return;
   document.body.classList.add("previewing");
   $("#previewToolbar").hidden = isPublic;
+};
+
+const showPublicEntryGate = (hasMusic) => {
+  if (!isPublicProfilePage) return;
+  $("#musicGate").hidden = false;
+  $("#musicGateHint").textContent = hasMusic ? "Click to start music" : "Click to enter";
 };
 
 const exitPreview = () => {
@@ -495,12 +502,14 @@ async function loadPublicProfile() {
     if (!response.ok) throw new Error(data.error || "Profile not found");
     applyProfile(data);
     enterPreview(true);
+    showPublicEntryGate(Boolean(data.musicData));
     document.title = `${data.name || data.handle} | NightCard`;
   } catch (error) {
     profile.name.textContent = "Profile not found";
     profile.handle.textContent = `@${publicHandle}`;
     profile.bio.textContent = error.message;
     enterPreview(true);
+    showPublicEntryGate(false);
   }
 }
 

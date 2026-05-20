@@ -798,6 +798,19 @@ textarea:focus {
   cursor: pointer;
 }
 
+.music-gate span,
+.music-gate small {
+  display: block;
+}
+
+.music-gate small {
+  margin-top: 0.25rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
 .toast {
   position: fixed;
   z-index: 3;
