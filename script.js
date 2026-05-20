@@ -386,6 +386,15 @@ $("#backgroundInput").addEventListener("change", async (event) => {
   $("#darkenVideoToggle").checked = true;
 });
 
+$("#clearBackgroundButton").addEventListener("click", () => {
+  $("#backgroundInput").value = "";
+  mediaState.backgroundData = "";
+  mediaState.backgroundName = "";
+  mediaState.backgroundType = "";
+  setBackgroundSource("");
+  showToast("Background file removed");
+});
+
 $("#musicInput").addEventListener("change", async (event) => {
   const file = event.target.files[0];
   if (!file) {
@@ -398,6 +407,14 @@ $("#musicInput").addEventListener("change", async (event) => {
   mediaState.musicData = await fileToDataUrl(file);
   mediaState.musicName = file.name;
   setMusicSource(mediaState.musicData, file.name);
+});
+
+$("#clearMusicButton").addEventListener("click", () => {
+  $("#musicInput").value = "";
+  mediaState.musicData = "";
+  mediaState.musicName = "";
+  setMusicSource("");
+  showToast("Music file removed");
 });
 
 $("#musicToggle").addEventListener("click", async () => {

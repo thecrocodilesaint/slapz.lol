@@ -832,6 +832,25 @@ textarea:focus {
   cursor: pointer;
 }
 
+.clear-upload {
+  min-height: 2.5rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.045);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: inset 0 0 1rem rgba(255, 255, 255, 0.035);
+}
+
+.clear-upload:hover {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--accent) 45%, rgba(255, 255, 255, 0.18));
+  box-shadow: 0 0 1rem color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
 .preview-toolbar {
   position: fixed;
   z-index: 4;
