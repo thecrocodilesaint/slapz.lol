@@ -90,8 +90,16 @@ const finishLoading = async () => {
   document.body.classList.remove("loading");
 };
 
+const finishLoadingIntoEditor = async () => {
+  clearInterval(loadingTimer);
+  setLoading(100, "Ready");
+  await new Promise((resolve) => setTimeout(resolve, 260));
+  document.body.classList.remove("auth-required", "loading");
+};
+
 const showEditor = () => {
-  document.body.classList.remove("auth-required");
+  clearInterval(loadingTimer);
+  document.body.classList.remove("auth-required", "loading");
 };
 
 const showAuth = () => {
@@ -129,8 +137,7 @@ const submitAuth = async (mode) => {
     setAuthMessage(`Signed in as ${data.email}`);
     startLoading("Loading your profile...");
     await loadMyProfile();
-    showEditor();
-    await finishLoading();
+    await finishLoadingIntoEditor();
   } catch (error) {
     document.body.classList.remove("loading");
     setAuthMessage(error.message);
@@ -572,8 +579,10 @@ async function bootApp() {
     return;
   }
 
-  showAuth();
-  if (!sessionToken) return;
+  if (!sessionToken) {
+    showAuth();
+    return;
+  }
 
   try {
     startLoading("Loading your profile...");
@@ -582,8 +591,7 @@ async function bootApp() {
     if (!response.ok) throw new Error(data.error || "Not signed in");
     setAuthMessage(`Signed in as ${data.email}`);
     await loadMyProfile();
-    showEditor();
-    await finishLoading();
+    await finishLoadingIntoEditor();
   } catch {
     sessionToken = "";
     localStorage.removeItem(sessionKey);

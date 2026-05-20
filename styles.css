@@ -94,6 +94,15 @@ body.auth-required .preview-toolbar {
   display: none;
 }
 
+body.loading.auth-required .auth-screen,
+body.loading.auth-required .shell {
+  display: none;
+}
+
+body.loading.auth-required .loading-screen {
+  display: grid;
+}
+
 body.public-locked .shell {
   opacity: 0;
   pointer-events: none;
