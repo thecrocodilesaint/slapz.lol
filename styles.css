@@ -779,6 +779,25 @@ textarea:focus {
   cursor: pointer;
 }
 
+.music-gate {
+  position: fixed;
+  z-index: 5;
+  left: 50%;
+  top: 50%;
+  min-width: min(18rem, 82vw);
+  min-height: 3.5rem;
+  transform: translate(-50%, -50%);
+  border-radius: 8px;
+  color: var(--text);
+  font: inherit;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-shadow:
+    0 0 0.7rem color-mix(in srgb, var(--accent) 72%, transparent),
+    0 0 1.4rem rgba(255, 255, 255, 0.28);
+  cursor: pointer;
+}
+
 .toast {
   position: fixed;
   z-index: 3;

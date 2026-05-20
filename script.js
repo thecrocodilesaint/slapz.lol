@@ -296,6 +296,7 @@ const setBackgroundSource = (src, name = "", type = "") => {
 
 const setMusicSource = (src, name = "") => {
   const audio = $("#backgroundMusic");
+  const gate = $("#musicGate");
   audio.pause();
 
   if (!src) {
@@ -303,6 +304,7 @@ const setMusicSource = (src, name = "") => {
     $("#musicPlayer").hidden = true;
     $("#musicFileName").textContent = "Choose an audio file";
     $("#musicIcon").textContent = "Play";
+    gate.hidden = true;
     return;
   }
 
@@ -312,6 +314,7 @@ const setMusicSource = (src, name = "") => {
   $("#musicFileName").textContent = name || "Saved background music";
   $("#musicPlayer").hidden = false;
   $("#musicIcon").textContent = "Play";
+  gate.hidden = !isPublicProfilePage;
 };
 
 $("#backgroundInput").addEventListener("change", async (event) => {
@@ -358,6 +361,20 @@ $("#musicToggle").addEventListener("click", async () => {
     audio.pause();
     $("#musicIcon").textContent = "Play";
     $("#musicToggle").setAttribute("aria-label", "Play music");
+  }
+});
+
+$("#musicGate").addEventListener("click", async () => {
+  const audio = $("#backgroundMusic");
+  if (!audio.src) return;
+
+  try {
+    await audio.play();
+    $("#musicIcon").textContent = "Pause";
+    $("#musicToggle").setAttribute("aria-label", "Pause music");
+    $("#musicGate").hidden = true;
+  } catch {
+    showToast("Tap again to start the music");
   }
 });
 
