@@ -27,6 +27,8 @@ const publicHandleFromPath = () => {
   return match ? decodeURIComponent(match[1]) : "";
 };
 
+const isPublicProfilePage = Boolean(publicHandleFromPath());
+
 const cleanHandle = (value) =>
   value
     .trim()
@@ -40,6 +42,18 @@ const showToast = (message) => {
   toast.textContent = message;
   toast.classList.add("show");
   window.setTimeout(() => toast.classList.remove("show"), 1700);
+};
+
+const tokenKeyForHandle = (handle) => `nightcard-owner-token:${handle}`;
+
+const getOwnerToken = (handle) => {
+  const key = tokenKeyForHandle(handle);
+  let token = localStorage.getItem(key);
+  if (!token) {
+    token = crypto.randomUUID();
+    localStorage.setItem(key, token);
+  }
+  return token;
 };
 
 const updatePublicLink = () => {
@@ -210,6 +224,7 @@ $("#previewButton").addEventListener("click", () => enterPreview(false));
 $("#exitPreview").addEventListener("click", exitPreview);
 
 document.addEventListener("keydown", (event) => {
+  if (isPublicProfilePage) return;
   if (event.key === "Escape" && document.body.classList.contains("previewing")) {
     exitPreview();
   }
@@ -265,6 +280,7 @@ const applyProfile = (data) => {
 
 $("#saveButton").addEventListener("click", async () => {
   const payload = collectProfile();
+  payload.ownerToken = getOwnerToken(payload.handle);
   $("#saveButton").textContent = "Publishing...";
   $("#saveButton").disabled = true;
 

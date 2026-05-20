@@ -122,7 +122,8 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, 404, { error: "Profile not found" });
       return;
     }
-    sendJson(res, 200, profile);
+    const { ownerToken, ...publicProfile } = profile;
+    sendJson(res, 200, publicProfile);
     return;
   }
 
@@ -137,9 +138,29 @@ const server = http.createServer(async (req, res) => {
       }
 
       const profiles = readProfiles();
+      const existingProfile = profiles[handle];
+      const ownerToken = String(incoming.ownerToken || "");
+      if (!ownerToken) {
+        sendJson(res, 401, { error: "Profile owner token is required" });
+        return;
+      }
+
+      if (existingProfile && !existingProfile.ownerToken) {
+        sendJson(res, 403, {
+          error: "This profile was created before edit protection. Create a new handle or reset it on the server.",
+        });
+        return;
+      }
+
+      if (existingProfile?.ownerToken && existingProfile.ownerToken !== ownerToken) {
+        sendJson(res, 403, { error: "You can only edit profiles created in this browser" });
+        return;
+      }
+
       profiles[handle] = {
         ...incoming,
         handle,
+        ownerToken,
         updatedAt: new Date().toISOString(),
       };
       writeProfiles(profiles);
