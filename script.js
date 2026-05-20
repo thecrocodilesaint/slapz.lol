@@ -559,13 +559,18 @@ document.body.classList.add("video-dark");
 syncProfile();
 
 async function bootApp() {
+  startLoading(isPublicProfilePage ? "Loading public profile..." : "Checking session...");
   if (isPublicProfilePage) {
     await loadPublicProfile();
+    await finishLoading();
     return;
   }
 
   showAuth();
-  if (!sessionToken) return;
+  if (!sessionToken) {
+    await finishLoading();
+    return;
+  }
 
   try {
     const response = await fetch("/api/me", { headers: authHeaders() });
@@ -579,6 +584,7 @@ async function bootApp() {
     localStorage.removeItem(sessionKey);
     showAuth();
   }
+  await finishLoading();
 }
 
 bootApp();
