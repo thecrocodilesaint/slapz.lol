@@ -314,6 +314,81 @@ h1 {
   text-align: left;
 }
 
+.hover-card {
+  --lift-x: 0px;
+  --lift-y: 0px;
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  position: relative;
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 1.05rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 46%, rgba(255, 255, 255, 0.18));
+  border-radius: 8px;
+  padding: 0.95rem;
+  overflow: hidden;
+  color: var(--text);
+  background:
+    radial-gradient(circle at var(--spot-x, 50%) var(--spot-y, 50%), color-mix(in srgb, var(--accent) 22%, transparent), transparent 9rem),
+    rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 0 1.3rem color-mix(in srgb, var(--accent) 22%, transparent),
+    inset 0 0 1.4rem rgba(255, 255, 255, 0.05);
+  text-align: left;
+  transform: translate3d(var(--lift-x), var(--lift-y), 0) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+  transform-style: preserve-3d;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  will-change: transform;
+}
+
+.hover-card::before {
+  position: absolute;
+  inset: -1px;
+  content: "";
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+  opacity: 0;
+  transform: translateX(-70%);
+  transition: opacity 180ms ease, transform 320ms ease;
+}
+
+.hover-card:hover,
+.hover-card:focus-visible {
+  border-color: color-mix(in srgb, var(--accent) 78%, white);
+  box-shadow:
+    0 0 2rem color-mix(in srgb, var(--accent) 44%, transparent),
+    0 1rem 2.4rem rgba(0, 0, 0, 0.28),
+    inset 0 0 1.4rem rgba(255, 255, 255, 0.08);
+}
+
+.hover-card:hover::before,
+.hover-card:focus-visible::before {
+  opacity: 1;
+  transform: translateX(70%);
+}
+
+.hover-card span {
+  display: block;
+  color: var(--accent-2);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  text-shadow: 0 0 0.8rem color-mix(in srgb, var(--accent-2) 78%, transparent);
+}
+
+.hover-card strong {
+  display: block;
+  margin-top: 0.12rem;
+  font-size: 1.05rem;
+  text-shadow: 0 0 1rem color-mix(in srgb, var(--accent) 62%, transparent);
+}
+
+.hover-card p {
+  color: #dce3f4;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  text-shadow: 0 0 0.8rem rgba(255, 255, 255, 0.32);
+}
+
 .media-button {
   display: grid;
   width: 2.35rem;
@@ -665,5 +740,9 @@ textarea:focus {
 
   .music-player input[type="range"] {
     grid-column: 1 / -1;
+  }
+
+  .hover-card {
+    transform: translateY(var(--lift-y));
   }
 }

@@ -121,6 +121,8 @@ const syncProfile = () => {
   profile.handle.textContent = `@${handle}`;
   profile.bio.textContent = inputs.bio.value.trim() || "No bio yet.";
   profile.location.textContent = inputs.location.value.trim() || "Somewhere online";
+  $("#featuredTitle").textContent = `${profile.name.textContent}'s profile`;
+  $("#featuredText").textContent = profile.bio.textContent;
   updatePublicLink();
 };
 
@@ -151,6 +153,34 @@ document.querySelectorAll(".swatch").forEach((button) => {
     button.classList.add("active");
     document.body.dataset.theme = button.dataset.theme;
   });
+});
+
+const hoverCard = $("#hoverCard");
+
+hoverCard.addEventListener("pointermove", (event) => {
+  const rect = hoverCard.getBoundingClientRect();
+  const x = (event.clientX - rect.left) / rect.width;
+  const y = (event.clientY - rect.top) / rect.height;
+  const liftX = (x - 0.5) * 10;
+  const liftY = (y - 0.5) * -14 - 6;
+  const tiltX = (0.5 - y) * 10;
+  const tiltY = (x - 0.5) * 12;
+
+  hoverCard.style.setProperty("--lift-x", `${liftX.toFixed(2)}px`);
+  hoverCard.style.setProperty("--lift-y", `${liftY.toFixed(2)}px`);
+  hoverCard.style.setProperty("--tilt-x", `${tiltX.toFixed(2)}deg`);
+  hoverCard.style.setProperty("--tilt-y", `${tiltY.toFixed(2)}deg`);
+  hoverCard.style.setProperty("--spot-x", `${(x * 100).toFixed(1)}%`);
+  hoverCard.style.setProperty("--spot-y", `${(y * 100).toFixed(1)}%`);
+});
+
+hoverCard.addEventListener("pointerleave", () => {
+  hoverCard.style.setProperty("--lift-x", "0px");
+  hoverCard.style.setProperty("--lift-y", "0px");
+  hoverCard.style.setProperty("--tilt-x", "0deg");
+  hoverCard.style.setProperty("--tilt-y", "0deg");
+  hoverCard.style.setProperty("--spot-x", "50%");
+  hoverCard.style.setProperty("--spot-y", "50%");
 });
 
 $("#particlesToggle").addEventListener("change", (event) => {
