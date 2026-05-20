@@ -31,6 +31,8 @@ const sessionKey = "nightcard-session-token";
 let sessionToken = localStorage.getItem(sessionKey) || "";
 
 const mediaState = {
+  avatarData: "",
+  avatarName: "",
   backgroundData: "",
   backgroundName: "",
   backgroundType: "",
@@ -244,6 +246,28 @@ const fileToDataUrl = (file) =>
     reader.readAsDataURL(file);
   });
 
+const setAvatarSource = (src, name = "") => {
+  const avatar = $("#avatar");
+  avatar.src =
+    src ||
+    "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=320&q=80";
+  $("#avatarFileName").textContent = name || "Choose a profile image";
+};
+
+$("#avatarInput").addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (!file) {
+    mediaState.avatarData = "";
+    mediaState.avatarName = "";
+    setAvatarSource("");
+    return;
+  }
+
+  mediaState.avatarData = await fileToDataUrl(file);
+  mediaState.avatarName = file.name;
+  setAvatarSource(mediaState.avatarData, file.name);
+});
+
 const setBackgroundSource = (src, name = "", type = "") => {
   const video = $("#backgroundVideo");
   const image = $("#backgroundImage");
@@ -374,6 +398,8 @@ const collectProfile = () => ({
   animatedBackground: $("#particlesToggle").checked,
   darkVideo: $("#darkenVideoToggle").checked,
   cursorTrail: inputs.cursorTrail.value === "dot",
+  avatarData: mediaState.avatarData,
+  avatarName: mediaState.avatarName,
   backgroundData: mediaState.backgroundData,
   backgroundName: mediaState.backgroundName,
   backgroundType: mediaState.backgroundType,
@@ -401,12 +427,15 @@ const applyProfile = (data) => {
   document.body.classList.toggle("no-motion", !$("#particlesToggle").checked);
   document.body.classList.toggle("video-dark", $("#darkenVideoToggle").checked);
 
+  mediaState.avatarData = data.avatarData || "";
+  mediaState.avatarName = data.avatarName || "";
   mediaState.backgroundData = data.backgroundData || data.videoData || "";
   mediaState.backgroundName = data.backgroundName || data.videoName || "";
   mediaState.backgroundType = data.backgroundType || (data.videoData ? "video/mp4" : "");
   mediaState.musicData = data.musicData || "";
   mediaState.musicName = data.musicName || "";
 
+  setAvatarSource(mediaState.avatarData, mediaState.avatarName);
   setBackgroundSource(mediaState.backgroundData, mediaState.backgroundName, mediaState.backgroundType);
   setMusicSource(mediaState.musicData, mediaState.musicName);
   profile.views.textContent = formatViews(data.views);
