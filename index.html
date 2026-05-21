@@ -83,7 +83,13 @@
               <span>Best <strong id="snakeBestScore">0</strong></span>
             </div>
           </div>
-          <canvas id="snakeCanvas" width="360" height="360" aria-label="Snake board"></canvas>
+          <div class="snake-board">
+            <canvas id="snakeCanvas" width="360" height="360" aria-label="Snake board"></canvas>
+            <div class="snake-game-over" id="snakeGameOver" hidden>
+              <strong>Game over</strong>
+              <span>Score - <b id="snakeFinalScore">0</b></span>
+            </div>
+          </div>
           <div class="snake-controls">
             <button class="save-button" id="snakeStartButton" type="button">Start</button>
             <button class="preview-button" id="snakePauseButton" type="button">Pause</button>

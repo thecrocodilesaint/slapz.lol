@@ -330,15 +330,15 @@ body.video-dark .backdrop-shade {
 }
 
 .snake-topbar {
-  display: flex;
+  display: grid;
   gap: 1rem;
-  align-items: end;
-  justify-content: space-between;
+  justify-items: center;
 }
 
 .snake-topbar h2 {
   font-size: clamp(2.2rem, 8vw, 4.5rem);
   line-height: 0.9;
+  text-align: center;
   text-shadow:
     0 0 0.7rem rgba(255, 255, 255, 0.78),
     0 0 1.6rem color-mix(in srgb, var(--accent) 72%, transparent);
@@ -348,7 +348,7 @@ body.video-dark .backdrop-shade {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
-  justify-content: end;
+  justify-content: center;
 }
 
 .snake-scores span {
@@ -373,18 +373,51 @@ body.video-dark .backdrop-shade {
   text-shadow: 0 0 0.8rem color-mix(in srgb, var(--accent) 70%, transparent);
 }
 
-#snakeCanvas {
-  display: block;
+.snake-board {
+  position: relative;
   width: min(100%, 26rem);
   aspect-ratio: 1;
-  height: auto;
   justify-self: center;
+}
+
+#snakeCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
   border: 1px solid color-mix(in srgb, var(--accent) 44%, rgba(255, 255, 255, 0.18));
   border-radius: 8px;
   background: #020204;
   box-shadow:
     0 0 2.2rem color-mix(in srgb, var(--accent) 18%, transparent),
     inset 0 0 1.4rem rgba(255, 255, 255, 0.04);
+}
+
+.snake-game-over {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  border-radius: 8px;
+  color: var(--text);
+  background: rgba(2, 2, 4, 0.78);
+  backdrop-filter: blur(8px);
+  text-align: center;
+  text-shadow:
+    0 0 0.8rem rgba(255, 255, 255, 0.75),
+    0 0 1.7rem color-mix(in srgb, var(--accent) 52%, transparent);
+}
+
+.snake-game-over strong {
+  font-size: clamp(2rem, 8vw, 4.4rem);
+  line-height: 0.95;
+}
+
+.snake-game-over span {
+  margin-top: 0.55rem;
+  color: var(--muted);
+  font-size: 1rem;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .snake-controls {

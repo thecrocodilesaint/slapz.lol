@@ -63,6 +63,8 @@ const snake = {
   canvas: $("#snakeCanvas"),
   score: $("#snakeScore"),
   best: $("#snakeBestScore"),
+  finalScore: $("#snakeFinalScore"),
+  gameOverScreen: $("#snakeGameOver"),
   status: $("#snakeStatus"),
   startButton: $("#snakeStartButton"),
   pauseButton: $("#snakePauseButton"),
@@ -76,6 +78,7 @@ const snake = {
   timer: null,
   running: false,
   paused: false,
+  gameOver: false,
 };
 
 const publicHandleFromPath = () => {
@@ -304,6 +307,8 @@ const resetSnake = () => {
   snake.snake = [{ x: 9, y: 9 }];
   snake.direction = { x: 1, y: 0 };
   snake.nextDirection = { x: 1, y: 0 };
+  snake.gameOver = false;
+  snake.gameOverScreen.hidden = true;
   updateSnakeScore(0);
   placeSnakeApple();
   snake.status.textContent = "Use arrow keys or WASD.";
@@ -321,11 +326,17 @@ const stopSnake = () => {
 
 const endSnakeGame = async () => {
   stopSnake();
-  snake.status.textContent = "Game over.";
+  snake.gameOver = true;
+  snake.finalScore.textContent = String(snake.scoreValue);
+  snake.gameOverScreen.hidden = false;
+  snake.startButton.textContent = "Restart";
+  snake.status.textContent = `Game over. Score - ${snake.scoreValue}.`;
   await saveSnakeBestScore();
 };
 
 const stepSnake = () => {
+  if (!snake.running || snake.paused || snake.gameOver) return;
+
   snake.direction = snake.nextDirection;
   const head = snake.snake[0];
   const nextHead = {
@@ -354,7 +365,7 @@ const stepSnake = () => {
 };
 
 const startSnake = () => {
-  if (snake.running && !snake.paused) {
+  if (snake.gameOver || (snake.running && !snake.paused)) {
     resetSnake();
   }
 
@@ -377,7 +388,7 @@ const startSnake = () => {
 };
 
 const pauseSnake = () => {
-  if (!snake.running) return;
+  if (!snake.running || snake.gameOver) return;
 
   if (snake.paused) {
     startSnake();
@@ -421,6 +432,7 @@ document.addEventListener("keydown", (event) => {
   if (!direction) return;
 
   event.preventDefault();
+  if (snake.gameOver) return;
   setSnakeDirection(direction[0], direction[1]);
   if (!snake.running) startSnake();
 });
