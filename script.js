@@ -131,6 +131,381 @@ const wordleWords = [
   "VIVID",
 ];
 
+const wordleValidWords = new Set([
+  ...wordleWords,
+  "ABOUT",
+  "ABOVE",
+  "ACTOR",
+  "ACUTE",
+  "ADMIT",
+  "ADOPT",
+  "ADULT",
+  "AFTER",
+  "AGAIN",
+  "AGENT",
+  "AGREE",
+  "AHEAD",
+  "ALARM",
+  "ALBUM",
+  "ALERT",
+  "ALIEN",
+  "ALIVE",
+  "ALLOW",
+  "ALONE",
+  "ALTER",
+  "AMONG",
+  "ANGER",
+  "APPLE",
+  "APPLY",
+  "ARENA",
+  "ARGUE",
+  "ARISE",
+  "ARROW",
+  "AUDIO",
+  "AVOID",
+  "AWARD",
+  "AWARE",
+  "BADGE",
+  "BASIC",
+  "BEACH",
+  "BEGAN",
+  "BEGIN",
+  "BEING",
+  "BELOW",
+  "BENCH",
+  "BIRTH",
+  "BLACK",
+  "BLAME",
+  "BLANK",
+  "BLIND",
+  "BLOCK",
+  "BLOOD",
+  "BOARD",
+  "BOOST",
+  "BOUND",
+  "BRAIN",
+  "BRAND",
+  "BREAD",
+  "BREAK",
+  "BRICK",
+  "BRING",
+  "BROWN",
+  "BUILD",
+  "BUILT",
+  "BUYER",
+  "CABLE",
+  "CARRY",
+  "CATCH",
+  "CAUSE",
+  "CHAIN",
+  "CHAIR",
+  "CHART",
+  "CHASE",
+  "CHEAP",
+  "CHECK",
+  "CHEST",
+  "CHILD",
+  "CHOIR",
+  "CIVIL",
+  "CLAIM",
+  "CLASS",
+  "CLEAN",
+  "CLEAR",
+  "CLICK",
+  "CLOCK",
+  "CLOSE",
+  "CLOUD",
+  "COACH",
+  "COAST",
+  "COUNT",
+  "COURT",
+  "COVER",
+  "CRAFT",
+  "CRASH",
+  "CREAM",
+  "CRIME",
+  "CROSS",
+  "CROWD",
+  "CROWN",
+  "DAILY",
+  "DANCE",
+  "DEALT",
+  "DEATH",
+  "DEBUT",
+  "DELAY",
+  "DEPTH",
+  "DIRTY",
+  "DOUBT",
+  "DRAFT",
+  "DRAMA",
+  "DREAM",
+  "DRESS",
+  "DRIVE",
+  "EARLY",
+  "EARTH",
+  "EIGHT",
+  "EMPTY",
+  "ENEMY",
+  "ENJOY",
+  "ENTER",
+  "ENTRY",
+  "EQUAL",
+  "ERROR",
+  "EVENT",
+  "EVERY",
+  "EXACT",
+  "EXIST",
+  "EXTRA",
+  "FAITH",
+  "FALSE",
+  "FAULT",
+  "FIBER",
+  "FIELD",
+  "FIFTH",
+  "FIGHT",
+  "FINAL",
+  "FIRST",
+  "FIXED",
+  "FLASH",
+  "FLOOR",
+  "FOCUS",
+  "FORCE",
+  "FRAME",
+  "FRESH",
+  "FRONT",
+  "FRUIT",
+  "GIANT",
+  "GIVEN",
+  "GLASS",
+  "GRACE",
+  "GRADE",
+  "GRAND",
+  "GRANT",
+  "GRASS",
+  "GREAT",
+  "GREEN",
+  "GROUP",
+  "GUARD",
+  "GUESS",
+  "GUEST",
+  "GUIDE",
+  "HAPPY",
+  "HEART",
+  "HEAVY",
+  "HONOR",
+  "HORSE",
+  "HOTEL",
+  "HOUSE",
+  "HUMAN",
+  "IMAGE",
+  "INDEX",
+  "INNER",
+  "INPUT",
+  "ISSUE",
+  "JOINT",
+  "JUDGE",
+  "KNOWN",
+  "LABEL",
+  "LARGE",
+  "LASER",
+  "LATER",
+  "LAUGH",
+  "LAYER",
+  "LEARN",
+  "LEAST",
+  "LEAVE",
+  "LEVEL",
+  "LIGHT",
+  "LIMIT",
+  "LOCAL",
+  "LOGIC",
+  "LOOSE",
+  "LOWER",
+  "LUCKY",
+  "MAGIC",
+  "MAJOR",
+  "MARCH",
+  "MATCH",
+  "MAYBE",
+  "METAL",
+  "MIGHT",
+  "MINOR",
+  "MODEL",
+  "MONEY",
+  "MONTH",
+  "MOTOR",
+  "MOUSE",
+  "MOUTH",
+  "MUSIC",
+  "NEVER",
+  "NOISE",
+  "NORTH",
+  "NOVEL",
+  "NURSE",
+  "OCEAN",
+  "OFFER",
+  "ORDER",
+  "OTHER",
+  "OUTER",
+  "OWNER",
+  "PANEL",
+  "PAPER",
+  "PARTY",
+  "PAUSE",
+  "PEACE",
+  "PHASE",
+  "PHONE",
+  "PHOTO",
+  "PIANO",
+  "PIECE",
+  "PILOT",
+  "PLACE",
+  "PLAIN",
+  "PLANE",
+  "PLANT",
+  "PLATE",
+  "POINT",
+  "POWER",
+  "PRESS",
+  "PRICE",
+  "PRIDE",
+  "PRIME",
+  "PRINT",
+  "PRIZE",
+  "PROOF",
+  "PROUD",
+  "QUEEN",
+  "QUICK",
+  "QUIET",
+  "RADIO",
+  "RAISE",
+  "RANGE",
+  "RAPID",
+  "RATIO",
+  "REACH",
+  "REACT",
+  "READY",
+  "RIGHT",
+  "RIVER",
+  "ROBOT",
+  "ROUGH",
+  "ROUND",
+  "ROUTE",
+  "ROYAL",
+  "RURAL",
+  "SCALE",
+  "SCENE",
+  "SCOPE",
+  "SCORE",
+  "SENSE",
+  "SERVE",
+  "SHADE",
+  "SHARE",
+  "SHEET",
+  "SHIFT",
+  "SHIRT",
+  "SHOCK",
+  "SHORT",
+  "SHOWN",
+  "SIGHT",
+  "SKILL",
+  "SLEEP",
+  "SLICE",
+  "SMALL",
+  "SMART",
+  "SMILE",
+  "SMOKE",
+  "SOLID",
+  "SOLVE",
+  "SORRY",
+  "SOUTH",
+  "SPACE",
+  "SPARE",
+  "SPEAK",
+  "SPEED",
+  "SPEND",
+  "SPICE",
+  "SPORT",
+  "SQUAD",
+  "STAFF",
+  "STAGE",
+  "STAIR",
+  "STAND",
+  "START",
+  "STATE",
+  "STEAM",
+  "STICK",
+  "STILL",
+  "STONE",
+  "STORE",
+  "STORM",
+  "STORY",
+  "STRIP",
+  "STUDY",
+  "STYLE",
+  "SUGAR",
+  "SUPER",
+  "SWEET",
+  "TABLE",
+  "TAKEN",
+  "TASTE",
+  "TEACH",
+  "THANK",
+  "THEME",
+  "THERE",
+  "THICK",
+  "THING",
+  "THINK",
+  "THIRD",
+  "THOSE",
+  "THREE",
+  "THROW",
+  "TIGHT",
+  "TIMER",
+  "TITLE",
+  "TODAY",
+  "TOPIC",
+  "TOTAL",
+  "TOUCH",
+  "TOWER",
+  "TRACK",
+  "TRADE",
+  "TRAIN",
+  "TRIAL",
+  "TRUCK",
+  "TRULY",
+  "TRUST",
+  "UNDER",
+  "UNION",
+  "UNITY",
+  "UPPER",
+  "URBAN",
+  "USAGE",
+  "USUAL",
+  "VALID",
+  "VALUE",
+  "VIDEO",
+  "VIRAL",
+  "VISIT",
+  "VOICE",
+  "WASTE",
+  "WATCH",
+  "WATER",
+  "WHEEL",
+  "WHERE",
+  "WHILE",
+  "WHITE",
+  "WHOLE",
+  "WOMAN",
+  "WORLD",
+  "WORRY",
+  "WORTH",
+  "WOULD",
+  "WRITE",
+  "WRONG",
+  "YOUNG",
+]);
+
 const wordle = {
   board: $("#wordleBoard"),
   input: $("#wordleInput"),
@@ -150,6 +525,7 @@ const crossy = {
   canvas: $("#crossyCanvas"),
   score: $("#crossyScore"),
   best: $("#crossyBest"),
+  level: $("#crossyLevel"),
   finalScore: $("#crossyFinalScore"),
   gameOverScreen: $("#crossyGameOver"),
   status: $("#crossyStatus"),
@@ -159,8 +535,10 @@ const crossy = {
   rows: 11,
   player: { x: 4, y: 10 },
   cars: [],
+  obstacles: [],
   scoreValue: 0,
   bestValue: 0,
+  levelValue: 1,
   highestRow: 10,
   timer: null,
   running: false,
@@ -633,6 +1011,12 @@ const submitWordleGuess = () => {
     return;
   }
 
+  if (!wordleValidWords.has(guess)) {
+    wordle.status.textContent = "That is not in the word list.";
+    wordle.input.select();
+    return;
+  }
+
   const rowElement = wordle.board.children[wordle.row];
   const result = scoreWordleGuess(guess);
   [...rowElement.children].forEach((tile, index) => {
@@ -676,6 +1060,44 @@ const loadCrossyBestScore = () => {
   crossy.best.textContent = String(crossy.bestValue);
 };
 
+const updateCrossyLevel = (level) => {
+  crossy.levelValue = Math.max(1, Number(level || 1));
+  crossy.level.textContent = String(crossy.levelValue);
+};
+
+const crossySpeedMultiplier = () => 1 + (crossy.levelValue - 1) * 0.18;
+
+const isCrossyObstacle = (x, y) =>
+  crossy.obstacles.some((obstacle) => obstacle.x === x && obstacle.y === y);
+
+const createCrossyObstacles = () => {
+  const patterns = [
+    [
+      { x: 1, y: 3 },
+      { x: 6, y: 3 },
+      { x: 3, y: 6 },
+      { x: 7, y: 6 },
+      { x: 2, y: 0 },
+    ],
+    [
+      { x: 2, y: 3 },
+      { x: 7, y: 3 },
+      { x: 1, y: 6 },
+      { x: 5, y: 6 },
+      { x: 6, y: 0 },
+    ],
+    [
+      { x: 0, y: 3 },
+      { x: 4, y: 3 },
+      { x: 8, y: 3 },
+      { x: 2, y: 6 },
+      { x: 6, y: 6 },
+      { x: 4, y: 0 },
+    ],
+  ];
+  crossy.obstacles = patterns[(crossy.levelValue - 1) % patterns.length];
+};
+
 const createCrossyCars = () => {
   const laneRows = [1, 2, 4, 5, 7, 8];
   crossy.cars = laneRows.flatMap((row, laneIndex) => {
@@ -708,6 +1130,20 @@ const drawCrossy = () => {
     context.lineTo(crossy.canvas.width, row * cellHeight);
     context.stroke();
   }
+
+  crossy.obstacles.forEach((obstacle) => {
+    const x = obstacle.x * cellWidth + cellWidth * 0.16;
+    const y = obstacle.y * cellHeight + cellHeight * 0.16;
+    const size = Math.min(cellWidth, cellHeight) * 0.68;
+    context.fillStyle = "rgba(255, 255, 255, 0.18)";
+    context.shadowColor = "rgba(255, 255, 255, 0.32)";
+    context.shadowBlur = 10;
+    context.beginPath();
+    context.roundRect(x, y, size, size, 8);
+    context.fill();
+    context.strokeStyle = "rgba(255, 255, 255, 0.34)";
+    context.stroke();
+  });
 
   crossy.cars.forEach((car, index) => {
     const x = car.x * cellWidth;
@@ -752,8 +1188,10 @@ const resetCrossy = () => {
   crossy.highestRow = crossy.rows - 1;
   crossy.gameOver = false;
   crossy.gameOverScreen.hidden = true;
+  updateCrossyLevel(1);
   crossy.status.textContent = "Use arrow keys or WASD to cross.";
   updateCrossyScore(0);
+  createCrossyObstacles();
   createCrossyCars();
   drawCrossy();
 };
@@ -780,7 +1218,7 @@ const stepCrossy = () => {
   if (!crossy.running || crossy.gameOver) return;
 
   crossy.cars.forEach((car) => {
-    car.x += car.speed * car.direction;
+    car.x += car.speed * crossySpeedMultiplier() * car.direction;
     if (car.direction > 0 && car.x > crossy.cols + 0.35) car.x = -car.width - 0.35;
     if (car.direction < 0 && car.x < -car.width - 0.35) car.x = crossy.cols + 0.35;
   });
@@ -807,8 +1245,18 @@ const moveCrossyPlayer = (x, y) => {
   if (crossy.gameOver) return;
   if (!crossy.running) startCrossy();
 
-  crossy.player.x = Math.max(0, Math.min(crossy.cols - 1, crossy.player.x + x));
-  crossy.player.y = Math.max(0, Math.min(crossy.rows - 1, crossy.player.y + y));
+  const nextPlayer = {
+    x: Math.max(0, Math.min(crossy.cols - 1, crossy.player.x + x)),
+    y: Math.max(0, Math.min(crossy.rows - 1, crossy.player.y + y)),
+  };
+
+  if (isCrossyObstacle(nextPlayer.x, nextPlayer.y)) {
+    crossy.status.textContent = "That safe spot is blocked.";
+    drawCrossy();
+    return;
+  }
+
+  crossy.player = nextPlayer;
 
   if (crossy.player.y < crossy.highestRow) {
     const rowsCrossed = crossy.highestRow - crossy.player.y;
@@ -817,9 +1265,12 @@ const moveCrossyPlayer = (x, y) => {
   }
 
   if (crossy.player.y === 0) {
-    crossy.status.textContent = "Nice crossing. Keep going.";
+    updateCrossyLevel(crossy.levelValue + 1);
+    crossy.status.textContent = `Level ${crossy.levelValue}. Traffic is faster.`;
     crossy.player = { x: Math.floor(crossy.cols / 2), y: crossy.rows - 1 };
     crossy.highestRow = crossy.rows - 1;
+    createCrossyObstacles();
+    createCrossyCars();
   }
 
   if (checkCrossyCollision()) {

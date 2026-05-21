@@ -76,8 +76,19 @@
       </section>
 
       <section class="dashboard-panel dashboard-games" data-dashboard-panel="games" aria-label="Games" hidden>
-        <div class="games-library">
-          <div class="games-grid" id="gamesGrid">
+        <div class="games-layout">
+          <aside class="games-help" aria-label="How to play">
+            <p>How to play</p>
+            <ul>
+              <li><strong>Snake</strong> Use WASD or arrow keys. Eat dots, avoid walls.</li>
+              <li><strong>Click Rush</strong> Click the glowing dot before time runs out.</li>
+              <li><strong>Wordle</strong> Guess a real 5 letter English word.</li>
+              <li><strong>Crossy Road</strong> Cross with WASD or arrows. Traffic gets faster each crossing.</li>
+            </ul>
+          </aside>
+
+          <div class="games-library">
+            <div class="games-grid" id="gamesGrid">
             <article class="game-card" data-game-card="snake">
               <button class="game-card-preview" type="button" data-open-game="snake">
                 <span class="game-card-title">Snake</span>
@@ -188,6 +199,7 @@
                     <div class="snake-scores" aria-label="Crossy Road scores">
                       <span>Score <strong id="crossyScore">0</strong></span>
                       <span>Best <strong id="crossyBest">0</strong></span>
+                      <span>Level <strong id="crossyLevel">1</strong></span>
                     </div>
                   </div>
                   <div class="crossy-board">
@@ -233,6 +245,7 @@
                 <p>Coming soon</p>
               </div>
             </article>
+          </div>
           </div>
         </div>
       </section>
