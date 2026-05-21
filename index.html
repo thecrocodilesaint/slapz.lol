@@ -71,6 +71,18 @@
         <button class="sidebar-logout" id="accountLogoutButton" type="button">Log out</button>
       </aside>
 
+      <div class="dashboard-quick-controls glass" id="dashboardQuickControls" aria-label="Dashboard controls">
+        <button class="dashboard-mute-button" id="dashboardMuteButton" type="button" aria-pressed="false">
+          Mute outside Bio
+        </button>
+        <div class="dashboard-theme-picker" role="group" aria-label="Dashboard theme">
+          <button class="dashboard-swatch black active" type="button" data-dashboard-theme="black" aria-label="Black dashboard theme"></button>
+          <button class="dashboard-swatch violet" type="button" data-dashboard-theme="violet" aria-label="Violet dashboard theme"></button>
+          <button class="dashboard-swatch aqua" type="button" data-dashboard-theme="aqua" aria-label="Aqua dashboard theme"></button>
+          <button class="dashboard-swatch ember" type="button" data-dashboard-theme="ember" aria-label="Ember dashboard theme"></button>
+        </div>
+      </div>
+
       <section class="dashboard-panel dashboard-home" data-dashboard-panel="home" aria-label="Account home" hidden>
         <h1>Welcome to fun.lol</h1>
       </section>

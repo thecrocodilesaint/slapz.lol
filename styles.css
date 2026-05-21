@@ -244,6 +244,83 @@ body.video-dark .backdrop-shade {
   padding: 1.25rem;
 }
 
+.dashboard-quick-controls {
+  position: fixed;
+  z-index: 4;
+  top: 1rem;
+  left: 50%;
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  border-radius: 8px;
+  padding: 0.55rem;
+  transform: translateX(-50%);
+}
+
+body:not([data-account-section="home"]) .dashboard-quick-controls,
+body.public-profile .dashboard-quick-controls,
+body.previewing .dashboard-quick-controls,
+body.entry-locked .dashboard-quick-controls {
+  display: none;
+}
+
+.dashboard-mute-button {
+  min-height: 2.3rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.065);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  cursor: pointer;
+  text-shadow: 0 0 0.8rem color-mix(in srgb, var(--accent) 46%, transparent);
+}
+
+.dashboard-mute-button.active {
+  border-color: color-mix(in srgb, var(--accent) 58%, rgba(255, 255, 255, 0.18));
+  background: color-mix(in srgb, var(--accent) 16%, rgba(255, 255, 255, 0.06));
+  box-shadow:
+    0 0 1.1rem color-mix(in srgb, var(--accent) 24%, transparent),
+    inset 0 0 1rem rgba(255, 255, 255, 0.045);
+}
+
+.dashboard-theme-picker {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.dashboard-swatch {
+  width: 2.1rem;
+  height: 2.1rem;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: linear-gradient(135deg, #9b7cff, #49d3ff);
+  cursor: pointer;
+}
+
+.dashboard-swatch.black {
+  background: linear-gradient(135deg, #050509, #f5f7fb);
+}
+
+.dashboard-swatch.aqua {
+  background: linear-gradient(135deg, #27e3b7, #4aa3ff);
+}
+
+.dashboard-swatch.ember {
+  background: linear-gradient(135deg, #ff6b4a, #ffd166);
+}
+
+.dashboard-swatch.active {
+  box-shadow:
+    0 0 0 2px #020204,
+    0 0 0 4px color-mix(in srgb, var(--accent) 72%, transparent),
+    0 0 1rem color-mix(in srgb, var(--accent) 46%, transparent);
+}
+
 .account-sidebar {
   --lift-x: 0px;
   --lift-y: 0px;

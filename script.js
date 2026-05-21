@@ -49,11 +49,17 @@ const settings = {
 
 const dashboardButtons = document.querySelectorAll("[data-dashboard-target]");
 const dashboardPanels = document.querySelectorAll("[data-dashboard-panel]");
+const dashboardThemeButtons = document.querySelectorAll("[data-dashboard-theme]");
 
 const sessionKey = "nightcard-session-token";
+const dashboardThemeKey = "funlol-dashboard-theme";
+const dashboardMuteKey = "funlol-dashboard-mute-outside-bio";
 let sessionToken = localStorage.getItem(sessionKey) || "";
 let loadingTimer = null;
 let loadingPercent = 8;
+let profileTheme = document.body.dataset.theme || "black";
+let dashboardTheme = localStorage.getItem(dashboardThemeKey) || "black";
+let dashboardMusicMutedOutsideBio = localStorage.getItem(dashboardMuteKey) === "true";
 let accountState = {
   email: "",
   userId: "",
@@ -590,9 +596,42 @@ if (isPublicProfilePage) {
   $("#previewToolbar").hidden = true;
 }
 
+function updateThemeButtons() {
+  document.querySelectorAll(".editor .swatch").forEach((swatch) => {
+    swatch.classList.toggle("active", swatch.dataset.theme === profileTheme);
+  });
+
+  dashboardThemeButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.dashboardTheme === dashboardTheme);
+  });
+}
+
+function applyThemeForCurrentSection() {
+  const section = document.body.dataset.accountSection;
+  const nextTheme = !isPublicProfilePage && section !== "bio" ? dashboardTheme : profileTheme;
+  document.body.dataset.theme = nextTheme;
+  updateThemeButtons();
+}
+
+function syncDashboardAudioState() {
+  const audio = $("#backgroundMusic");
+  const section = document.body.dataset.accountSection;
+  const shouldMute = !isPublicProfilePage && section !== "bio" && dashboardMusicMutedOutsideBio;
+  if (audio) audio.muted = shouldMute;
+
+  const muteButton = $("#dashboardMuteButton");
+  if (muteButton) {
+    muteButton.classList.toggle("active", dashboardMusicMutedOutsideBio);
+    muteButton.setAttribute("aria-pressed", String(dashboardMusicMutedOutsideBio));
+    muteButton.textContent = dashboardMusicMutedOutsideBio ? "Muted outside Bio" : "Mute outside Bio";
+  }
+}
+
 const setDashboardSection = (section) => {
   const nextSection = isPublicProfilePage ? "bio" : section;
   document.body.dataset.accountSection = nextSection;
+  applyThemeForCurrentSection();
+  syncDashboardAudioState();
 
   dashboardPanels.forEach((panel) => {
     panel.hidden = panel.dataset.dashboardPanel !== nextSection;
@@ -1653,12 +1692,25 @@ dashboardButtons.forEach((button) => {
   });
 });
 
-document.querySelectorAll(".swatch").forEach((button) => {
+document.querySelectorAll(".editor .swatch").forEach((button) => {
   button.addEventListener("click", () => {
-    document.querySelectorAll(".swatch").forEach((swatch) => swatch.classList.remove("active"));
-    button.classList.add("active");
-    document.body.dataset.theme = button.dataset.theme;
+    profileTheme = button.dataset.theme || "black";
+    applyThemeForCurrentSection();
   });
+});
+
+dashboardThemeButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    dashboardTheme = button.dataset.dashboardTheme || "black";
+    localStorage.setItem(dashboardThemeKey, dashboardTheme);
+    applyThemeForCurrentSection();
+  });
+});
+
+$("#dashboardMuteButton").addEventListener("click", () => {
+  dashboardMusicMutedOutsideBio = !dashboardMusicMutedOutsideBio;
+  localStorage.setItem(dashboardMuteKey, String(dashboardMusicMutedOutsideBio));
+  syncDashboardAudioState();
 });
 
 const attachMouseBoxEffect = (element, { lift = 1, tilt = 1 } = {}) => {
@@ -1821,6 +1873,7 @@ const setMusicSource = (src, name = "") => {
     $("#musicPlayer").hidden = true;
     $("#musicFileName").textContent = "Choose an audio file";
     $("#musicIcon").textContent = "Play";
+    syncDashboardAudioState();
     return;
   }
 
@@ -1833,6 +1886,7 @@ const setMusicSource = (src, name = "") => {
   $("#musicFileName").textContent = name || "Saved background music";
   $("#musicPlayer").hidden = false;
   $("#musicIcon").textContent = "Play";
+  syncDashboardAudioState();
 };
 
 $("#backgroundInput").addEventListener("change", async (event) => {
@@ -1995,7 +2049,7 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-const getActiveTheme = () => document.body.dataset.theme || "black";
+const getActiveTheme = () => profileTheme || "black";
 
 const collectProfile = () => ({
   name: inputs.name.value.trim() || "Nova",
@@ -2032,10 +2086,8 @@ const applyProfile = (data) => {
   });
   applySocialInputs(data.socialLinks || data.socials || {});
 
-  document.body.dataset.theme = data.theme || "black";
-  document.querySelectorAll(".swatch").forEach((swatch) => {
-    swatch.classList.toggle("active", swatch.dataset.theme === document.body.dataset.theme);
-  });
+  profileTheme = data.theme || "black";
+  applyThemeForCurrentSection();
 
   $("#compactToggle").checked = Boolean(data.compactLinks);
   $("#particlesToggle").checked = data.animatedBackground !== false;
