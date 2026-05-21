@@ -54,12 +54,14 @@ const dashboardThemeButtons = document.querySelectorAll("[data-dashboard-theme]"
 const sessionKey = "nightcard-session-token";
 const dashboardThemeKey = "funlol-dashboard-theme";
 const dashboardMuteKey = "funlol-dashboard-mute-outside-bio";
+const sidebarCollapsedKey = "funlol-sidebar-collapsed";
 let sessionToken = localStorage.getItem(sessionKey) || "";
 let loadingTimer = null;
 let loadingPercent = 8;
 let profileTheme = document.body.dataset.theme || "black";
 let dashboardTheme = localStorage.getItem(dashboardThemeKey) || "black";
 let dashboardMusicMutedOutsideBio = localStorage.getItem(dashboardMuteKey) === "true";
+let sidebarCollapsed = localStorage.getItem(sidebarCollapsedKey) === "true";
 let accountState = {
   email: "",
   userId: "",
@@ -627,6 +629,24 @@ function syncDashboardAudioState() {
   }
 }
 
+function syncSidebarCollapsedState() {
+  document.body.classList.toggle("sidebar-collapsed", sidebarCollapsed);
+
+  const collapseButton = $("#sidebarCollapseButton");
+  const collapseIcon = $("#sidebarCollapseIcon");
+  const label = sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar";
+
+  if (collapseButton) {
+    collapseButton.setAttribute("aria-expanded", String(!sidebarCollapsed));
+    collapseButton.setAttribute("aria-label", label);
+    collapseButton.title = label;
+  }
+
+  if (collapseIcon) {
+    collapseIcon.textContent = sidebarCollapsed ? ">" : "<";
+  }
+}
+
 const setDashboardSection = (section) => {
   const nextSection = isPublicProfilePage ? "bio" : section;
   document.body.dataset.accountSection = nextSection;
@@ -652,6 +672,7 @@ const setDashboardSection = (section) => {
 };
 
 setDashboardSection(isPublicProfilePage ? "bio" : "home");
+syncSidebarCollapsedState();
 
 const cleanHandle = (value) =>
   value
@@ -1711,6 +1732,12 @@ $("#dashboardMuteButton").addEventListener("click", () => {
   dashboardMusicMutedOutsideBio = !dashboardMusicMutedOutsideBio;
   localStorage.setItem(dashboardMuteKey, String(dashboardMusicMutedOutsideBio));
   syncDashboardAudioState();
+});
+
+$("#sidebarCollapseButton").addEventListener("click", () => {
+  sidebarCollapsed = !sidebarCollapsed;
+  localStorage.setItem(sidebarCollapsedKey, String(sidebarCollapsed));
+  syncSidebarCollapsedState();
 });
 
 const attachMouseBoxEffect = (element, { lift = 1, tilt = 1 } = {}) => {

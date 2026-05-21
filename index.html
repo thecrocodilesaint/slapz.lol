@@ -61,15 +61,20 @@
     </section>
 
     <main class="shell" aria-label="Account dashboard">
-      <aside class="account-sidebar glass" aria-label="Account navigation">
-        <button class="sidebar-brand" type="button" data-dashboard-target="home">fun.lol</button>
+      <aside class="account-sidebar glass" id="accountSidebar" aria-label="Account navigation">
+        <div class="sidebar-head">
+          <button class="sidebar-brand" type="button" data-dashboard-target="home" data-short="F">fun.lol</button>
+          <button class="sidebar-collapse-button" id="sidebarCollapseButton" type="button" aria-controls="accountSidebar" aria-expanded="true" aria-label="Collapse sidebar">
+            <span id="sidebarCollapseIcon" aria-hidden="true">&lt;</span>
+          </button>
+        </div>
         <nav class="account-nav">
-          <button class="account-nav-button active" type="button" data-dashboard-target="bio">Bio</button>
-          <button class="account-nav-button" type="button" data-dashboard-target="games">Games</button>
-          <button class="account-nav-button" type="button" data-dashboard-target="communities">Communities</button>
-          <button class="account-nav-button" type="button" data-dashboard-target="settings">Settings</button>
+          <button class="account-nav-button active" type="button" data-dashboard-target="bio" data-short="B">Bio</button>
+          <button class="account-nav-button" type="button" data-dashboard-target="games" data-short="G">Games</button>
+          <button class="account-nav-button" type="button" data-dashboard-target="communities" data-short="C">Communities</button>
+          <button class="account-nav-button" type="button" data-dashboard-target="settings" data-short="S">Settings</button>
         </nav>
-        <button class="sidebar-logout" id="accountLogoutButton" type="button">Log out</button>
+        <button class="sidebar-logout" id="accountLogoutButton" type="button" data-short="X">Log out</button>
       </aside>
 
       <div class="dashboard-quick-controls glass" id="dashboardQuickControls" aria-label="Dashboard controls">
