@@ -150,6 +150,8 @@ body.public-profile .auth-screen,
 body.public-profile .account-sidebar,
 body.public-profile .dashboard-home,
 body.public-profile .dashboard-games,
+body.public-profile .dashboard-communities,
+body.public-profile .dashboard-settings,
 body.public-profile .editor,
 body.public-profile .preview-toolbar,
 body.public-profile .music-player {
@@ -446,6 +448,12 @@ body.entry-locked .dashboard-quick-controls {
   overflow-y: auto;
   border-radius: 8px;
   padding: 1rem;
+  background: #020204;
+}
+
+.dashboard-communities {
+  min-height: calc(100vh - 2.5rem);
+  border-radius: 8px;
   background: #020204;
 }
 
@@ -1148,6 +1156,8 @@ body[data-account-section="home"]:not(.public-profile) .background-image,
 body[data-account-section="home"]:not(.public-profile) .background-video,
 body[data-account-section="games"]:not(.public-profile) .background-image,
 body[data-account-section="games"]:not(.public-profile) .background-video,
+body[data-account-section="communities"]:not(.public-profile) .background-image,
+body[data-account-section="communities"]:not(.public-profile) .background-video,
 body[data-account-section="settings"]:not(.public-profile) .background-image,
 body[data-account-section="settings"]:not(.public-profile) .background-video {
   display: none !important;
@@ -1343,6 +1353,7 @@ body.previewing .shell {
 body.previewing .account-sidebar,
 body.previewing .dashboard-home,
 body.previewing .dashboard-games,
+body.previewing .dashboard-communities,
 body.previewing .dashboard-settings {
   display: none;
 }
@@ -2066,6 +2077,7 @@ textarea:focus {
 
   .dashboard-home,
   .dashboard-games,
+  .dashboard-communities,
   .dashboard-settings,
   .dashboard-panel {
     min-height: 62vh;
