@@ -14,6 +14,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   min-height: 100vh;
   margin: 0;
@@ -101,6 +105,13 @@ body.welcoming .music-gate {
   display: none;
 }
 
+body.welcoming .background-image,
+body.welcoming .background-video,
+body.welcoming .backdrop-shade,
+body.welcoming #stars {
+  display: none !important;
+}
+
 body.welcoming .shell {
   display: none;
   opacity: 0;
@@ -114,9 +125,13 @@ body.welcome-leaving .welcome-screen {
 }
 
 body.welcoming .welcome-screen {
-  animation: welcomeFadeIn 1000ms ease both;
+  opacity: 1;
   background: #020204;
   backdrop-filter: none;
+}
+
+body.welcoming .welcome-copy {
+  animation: welcomeCopyIn 1000ms ease both;
 }
 
 body.welcome-leaving .welcome-screen {
@@ -132,6 +147,9 @@ body.owner-entering .shell {
 }
 
 body.public-profile .auth-screen,
+body.public-profile .account-sidebar,
+body.public-profile .dashboard-home,
+body.public-profile .dashboard-games,
 body.public-profile .editor,
 body.public-profile .preview-toolbar,
 body.public-profile .music-player {
@@ -139,6 +157,11 @@ body.public-profile .music-player {
 }
 
 body.public-profile .shell {
+  grid-template-columns: minmax(18rem, 30rem);
+}
+
+body.public-profile .dashboard-bio {
+  display: grid !important;
   grid-template-columns: minmax(18rem, 30rem);
 }
 
@@ -209,12 +232,109 @@ body.video-dark .backdrop-shade {
   position: relative;
   z-index: 1;
   display: grid;
+  grid-template-columns: minmax(12rem, 15rem) minmax(0, 64rem);
+  gap: 1.25rem;
+  align-items: stretch;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 1.25rem;
+}
+
+.account-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  min-height: calc(100vh - 2.5rem);
+  border-radius: 8px;
+  padding: 0.9rem;
+  background: rgba(2, 2, 4, 0.72);
+}
+
+.sidebar-brand,
+.account-nav-button,
+.sidebar-logout {
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text);
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.sidebar-brand {
+  min-height: 3.2rem;
+  text-align: left;
+  font-size: 1.35rem;
+  font-weight: 900;
+  text-shadow:
+    0 0 0.75rem rgba(255, 255, 255, 0.75),
+    0 0 1.6rem color-mix(in srgb, var(--accent) 42%, transparent);
+}
+
+.account-nav {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.account-nav-button,
+.sidebar-logout {
+  min-height: 2.85rem;
+  padding: 0.75rem;
+  color: var(--muted);
+  font-weight: 900;
+  text-align: left;
+}
+
+.account-nav-button.active {
+  border-color: color-mix(in srgb, var(--accent) 50%, rgba(255, 255, 255, 0.18));
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.075);
+  box-shadow:
+    0 0 1rem color-mix(in srgb, var(--accent) 18%, transparent),
+    inset 0 0 1rem rgba(255, 255, 255, 0.045);
+  text-shadow: 0 0 0.75rem color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+.sidebar-logout {
+  margin-top: auto;
+  border-color: var(--line);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.dashboard-panel {
+  min-width: 0;
+  min-height: calc(100vh - 2.5rem);
+}
+
+.dashboard-home,
+.dashboard-games {
+  display: grid;
+  min-height: calc(100vh - 2.5rem);
+  place-items: center;
+  border-radius: 8px;
+  background: #020204;
+}
+
+.dashboard-home h1 {
+  max-width: 12ch;
+  text-align: center;
+  font-size: clamp(3.2rem, 10vw, 7rem);
+}
+
+.dashboard-bio {
+  display: grid;
   grid-template-columns: minmax(18rem, 28rem) minmax(18rem, 24rem);
   gap: 1.25rem;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
-  padding: 2rem;
+}
+
+body[data-account-section="home"]:not(.public-profile) .background-image,
+body[data-account-section="home"]:not(.public-profile) .background-video,
+body[data-account-section="games"]:not(.public-profile) .background-image,
+body[data-account-section="games"]:not(.public-profile) .background-video {
+  display: none !important;
 }
 
 .loading-screen {
@@ -307,7 +427,7 @@ body.video-dark .backdrop-shade {
   transition: width 260ms ease;
 }
 
-@keyframes welcomeFadeIn {
+@keyframes welcomeCopyIn {
   from {
     opacity: 0;
     transform: scale(1.02);
@@ -402,6 +522,18 @@ body.video-dark .backdrop-shade {
 
 body.previewing .shell {
   grid-template-columns: minmax(18rem, 30rem);
+}
+
+body.previewing .account-sidebar,
+body.previewing .dashboard-home,
+body.previewing .dashboard-games {
+  display: none;
+}
+
+body.previewing .dashboard-bio {
+  display: grid !important;
+  grid-template-columns: minmax(18rem, 30rem);
+  min-height: 100vh;
 }
 
 body.previewing .editor {
@@ -1105,6 +1237,24 @@ textarea:focus {
     grid-template-columns: 1fr;
     align-items: start;
     padding: 1rem;
+  }
+
+  .account-sidebar {
+    min-height: auto;
+  }
+
+  .account-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-home,
+  .dashboard-games,
+  .dashboard-panel {
+    min-height: 62vh;
+  }
+
+  .dashboard-bio {
+    grid-template-columns: 1fr;
   }
 
   .editor {

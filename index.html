@@ -60,7 +60,23 @@
       </form>
     </section>
 
-    <main class="shell">
+    <main class="shell" aria-label="Account dashboard">
+      <aside class="account-sidebar glass" aria-label="Account navigation">
+        <button class="sidebar-brand" type="button" data-dashboard-target="home">fun.lol</button>
+        <nav class="account-nav">
+          <button class="account-nav-button active" type="button" data-dashboard-target="bio">Bio</button>
+          <button class="account-nav-button" type="button" data-dashboard-target="games">Games</button>
+        </nav>
+        <button class="sidebar-logout" id="accountLogoutButton" type="button">Log out</button>
+      </aside>
+
+      <section class="dashboard-panel dashboard-home" data-dashboard-panel="home" aria-label="Account home" hidden>
+        <h1>Welcome to fun.lol</h1>
+      </section>
+
+      <section class="dashboard-panel dashboard-games" data-dashboard-panel="games" aria-label="Games" hidden></section>
+
+      <section class="dashboard-panel dashboard-bio" data-dashboard-panel="bio" aria-label="Bio editor">
       <section class="profile" aria-label="Profile card">
         <div class="glass profile-card">
           <div class="profile-top">
@@ -278,6 +294,7 @@
           </label>
         </div>
       </aside>
+      </section>
     </main>
 
     <div class="preview-toolbar glass" id="previewToolbar" hidden>

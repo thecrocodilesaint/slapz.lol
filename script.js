@@ -34,7 +34,11 @@ const auth = {
   loginButton: $("#loginButton"),
   message: $("#authMessage"),
   logoutButton: $("#logoutButton"),
+  accountLogoutButton: $("#accountLogoutButton"),
 };
+
+const dashboardButtons = document.querySelectorAll("[data-dashboard-target]");
+const dashboardPanels = document.querySelectorAll("[data-dashboard-panel]");
 
 const sessionKey = "nightcard-session-token";
 let sessionToken = localStorage.getItem(sessionKey) || "";
@@ -66,6 +70,21 @@ if (isPublicProfilePage) {
   document.body.classList.add("public-profile", "previewing");
   $("#previewToolbar").hidden = true;
 }
+
+const setDashboardSection = (section) => {
+  const nextSection = isPublicProfilePage ? "bio" : section;
+  document.body.dataset.accountSection = nextSection;
+
+  dashboardPanels.forEach((panel) => {
+    panel.hidden = panel.dataset.dashboardPanel !== nextSection;
+  });
+
+  dashboardButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.dashboardTarget === nextSection);
+  });
+};
+
+setDashboardSection(isPublicProfilePage ? "bio" : "home");
 
 const cleanHandle = (value) =>
   value
@@ -203,6 +222,7 @@ const finishLoadingIntoEditor = async () => {
   clearInterval(loadingTimer);
   setLoading(100, "Ready");
   await wait(260);
+  setDashboardSection("home");
   await playOwnerWelcome();
 };
 
@@ -300,11 +320,22 @@ auth.form.addEventListener("submit", (event) => {
 
 auth.loginButton.addEventListener("click", () => submitAuth("login"));
 
-auth.logoutButton.addEventListener("click", () => {
+const logoutUser = () => {
   sessionToken = "";
   localStorage.removeItem(sessionKey);
+  setDashboardSection("home");
   showAuth();
   setAuthMessage("Logged out. Sign in again to edit your profile.");
+};
+
+auth.logoutButton.addEventListener("click", logoutUser);
+auth.accountLogoutButton.addEventListener("click", logoutUser);
+
+dashboardButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    setDashboardSection(button.dataset.dashboardTarget);
+    exitPreview();
+  });
 });
 
 document.querySelectorAll(".swatch").forEach((button) => {
