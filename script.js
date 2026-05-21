@@ -1683,6 +1683,9 @@ const attachMouseBoxEffect = (element, { lift = 1, tilt = 1 } = {}) => {
 
 attachMouseBoxEffect($("#hoverCard"));
 attachMouseBoxEffect($(".account-sidebar"), { lift: 0.55, tilt: 0.65 });
+document.querySelectorAll(".game-card-preview").forEach((card) => {
+  attachMouseBoxEffect(card, { lift: 0.85, tilt: 0.8 });
+});
 
 $("#particlesToggle").addEventListener("change", (event) => {
   document.body.classList.toggle("no-motion", !event.target.checked);

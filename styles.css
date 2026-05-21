@@ -506,6 +506,13 @@ body.video-dark .backdrop-shade {
 }
 
 .game-card-preview {
+  --lift-x: 0px;
+  --lift-y: 0px;
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  --spot-x: 50%;
+  --spot-y: 50%;
+  --card-scale: 1;
   display: grid;
   gap: 0.45rem;
   width: 100%;
@@ -516,6 +523,7 @@ body.video-dark .backdrop-shade {
   font: inherit;
   text-align: left;
   cursor: pointer;
+  perspective: 800px;
 }
 
 .game-card-title {
@@ -533,17 +541,20 @@ body.video-dark .backdrop-shade {
   border: 1px solid color-mix(in srgb, var(--accent) 36%, rgba(255, 255, 255, 0.16));
   border-radius: 8px;
   background:
-    radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 9rem),
+    radial-gradient(circle at var(--spot-x) var(--spot-y), color-mix(in srgb, var(--accent) 18%, transparent), transparent 9rem),
     rgba(255, 255, 255, 0.045);
   box-shadow:
     0 0 1.2rem color-mix(in srgb, var(--accent) 12%, transparent),
     inset 0 0 1.1rem rgba(255, 255, 255, 0.035);
+  transform: translate3d(var(--lift-x), var(--lift-y), 0) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) scale(var(--card-scale));
+  transform-style: preserve-3d;
   transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  will-change: transform;
 }
 
 .game-card-preview:hover .game-card-box,
 .game-card-preview:focus-visible .game-card-box {
-  transform: translateY(-4px) scale(1.015);
+  --card-scale: 1.015;
   border-color: color-mix(in srgb, var(--accent) 58%, white);
   box-shadow:
     0 0 1.8rem color-mix(in srgb, var(--accent) 28%, transparent),
