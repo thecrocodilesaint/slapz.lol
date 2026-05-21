@@ -306,6 +306,50 @@ async function saveUserProfileLink(userId, { handle, origin }) {
   }
 }
 
+async function getSnakeHighScore(userId) {
+  if (hasSupabase) {
+    try {
+      const rows = await supabaseRequest("app_users", {
+        query: `?id=eq.${encodeURIComponent(userId)}&select=snake_high_score&limit=1`,
+      });
+      return Number(rows[0]?.snake_high_score || 0);
+    } catch (error) {
+      console.warn("Could not read snake_high_score. Run the latest supabase-schema.sql.", error.message);
+      return 0;
+    }
+  }
+
+  const user = readUsersFile().users[userId];
+  return Number(user?.snakeHighScore || 0);
+}
+
+async function saveSnakeHighScore(userId, score) {
+  const safeScore = Math.max(0, Math.min(999999, Number.parseInt(score, 10) || 0));
+  const currentScore = await getSnakeHighScore(userId);
+  const highScore = Math.max(currentScore, safeScore);
+
+  if (hasSupabase) {
+    try {
+      await supabaseRequest("app_users", {
+        method: "PATCH",
+        query: `?id=eq.${encodeURIComponent(userId)}`,
+        body: { snake_high_score: highScore },
+        prefer: "return=minimal",
+      });
+    } catch (error) {
+      console.warn("Could not save snake_high_score. Run the latest supabase-schema.sql.", error.message);
+    }
+    return highScore;
+  }
+
+  const store = readUsersFile();
+  if (store.users[userId]) {
+    store.users[userId].snakeHighScore = highScore;
+    writeUsersFile(store);
+  }
+  return highScore;
+}
+
 async function incrementProfileViews(profile) {
   const views = Number(profile.views || 0) + 1;
   profile.views = views;
@@ -601,6 +645,35 @@ const server = http.createServer(async (req, res) => {
 
     const { ownerToken, ownerUserId, ...safeProfile } = profile;
     sendJson(res, 200, safeProfile);
+    return;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/games/snake-score") {
+    const authed = await getAuthedUser(req);
+    if (!authed) {
+      sendJson(res, 401, { error: "Not signed in" });
+      return;
+    }
+
+    const highScore = await getSnakeHighScore(authed.userId);
+    sendJson(res, 200, { highScore });
+    return;
+  }
+
+  if (req.method === "PUT" && url.pathname === "/api/games/snake-score") {
+    try {
+      const authed = await getAuthedUser(req);
+      if (!authed) {
+        sendJson(res, 401, { error: "Not signed in" });
+        return;
+      }
+
+      const body = JSON.parse((await readBody(req)) || "{}");
+      const highScore = await saveSnakeHighScore(authed.userId, body.score);
+      sendJson(res, 200, { highScore });
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+    }
     return;
   }
 

@@ -74,7 +74,23 @@
         <h1>Welcome to fun.lol</h1>
       </section>
 
-      <section class="dashboard-panel dashboard-games" data-dashboard-panel="games" aria-label="Games" hidden></section>
+      <section class="dashboard-panel dashboard-games" data-dashboard-panel="games" aria-label="Games" hidden>
+        <div class="snake-game" aria-label="Snake game">
+          <div class="snake-topbar">
+            <h2>Snake</h2>
+            <div class="snake-scores" aria-label="Snake scores">
+              <span>Score <strong id="snakeScore">0</strong></span>
+              <span>Best <strong id="snakeBestScore">0</strong></span>
+            </div>
+          </div>
+          <canvas id="snakeCanvas" width="360" height="360" aria-label="Snake board"></canvas>
+          <div class="snake-controls">
+            <button class="save-button" id="snakeStartButton" type="button">Start</button>
+            <button class="preview-button" id="snakePauseButton" type="button">Pause</button>
+          </div>
+          <p class="snake-status" id="snakeStatus">Use arrow keys or WASD.</p>
+        </div>
+      </section>
 
       <section class="dashboard-panel dashboard-bio" data-dashboard-panel="bio" aria-label="Bio editor">
       <section class="profile" aria-label="Profile card">

@@ -5,13 +5,15 @@ create table if not exists public.app_users (
   profile_handle text,
   profile_path text,
   profile_url text,
+  snake_high_score integer not null default 0,
   created_at timestamptz not null default now()
 );
 
 alter table public.app_users
   add column if not exists profile_handle text,
   add column if not exists profile_path text,
-  add column if not exists profile_url text;
+  add column if not exists profile_url text,
+  add column if not exists snake_high_score integer not null default 0;
 
 create table if not exists public.app_sessions (
   token text primary key,
@@ -36,6 +38,7 @@ select
   u.id as user_id,
   u.email,
   u.created_at,
+  u.snake_high_score,
   coalesce(u.profile_handle, p.handle) as profile_handle,
   coalesce(u.profile_path, p.data ->> 'profilePath', case when p.handle is not null then '/u/' || p.handle end) as profile_path,
   coalesce(u.profile_url, p.data ->> 'profileUrl') as profile_url,

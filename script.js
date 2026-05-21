@@ -59,6 +59,25 @@ const mediaState = {
   musicObjectUrl: "",
 };
 
+const snake = {
+  canvas: $("#snakeCanvas"),
+  score: $("#snakeScore"),
+  best: $("#snakeBestScore"),
+  status: $("#snakeStatus"),
+  startButton: $("#snakeStartButton"),
+  pauseButton: $("#snakePauseButton"),
+  gridSize: 18,
+  snake: [{ x: 9, y: 9 }],
+  apple: { x: 13, y: 9 },
+  direction: { x: 1, y: 0 },
+  nextDirection: { x: 1, y: 0 },
+  scoreValue: 0,
+  bestValue: 0,
+  timer: null,
+  running: false,
+  paused: false,
+};
+
 const publicHandleFromPath = () => {
   const match = location.pathname.match(/^\/u\/([^/]+)/);
   return match ? decodeURIComponent(match[1]) : "";
@@ -82,6 +101,11 @@ const setDashboardSection = (section) => {
   dashboardButtons.forEach((button) => {
     button.classList.toggle("active", button.dataset.dashboardTarget === nextSection);
   });
+
+  if (nextSection === "games") {
+    loadSnakeBestScore();
+    drawSnake();
+  }
 };
 
 setDashboardSection(isPublicProfilePage ? "bio" : "home");
@@ -174,6 +198,235 @@ const showToast = (message) => {
   window.setTimeout(() => toast.classList.remove("show"), 1700);
 };
 
+const localSnakeScoreKey = () => `funlol-snake-best:${auth.email.value.trim().toLowerCase() || "local"}`;
+
+const drawSnake = () => {
+  const canvas = snake.canvas;
+  const context = canvas.getContext("2d");
+  const cell = canvas.width / snake.gridSize;
+
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = "#020204";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  context.strokeStyle = "rgba(255, 255, 255, 0.045)";
+  context.lineWidth = 1;
+  for (let index = 1; index < snake.gridSize; index += 1) {
+    const line = index * cell;
+    context.beginPath();
+    context.moveTo(line, 0);
+    context.lineTo(line, canvas.height);
+    context.moveTo(0, line);
+    context.lineTo(canvas.width, line);
+    context.stroke();
+  }
+
+  context.fillStyle = "#f5f7fb";
+  context.shadowColor = "rgba(255, 255, 255, 0.9)";
+  context.shadowBlur = 16;
+  context.beginPath();
+  context.arc((snake.apple.x + 0.5) * cell, (snake.apple.y + 0.5) * cell, cell * 0.28, 0, Math.PI * 2);
+  context.fill();
+
+  snake.snake.forEach((segment, index) => {
+    const inset = index === 0 ? 2 : 3.5;
+    context.fillStyle = index === 0 ? "#ffffff" : "rgba(255, 255, 255, 0.78)";
+    context.shadowColor = "rgba(255, 255, 255, 0.55)";
+    context.shadowBlur = index === 0 ? 18 : 10;
+    context.beginPath();
+    context.roundRect(segment.x * cell + inset, segment.y * cell + inset, cell - inset * 2, cell - inset * 2, 6);
+    context.fill();
+  });
+
+  context.shadowBlur = 0;
+};
+
+const randomSnakeCell = () => ({
+  x: Math.floor(Math.random() * snake.gridSize),
+  y: Math.floor(Math.random() * snake.gridSize),
+});
+
+const placeSnakeApple = () => {
+  let nextApple = randomSnakeCell();
+  while (snake.snake.some((segment) => segment.x === nextApple.x && segment.y === nextApple.y)) {
+    nextApple = randomSnakeCell();
+  }
+  snake.apple = nextApple;
+};
+
+const updateSnakeScore = (score) => {
+  snake.scoreValue = score;
+  snake.score.textContent = String(score);
+};
+
+const updateSnakeBest = (score) => {
+  snake.bestValue = Math.max(0, Number(score || 0));
+  snake.best.textContent = String(snake.bestValue);
+  localStorage.setItem(localSnakeScoreKey(), String(snake.bestValue));
+};
+
+const loadSnakeBestScore = async () => {
+  updateSnakeBest(Number(localStorage.getItem(localSnakeScoreKey()) || 0));
+  if (!sessionToken || isPublicProfilePage) return;
+
+  try {
+    const response = await fetch("/api/games/snake-score", { headers: authHeaders() });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Could not load score");
+    updateSnakeBest(data.highScore);
+  } catch {
+    snake.status.textContent = "Best score is saved on this device.";
+  }
+};
+
+const saveSnakeBestScore = async () => {
+  if (snake.scoreValue <= snake.bestValue) return;
+  updateSnakeBest(snake.scoreValue);
+  snake.status.textContent = "New best saved.";
+
+  if (!sessionToken || isPublicProfilePage) return;
+
+  try {
+    const response = await fetch("/api/games/snake-score", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ score: snake.scoreValue }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Could not save score");
+    updateSnakeBest(data.highScore);
+  } catch {
+    snake.status.textContent = "New best saved on this device.";
+  }
+};
+
+const resetSnake = () => {
+  snake.snake = [{ x: 9, y: 9 }];
+  snake.direction = { x: 1, y: 0 };
+  snake.nextDirection = { x: 1, y: 0 };
+  updateSnakeScore(0);
+  placeSnakeApple();
+  snake.status.textContent = "Use arrow keys or WASD.";
+  drawSnake();
+};
+
+const stopSnake = () => {
+  clearInterval(snake.timer);
+  snake.timer = null;
+  snake.running = false;
+  snake.paused = false;
+  snake.startButton.textContent = "Start";
+  snake.pauseButton.textContent = "Pause";
+};
+
+const endSnakeGame = async () => {
+  stopSnake();
+  snake.status.textContent = "Game over.";
+  await saveSnakeBestScore();
+};
+
+const stepSnake = () => {
+  snake.direction = snake.nextDirection;
+  const head = snake.snake[0];
+  const nextHead = {
+    x: head.x + snake.direction.x,
+    y: head.y + snake.direction.y,
+  };
+
+  const hitWall =
+    nextHead.x < 0 || nextHead.x >= snake.gridSize || nextHead.y < 0 || nextHead.y >= snake.gridSize;
+  const hitBody = snake.snake.some((segment) => segment.x === nextHead.x && segment.y === nextHead.y);
+  if (hitWall || hitBody) {
+    endSnakeGame();
+    return;
+  }
+
+  snake.snake.unshift(nextHead);
+  if (nextHead.x === snake.apple.x && nextHead.y === snake.apple.y) {
+    updateSnakeScore(snake.scoreValue + 1);
+    if (snake.scoreValue > snake.bestValue) saveSnakeBestScore();
+    placeSnakeApple();
+  } else {
+    snake.snake.pop();
+  }
+
+  drawSnake();
+};
+
+const startSnake = () => {
+  if (snake.running && !snake.paused) {
+    resetSnake();
+  }
+
+  if (!snake.running) {
+    snake.running = true;
+    snake.paused = false;
+    snake.startButton.textContent = "Restart";
+    snake.status.textContent = "Playing";
+    clearInterval(snake.timer);
+    snake.timer = setInterval(stepSnake, 125);
+    return;
+  }
+
+  if (snake.paused) {
+    snake.paused = false;
+    snake.pauseButton.textContent = "Pause";
+    snake.status.textContent = "Playing";
+    snake.timer = setInterval(stepSnake, 125);
+  }
+};
+
+const pauseSnake = () => {
+  if (!snake.running) return;
+
+  if (snake.paused) {
+    startSnake();
+    return;
+  }
+
+  clearInterval(snake.timer);
+  snake.timer = null;
+  snake.paused = true;
+  snake.pauseButton.textContent = "Resume";
+  snake.status.textContent = "Paused";
+};
+
+const setSnakeDirection = (x, y) => {
+  if (snake.direction.x + x === 0 && snake.direction.y + y === 0) return;
+  snake.nextDirection = { x, y };
+};
+
+snake.startButton.addEventListener("click", startSnake);
+snake.pauseButton.addEventListener("click", pauseSnake);
+
+document.addEventListener("keydown", (event) => {
+  if (document.body.dataset.accountSection !== "games") return;
+
+  const directions = {
+    ArrowUp: [0, -1],
+    w: [0, -1],
+    W: [0, -1],
+    ArrowDown: [0, 1],
+    s: [0, 1],
+    S: [0, 1],
+    ArrowLeft: [-1, 0],
+    a: [-1, 0],
+    A: [-1, 0],
+    ArrowRight: [1, 0],
+    d: [1, 0],
+    D: [1, 0],
+  };
+
+  const direction = directions[event.key];
+  if (!direction) return;
+
+  event.preventDefault();
+  setSnakeDirection(direction[0], direction[1]);
+  if (!snake.running) startSnake();
+});
+
+resetSnake();
+
 const setAuthMessage = (message) => {
   auth.message.textContent = message;
 };
@@ -263,6 +516,7 @@ const submitAuth = async (mode) => {
 
     sessionToken = data.token;
     localStorage.setItem(sessionKey, sessionToken);
+    auth.email.value = data.email;
     setAuthMessage(`Signed in as ${data.email}`);
     startLoading("Loading your profile...");
     await loadMyProfile();
@@ -809,6 +1063,7 @@ async function bootApp() {
     const response = await fetch("/api/me", { headers: authHeaders() });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Not signed in");
+    auth.email.value = data.email;
     setAuthMessage(`Signed in as ${data.email}`);
     await loadMyProfile();
     await finishLoadingIntoEditor();
