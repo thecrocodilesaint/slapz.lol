@@ -99,6 +99,56 @@ const clickRush = {
   running: false,
 };
 
+const wordleWords = [
+  "BLAZE",
+  "CRISP",
+  "FROST",
+  "GHOST",
+  "GLARE",
+  "NIGHT",
+  "PIXEL",
+  "PLAZA",
+  "SHINE",
+  "SOUND",
+  "VIVID",
+];
+
+const wordle = {
+  board: $("#wordleBoard"),
+  input: $("#wordleInput"),
+  try: $("#wordleTry"),
+  left: $("#wordleLeft"),
+  status: $("#wordleStatus"),
+  guessButton: $("#wordleGuessButton"),
+  resetButton: $("#wordleResetButton"),
+  target: "",
+  row: 0,
+  size: 5,
+  maxRows: 6,
+  complete: false,
+};
+
+const crossy = {
+  canvas: $("#crossyCanvas"),
+  score: $("#crossyScore"),
+  best: $("#crossyBest"),
+  finalScore: $("#crossyFinalScore"),
+  gameOverScreen: $("#crossyGameOver"),
+  status: $("#crossyStatus"),
+  startButton: $("#crossyStartButton"),
+  resetButton: $("#crossyResetButton"),
+  cols: 9,
+  rows: 11,
+  player: { x: 4, y: 10 },
+  cars: [],
+  scoreValue: 0,
+  bestValue: 0,
+  highestRow: 10,
+  timer: null,
+  running: false,
+  gameOver: false,
+};
+
 const gamesGrid = $("#gamesGrid");
 const gameCards = document.querySelectorAll("[data-game-card]");
 const gameExpandedPanels = document.querySelectorAll("[data-game-expanded]");
@@ -226,6 +276,7 @@ const showToast = (message) => {
 
 const localSnakeScoreKey = () => `funlol-snake-best:${auth.email.value.trim().toLowerCase() || "local"}`;
 const localClickRushScoreKey = () => `funlol-click-rush-best:${auth.email.value.trim().toLowerCase() || "local"}`;
+const localCrossyScoreKey = () => `funlol-crossy-best:${auth.email.value.trim().toLowerCase() || "local"}`;
 
 const drawSnake = () => {
   const canvas = snake.canvas;
@@ -495,6 +546,266 @@ const startClickRush = () => {
   }, 1000);
 };
 
+const buildWordleBoard = () => {
+  wordle.board.innerHTML = "";
+  for (let row = 0; row < wordle.maxRows; row += 1) {
+    const rowElement = document.createElement("div");
+    rowElement.className = "wordle-row";
+    for (let col = 0; col < wordle.size; col += 1) {
+      const tile = document.createElement("span");
+      tile.className = "wordle-tile";
+      rowElement.append(tile);
+    }
+    wordle.board.append(rowElement);
+  }
+};
+
+const setWordleStats = () => {
+  wordle.try.textContent = String(Math.min(wordle.row + 1, wordle.maxRows));
+  wordle.left.textContent = String(Math.max(0, wordle.maxRows - wordle.row));
+};
+
+const resetWordle = () => {
+  wordle.target = wordleWords[Math.floor(Math.random() * wordleWords.length)];
+  wordle.row = 0;
+  wordle.complete = false;
+  wordle.input.value = "";
+  wordle.input.disabled = false;
+  wordle.status.textContent = "Guess the 5 letter word.";
+  buildWordleBoard();
+  setWordleStats();
+  if (activeGame === "wordle") wordle.input.focus();
+};
+
+const scoreWordleGuess = (guess) => {
+  const result = Array(wordle.size).fill("absent");
+  const remaining = {};
+
+  for (let index = 0; index < wordle.size; index += 1) {
+    const targetLetter = wordle.target[index];
+    if (guess[index] === targetLetter) {
+      result[index] = "correct";
+    } else {
+      remaining[targetLetter] = (remaining[targetLetter] || 0) + 1;
+    }
+  }
+
+  for (let index = 0; index < wordle.size; index += 1) {
+    const letter = guess[index];
+    if (result[index] === "correct" || !remaining[letter]) continue;
+    result[index] = "present";
+    remaining[letter] -= 1;
+  }
+
+  return result;
+};
+
+const submitWordleGuess = () => {
+  if (wordle.complete) return;
+
+  const guess = wordle.input.value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, wordle.size);
+  wordle.input.value = guess;
+
+  if (guess.length !== wordle.size) {
+    wordle.status.textContent = "Enter 5 letters first.";
+    return;
+  }
+
+  const rowElement = wordle.board.children[wordle.row];
+  const result = scoreWordleGuess(guess);
+  [...rowElement.children].forEach((tile, index) => {
+    tile.textContent = guess[index];
+    tile.classList.add(result[index]);
+  });
+
+  wordle.row += 1;
+  wordle.input.value = "";
+  setWordleStats();
+
+  if (guess === wordle.target) {
+    wordle.complete = true;
+    wordle.input.disabled = true;
+    wordle.status.textContent = `You got it in ${wordle.row} ${wordle.row === 1 ? "try" : "tries"}.`;
+    return;
+  }
+
+  if (wordle.row >= wordle.maxRows) {
+    wordle.complete = true;
+    wordle.input.disabled = true;
+    wordle.status.textContent = `Out of tries. Word was ${wordle.target}.`;
+    return;
+  }
+
+  wordle.status.textContent = "Keep guessing.";
+};
+
+const updateCrossyScore = (score) => {
+  crossy.scoreValue = score;
+  crossy.score.textContent = String(score);
+  if (score > crossy.bestValue) {
+    crossy.bestValue = score;
+    crossy.best.textContent = String(score);
+    localStorage.setItem(localCrossyScoreKey(), String(score));
+  }
+};
+
+const loadCrossyBestScore = () => {
+  crossy.bestValue = Number(localStorage.getItem(localCrossyScoreKey()) || 0);
+  crossy.best.textContent = String(crossy.bestValue);
+};
+
+const createCrossyCars = () => {
+  const laneRows = [1, 2, 4, 5, 7, 8];
+  crossy.cars = laneRows.flatMap((row, laneIndex) => {
+    const direction = laneIndex % 2 === 0 ? 1 : -1;
+    const speed = 0.045 + laneIndex * 0.006;
+    return Array.from({ length: 2 }, (_, carIndex) => ({
+      x: (carIndex * 4 + laneIndex * 1.35) % crossy.cols,
+      y: row,
+      width: laneIndex % 3 === 0 ? 1.6 : 1.25,
+      direction,
+      speed,
+    }));
+  });
+};
+
+const drawCrossy = () => {
+  const context = crossy.canvas.getContext("2d");
+  const cellWidth = crossy.canvas.width / crossy.cols;
+  const cellHeight = crossy.canvas.height / crossy.rows;
+
+  context.clearRect(0, 0, crossy.canvas.width, crossy.canvas.height);
+
+  for (let row = 0; row < crossy.rows; row += 1) {
+    const safeRow = row === 0 || row === 3 || row === 6 || row === crossy.rows - 1;
+    context.fillStyle = safeRow ? "rgba(255, 255, 255, 0.07)" : "rgba(255, 255, 255, 0.025)";
+    context.fillRect(0, row * cellHeight, crossy.canvas.width, cellHeight);
+    context.strokeStyle = "rgba(255, 255, 255, 0.045)";
+    context.beginPath();
+    context.moveTo(0, row * cellHeight);
+    context.lineTo(crossy.canvas.width, row * cellHeight);
+    context.stroke();
+  }
+
+  crossy.cars.forEach((car, index) => {
+    const x = car.x * cellWidth;
+    const y = car.y * cellHeight + cellHeight * 0.18;
+    const width = car.width * cellWidth;
+    const height = cellHeight * 0.64;
+    context.fillStyle = index % 2 === 0 ? "#ffffff" : "rgba(255, 255, 255, 0.72)";
+    context.shadowColor = "rgba(255, 255, 255, 0.55)";
+    context.shadowBlur = 14;
+    context.beginPath();
+    context.roundRect(x, y, width, height, 8);
+    context.fill();
+  });
+
+  context.shadowBlur = 0;
+  context.fillStyle = "#ffffff";
+  context.shadowColor = "rgba(255, 255, 255, 0.95)";
+  context.shadowBlur = 18;
+  context.beginPath();
+  context.arc(
+    (crossy.player.x + 0.5) * cellWidth,
+    (crossy.player.y + 0.5) * cellHeight,
+    Math.min(cellWidth, cellHeight) * 0.32,
+    0,
+    Math.PI * 2
+  );
+  context.fill();
+  context.shadowBlur = 0;
+};
+
+const stopCrossy = () => {
+  clearInterval(crossy.timer);
+  crossy.timer = null;
+  crossy.running = false;
+  crossy.startButton.textContent = "Start";
+};
+
+const resetCrossy = () => {
+  stopCrossy();
+  loadCrossyBestScore();
+  crossy.player = { x: Math.floor(crossy.cols / 2), y: crossy.rows - 1 };
+  crossy.highestRow = crossy.rows - 1;
+  crossy.gameOver = false;
+  crossy.gameOverScreen.hidden = true;
+  crossy.status.textContent = "Use arrow keys or WASD to cross.";
+  updateCrossyScore(0);
+  createCrossyCars();
+  drawCrossy();
+};
+
+const endCrossy = () => {
+  stopCrossy();
+  crossy.gameOver = true;
+  crossy.finalScore.textContent = String(crossy.scoreValue);
+  crossy.gameOverScreen.hidden = false;
+  crossy.startButton.textContent = "Restart";
+  crossy.status.textContent = `Game over. Score - ${crossy.scoreValue}.`;
+};
+
+const checkCrossyCollision = () => {
+  const playerLeft = crossy.player.x + 0.18;
+  const playerRight = crossy.player.x + 0.82;
+  return crossy.cars.some((car) => {
+    if (car.y !== crossy.player.y) return false;
+    return playerRight > car.x && playerLeft < car.x + car.width;
+  });
+};
+
+const stepCrossy = () => {
+  if (!crossy.running || crossy.gameOver) return;
+
+  crossy.cars.forEach((car) => {
+    car.x += car.speed * car.direction;
+    if (car.direction > 0 && car.x > crossy.cols + 0.35) car.x = -car.width - 0.35;
+    if (car.direction < 0 && car.x < -car.width - 0.35) car.x = crossy.cols + 0.35;
+  });
+
+  if (checkCrossyCollision()) {
+    endCrossy();
+    drawCrossy();
+    return;
+  }
+
+  drawCrossy();
+};
+
+const startCrossy = () => {
+  if (crossy.running || crossy.gameOver) resetCrossy();
+  crossy.running = true;
+  crossy.startButton.textContent = "Restart";
+  crossy.status.textContent = "Cross the roads.";
+  clearInterval(crossy.timer);
+  crossy.timer = setInterval(stepCrossy, 70);
+};
+
+const moveCrossyPlayer = (x, y) => {
+  if (crossy.gameOver) return;
+  if (!crossy.running) startCrossy();
+
+  crossy.player.x = Math.max(0, Math.min(crossy.cols - 1, crossy.player.x + x));
+  crossy.player.y = Math.max(0, Math.min(crossy.rows - 1, crossy.player.y + y));
+
+  if (crossy.player.y < crossy.highestRow) {
+    const rowsCrossed = crossy.highestRow - crossy.player.y;
+    crossy.highestRow = crossy.player.y;
+    updateCrossyScore(crossy.scoreValue + rowsCrossed);
+  }
+
+  if (crossy.player.y === 0) {
+    crossy.status.textContent = "Nice crossing. Keep going.";
+    crossy.player = { x: Math.floor(crossy.cols / 2), y: crossy.rows - 1 };
+    crossy.highestRow = crossy.rows - 1;
+  }
+
+  if (checkCrossyCollision()) {
+    endCrossy();
+  }
+  drawCrossy();
+};
+
 const openGame = (game) => {
   activeGame = game;
   gamesGrid.classList.add("has-expanded");
@@ -514,6 +825,14 @@ const openGame = (game) => {
     loadClickRushBestScore();
     resetClickRush();
   }
+
+  if (game === "wordle") {
+    resetWordle();
+  }
+
+  if (game === "crossy") {
+    resetCrossy();
+  }
 };
 
 const closeActiveGame = () => {
@@ -525,6 +844,7 @@ const closeActiveGame = () => {
   });
   stopSnake();
   stopClickRush();
+  stopCrossy();
 };
 
 document.querySelectorAll("[data-open-game]").forEach((button) => {
@@ -544,9 +864,21 @@ clickRush.target.addEventListener("click", () => {
   updateClickRushScore(clickRush.scoreValue + 1);
   moveClickRushTarget();
 });
+wordle.guessButton.addEventListener("click", submitWordleGuess);
+wordle.resetButton.addEventListener("click", resetWordle);
+wordle.input.addEventListener("input", () => {
+  wordle.input.value = wordle.input.value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, wordle.size);
+});
+wordle.input.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter") return;
+  event.preventDefault();
+  submitWordleGuess();
+});
+crossy.startButton.addEventListener("click", startCrossy);
+crossy.resetButton.addEventListener("click", resetCrossy);
 
 document.addEventListener("keydown", (event) => {
-  if (document.body.dataset.accountSection !== "games" || activeGame !== "snake") return;
+  if (document.body.dataset.accountSection !== "games") return;
 
   const directions = {
     ArrowUp: [0, -1],
@@ -565,14 +897,25 @@ document.addEventListener("keydown", (event) => {
 
   const direction = directions[event.key];
   if (!direction) return;
+  const isSnakeActive = activeGame === "snake";
+  const isCrossyActive = activeGame === "crossy";
+  if (!isSnakeActive && !isCrossyActive) return;
 
   event.preventDefault();
-  if (snake.gameOver) return;
-  setSnakeDirection(direction[0], direction[1]);
-  if (!snake.running) startSnake();
+  if (isSnakeActive) {
+    if (snake.gameOver) return;
+    setSnakeDirection(direction[0], direction[1]);
+    if (!snake.running) startSnake();
+  }
+
+  if (isCrossyActive) {
+    moveCrossyPlayer(direction[0], direction[1]);
+  }
 });
 
 resetSnake();
+resetWordle();
+resetCrossy();
 
 const setAuthMessage = (message) => {
   auth.message.textContent = message;

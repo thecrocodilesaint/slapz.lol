@@ -144,6 +144,67 @@
               </div>
             </article>
 
+            <article class="game-card" data-game-card="wordle">
+              <button class="game-card-preview" type="button" data-open-game="wordle">
+                <span class="game-card-title">Wordle</span>
+                <span class="game-card-box wordle-preview" aria-hidden="true">
+                  <i></i><i></i><i></i><i></i><i></i>
+                </span>
+              </button>
+              <div class="game-expanded" data-game-expanded="wordle" hidden>
+                <button class="game-back-button" type="button" data-close-game>Back to games</button>
+                <div class="wordle-game" aria-label="Wordle game">
+                  <div class="snake-topbar">
+                    <h2>Wordle</h2>
+                    <div class="snake-scores" aria-label="Wordle stats">
+                      <span>Try <strong id="wordleTry">1</strong></span>
+                      <span>Left <strong id="wordleLeft">6</strong></span>
+                    </div>
+                  </div>
+                  <div class="wordle-board" id="wordleBoard" aria-label="Wordle board"></div>
+                  <div class="wordle-entry">
+                    <input id="wordleInput" type="text" maxlength="5" autocomplete="off" spellcheck="false" aria-label="Enter a five letter word" />
+                    <button class="save-button" id="wordleGuessButton" type="button">Guess</button>
+                    <button class="preview-button" id="wordleResetButton" type="button">Reset</button>
+                  </div>
+                  <p class="snake-status" id="wordleStatus">Guess the 5 letter word.</p>
+                </div>
+              </div>
+            </article>
+
+            <article class="game-card" data-game-card="crossy">
+              <button class="game-card-preview" type="button" data-open-game="crossy">
+                <span class="game-card-title">Crossy Road</span>
+                <span class="game-card-box crossy-preview" aria-hidden="true">
+                  <i></i><i></i><i></i><b></b>
+                </span>
+              </button>
+              <div class="game-expanded" data-game-expanded="crossy" hidden>
+                <button class="game-back-button" type="button" data-close-game>Back to games</button>
+                <div class="crossy-game" aria-label="Crossy Road game">
+                  <div class="snake-topbar">
+                    <h2>Crossy Road</h2>
+                    <div class="snake-scores" aria-label="Crossy Road scores">
+                      <span>Score <strong id="crossyScore">0</strong></span>
+                      <span>Best <strong id="crossyBest">0</strong></span>
+                    </div>
+                  </div>
+                  <div class="crossy-board">
+                    <canvas id="crossyCanvas" width="360" height="440" aria-label="Crossy Road board"></canvas>
+                    <div class="snake-game-over" id="crossyGameOver" hidden>
+                      <strong>Game over</strong>
+                      <span>Score - <b id="crossyFinalScore">0</b></span>
+                    </div>
+                  </div>
+                  <div class="snake-controls">
+                    <button class="save-button" id="crossyStartButton" type="button">Start</button>
+                    <button class="preview-button" id="crossyResetButton" type="button">Reset</button>
+                  </div>
+                  <p class="snake-status" id="crossyStatus">Use arrow keys or WASD to cross.</p>
+                </div>
+              </div>
+            </article>
+
             <article class="game-card" data-game-card="memory">
               <button class="game-card-preview" type="button" data-open-game="memory">
                 <span class="game-card-title">Memory Match</span>
