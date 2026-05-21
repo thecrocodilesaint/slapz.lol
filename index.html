@@ -77,16 +77,6 @@
 
       <section class="dashboard-panel dashboard-games" data-dashboard-panel="games" aria-label="Games" hidden>
         <div class="games-layout">
-          <aside class="games-help" aria-label="How to play">
-            <p>How to play</p>
-            <ul>
-              <li><strong>Snake</strong> Use WASD or arrow keys. Eat dots, avoid walls.</li>
-              <li><strong>Click Rush</strong> Click the glowing dot before time runs out.</li>
-              <li><strong>Wordle</strong> Guess a real 5 letter English word.</li>
-              <li><strong>Crossy Road</strong> Cross with WASD or arrows. Traffic gets faster each crossing.</li>
-            </ul>
-          </aside>
-
           <div class="games-library">
             <div class="games-grid" id="gamesGrid">
             <article class="game-card" data-game-card="snake">
@@ -119,6 +109,14 @@
                   </div>
                   <p class="snake-status" id="snakeStatus">Use arrow keys or WASD.</p>
                 </div>
+                <aside class="game-help-card" aria-label="How to play Snake">
+                  <p>How to play</p>
+                  <ul>
+                    <li>Move with WASD or arrow keys.</li>
+                    <li>Eat the white dot to grow.</li>
+                    <li>Do not hit walls or yourself.</li>
+                  </ul>
+                </aside>
               </div>
             </article>
 
@@ -153,6 +151,14 @@
                   </div>
                   <p class="snake-status" id="clickRushStatus">Click the glowing dot before time runs out.</p>
                 </div>
+                <aside class="game-help-card" aria-label="How to play Click Rush">
+                  <p>How to play</p>
+                  <ul>
+                    <li>Press Start to begin the timer.</li>
+                    <li>Click the glowing dot as fast as you can.</li>
+                    <li>Each click adds 1 point.</li>
+                  </ul>
+                </aside>
               </div>
             </article>
 
@@ -181,6 +187,14 @@
                   </div>
                   <p class="snake-status" id="wordleStatus">Guess the 5 letter word.</p>
                 </div>
+                <aside class="game-help-card" aria-label="How to play Wordle">
+                  <p>How to play</p>
+                  <ul>
+                    <li>Guess any real 5 letter English word.</li>
+                    <li>White tiles are correct letters.</li>
+                    <li>Glowing tiles are right letters in the wrong spot.</li>
+                  </ul>
+                </aside>
               </div>
             </article>
 
@@ -215,6 +229,14 @@
                   </div>
                   <p class="snake-status" id="crossyStatus">Use arrow keys or WASD to cross.</p>
                 </div>
+                <aside class="game-help-card" aria-label="How to play Crossy Road">
+                  <p>How to play</p>
+                  <ul>
+                    <li>Move with WASD or arrow keys.</li>
+                    <li>Reach the top to start a faster level.</li>
+                    <li>Safe-zone blocks cannot be landed on.</li>
+                  </ul>
+                </aside>
               </div>
             </article>
 
