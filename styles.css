@@ -174,19 +174,23 @@ body.loading.auth-required .loading-screen {
   display: grid;
 }
 
+body.entry-locked .shell,
 body.public-locked .shell {
   opacity: 0;
   pointer-events: none;
 }
 
+body.entry-locked .music-gate,
 body.public-locked .music-gate {
   display: flex;
 }
 
+body.entry-locked .music-gate:not(.entry-active),
 body.public-locked .music-gate:not(.entry-active) {
   display: none;
 }
 
+body.loading.entry-locked .music-gate,
 body.loading.public-locked .music-gate {
   display: none;
 }

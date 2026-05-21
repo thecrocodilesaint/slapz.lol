@@ -1436,6 +1436,7 @@ const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve))
 
 const startLoading = (message = "Loading...") => {
   clearInterval(loadingTimer);
+  hideEntryGate();
   document.body.classList.remove("welcoming", "welcome-leaving", "owner-entering");
   document.body.classList.add("loading");
   setLoading(8, message);
@@ -1454,6 +1455,7 @@ const finishLoading = async () => {
 const playOwnerWelcome = async () => {
   if (isPublicProfilePage) return;
 
+  hideEntryGate();
   document.body.classList.remove("auth-required", "previewing", "welcome-leaving", "owner-entering");
   document.body.classList.add("welcoming");
   await nextFrame();
@@ -1475,12 +1477,14 @@ const finishLoadingIntoEditor = async () => {
 
 const showEditor = () => {
   clearInterval(loadingTimer);
+  hideEntryGate();
   document.body.classList.remove("auth-required", "loading", "welcoming", "welcome-leaving", "owner-entering");
 };
 
 const showAuth = () => {
   if (!isPublicProfilePage) {
     document.body.classList.remove("loading");
+    hideEntryGate();
     exitPreview();
     document.body.classList.add("auth-required");
   }
@@ -1637,9 +1641,15 @@ auth.accountLogoutButton.addEventListener("click", logoutUser);
 
 dashboardButtons.forEach((button) => {
   button.addEventListener("click", () => {
-    if (button.dataset.dashboardTarget !== "games") closeActiveGame();
-    setDashboardSection(button.dataset.dashboardTarget);
+    const target = button.dataset.dashboardTarget;
+    if (target !== "games") closeActiveGame();
+    setDashboardSection(target);
     exitPreview();
+    if (target === "bio" && !isPublicProfilePage) {
+      showOwnerBioEntryGate();
+    } else if (!isPublicProfilePage) {
+      hideEntryGate();
+    }
   });
 });
 
@@ -1895,23 +1905,23 @@ $("#musicToggle").addEventListener("click", async () => {
   }
 });
 
-let publicMusicStarting = false;
+let entryMusicStarting = false;
 
-const hidePublicEntryGate = () => {
-  document.body.classList.remove("public-locked");
+const hideEntryGate = () => {
+  document.body.classList.remove("entry-locked", "public-locked");
   $("#musicGate").classList.remove("entry-active");
 };
 
-const startPublicMusic = async () => {
-  if (publicMusicStarting) return;
+const startEntryGate = async () => {
+  if (entryMusicStarting || !$("#musicGate").classList.contains("entry-active")) return;
   const audio = $("#backgroundMusic");
   if (!audio.src) {
-    hidePublicEntryGate();
+    hideEntryGate();
     return;
   }
 
-  publicMusicStarting = true;
-  hidePublicEntryGate();
+  entryMusicStarting = true;
+  hideEntryGate();
   try {
     if (audio.src) {
       audio.currentTime = 0;
@@ -1921,13 +1931,14 @@ const startPublicMusic = async () => {
       $("#musicToggle").setAttribute("aria-label", "Pause music");
     }
   } catch (error) {
-    publicMusicStarting = false;
     showToast(`Music failed: ${error.name || "playback blocked"}`);
+  } finally {
+    entryMusicStarting = false;
   }
 };
 
-$("#musicGate").addEventListener("pointerdown", startPublicMusic);
-$("#musicGate").addEventListener("click", startPublicMusic);
+$("#musicGate").addEventListener("pointerdown", startEntryGate);
+$("#musicGate").addEventListener("click", startEntryGate);
 
 $("#backgroundMusic").addEventListener("error", () => {
   showToast("Music file could not load. Re-upload a smaller MP3 and publish again.");
@@ -1943,11 +1954,30 @@ const enterPreview = (isPublic = false) => {
   $("#previewToolbar").hidden = isPublic;
 };
 
+const showEntryGate = ({ title = "Click to enter", hint = "Click to enter", hasMusic = false } = {}) => {
+  document.body.classList.add("entry-locked");
+  $("#musicGate").classList.add("entry-active");
+  $("#musicGate span").textContent = title;
+  $("#musicGateHint").textContent = hasMusic ? "Click to start music" : hint;
+};
+
 const showPublicEntryGate = (hasMusic) => {
   if (!isPublicProfilePage) return;
   document.body.classList.add("public-locked");
-  $("#musicGate").classList.add("entry-active");
-  $("#musicGateHint").textContent = hasMusic ? "Click to start music" : "Click to enter";
+  showEntryGate({
+    title: "Click to enter",
+    hint: "Click to enter",
+    hasMusic,
+  });
+};
+
+const showOwnerBioEntryGate = () => {
+  if (isPublicProfilePage || document.body.classList.contains("auth-required")) return;
+  showEntryGate({
+    title: "Click to enter bio",
+    hint: "Open your bio editor",
+    hasMusic: Boolean($("#backgroundMusic").src),
+  });
 };
 
 const exitPreview = () => {
