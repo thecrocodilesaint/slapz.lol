@@ -612,33 +612,38 @@ document.querySelectorAll(".swatch").forEach((button) => {
   });
 });
 
-const hoverCard = $("#hoverCard");
+const attachMouseBoxEffect = (element, { lift = 1, tilt = 1 } = {}) => {
+  if (!element) return;
 
-hoverCard.addEventListener("pointermove", (event) => {
-  const rect = hoverCard.getBoundingClientRect();
-  const x = (event.clientX - rect.left) / rect.width;
-  const y = (event.clientY - rect.top) / rect.height;
-  const liftX = (x - 0.5) * 10;
-  const liftY = (y - 0.5) * -14 - 6;
-  const tiltX = (0.5 - y) * 10;
-  const tiltY = (x - 0.5) * 12;
+  element.addEventListener("pointermove", (event) => {
+    const rect = element.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width;
+    const y = (event.clientY - rect.top) / rect.height;
+    const liftX = (x - 0.5) * 10 * lift;
+    const liftY = ((y - 0.5) * -14 - 6) * lift;
+    const tiltX = (0.5 - y) * 10 * tilt;
+    const tiltY = (x - 0.5) * 12 * tilt;
 
-  hoverCard.style.setProperty("--lift-x", `${liftX.toFixed(2)}px`);
-  hoverCard.style.setProperty("--lift-y", `${liftY.toFixed(2)}px`);
-  hoverCard.style.setProperty("--tilt-x", `${tiltX.toFixed(2)}deg`);
-  hoverCard.style.setProperty("--tilt-y", `${tiltY.toFixed(2)}deg`);
-  hoverCard.style.setProperty("--spot-x", `${(x * 100).toFixed(1)}%`);
-  hoverCard.style.setProperty("--spot-y", `${(y * 100).toFixed(1)}%`);
-});
+    element.style.setProperty("--lift-x", `${liftX.toFixed(2)}px`);
+    element.style.setProperty("--lift-y", `${liftY.toFixed(2)}px`);
+    element.style.setProperty("--tilt-x", `${tiltX.toFixed(2)}deg`);
+    element.style.setProperty("--tilt-y", `${tiltY.toFixed(2)}deg`);
+    element.style.setProperty("--spot-x", `${(x * 100).toFixed(1)}%`);
+    element.style.setProperty("--spot-y", `${(y * 100).toFixed(1)}%`);
+  });
 
-hoverCard.addEventListener("pointerleave", () => {
-  hoverCard.style.setProperty("--lift-x", "0px");
-  hoverCard.style.setProperty("--lift-y", "0px");
-  hoverCard.style.setProperty("--tilt-x", "0deg");
-  hoverCard.style.setProperty("--tilt-y", "0deg");
-  hoverCard.style.setProperty("--spot-x", "50%");
-  hoverCard.style.setProperty("--spot-y", "50%");
-});
+  element.addEventListener("pointerleave", () => {
+    element.style.setProperty("--lift-x", "0px");
+    element.style.setProperty("--lift-y", "0px");
+    element.style.setProperty("--tilt-x", "0deg");
+    element.style.setProperty("--tilt-y", "0deg");
+    element.style.setProperty("--spot-x", "50%");
+    element.style.setProperty("--spot-y", "50%");
+  });
+};
+
+attachMouseBoxEffect($("#hoverCard"));
+attachMouseBoxEffect($(".account-sidebar"), { lift: 0.55, tilt: 0.65 });
 
 $("#particlesToggle").addEventListener("change", (event) => {
   document.body.classList.toggle("no-motion", !event.target.checked);

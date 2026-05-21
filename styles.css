@@ -241,13 +241,58 @@ body.video-dark .backdrop-shade {
 }
 
 .account-sidebar {
+  --lift-x: 0px;
+  --lift-y: 0px;
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  --spot-x: 50%;
+  --spot-y: 50%;
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
   min-height: calc(100vh - 2.5rem);
   border-radius: 8px;
   padding: 0.9rem;
-  background: rgba(2, 2, 4, 0.72);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at var(--spot-x) var(--spot-y), color-mix(in srgb, var(--accent) 20%, transparent), transparent 10rem),
+    rgba(2, 2, 4, 0.72);
+  transform: translate3d(var(--lift-x), var(--lift-y), 0) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+  transform-style: preserve-3d;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  will-change: transform;
+}
+
+.account-sidebar::before {
+  position: absolute;
+  inset: -1px;
+  content: "";
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.16), transparent);
+  opacity: 0;
+  transform: translateX(-75%);
+  transition: opacity 180ms ease, transform 360ms ease;
+  pointer-events: none;
+}
+
+.account-sidebar:hover,
+.account-sidebar:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 52%, rgba(255, 255, 255, 0.2));
+  box-shadow:
+    0 1.5rem 5rem var(--shadow),
+    0 0 2rem color-mix(in srgb, var(--accent) 18%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.account-sidebar:hover::before,
+.account-sidebar:focus-within::before {
+  opacity: 1;
+  transform: translateX(75%);
+}
+
+.account-sidebar > * {
+  position: relative;
+  z-index: 1;
 }
 
 .sidebar-brand,
