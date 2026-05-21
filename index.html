@@ -75,26 +75,103 @@
       </section>
 
       <section class="dashboard-panel dashboard-games" data-dashboard-panel="games" aria-label="Games" hidden>
-        <div class="snake-game" aria-label="Snake game">
-          <div class="snake-topbar">
-            <h2>Snake</h2>
-            <div class="snake-scores" aria-label="Snake scores">
-              <span>Score <strong id="snakeScore">0</strong></span>
-              <span>Best <strong id="snakeBestScore">0</strong></span>
-            </div>
+        <div class="games-library">
+          <div class="games-grid" id="gamesGrid">
+            <article class="game-card" data-game-card="snake">
+              <button class="game-card-preview" type="button" data-open-game="snake">
+                <span class="game-card-title">Snake</span>
+                <span class="game-card-box snake-preview" aria-hidden="true">
+                  <i></i><i></i><i></i><b></b>
+                </span>
+              </button>
+              <div class="game-expanded" data-game-expanded="snake" hidden>
+                <button class="game-back-button" type="button" data-close-game>Back to games</button>
+                <div class="snake-game" aria-label="Snake game">
+                  <div class="snake-topbar">
+                    <h2>Snake</h2>
+                    <div class="snake-scores" aria-label="Snake scores">
+                      <span>Score <strong id="snakeScore">0</strong></span>
+                      <span>Best <strong id="snakeBestScore">0</strong></span>
+                    </div>
+                  </div>
+                  <div class="snake-board">
+                    <canvas id="snakeCanvas" width="360" height="360" aria-label="Snake board"></canvas>
+                    <div class="snake-game-over" id="snakeGameOver" hidden>
+                      <strong>Game over</strong>
+                      <span>Score - <b id="snakeFinalScore">0</b></span>
+                    </div>
+                  </div>
+                  <div class="snake-controls">
+                    <button class="save-button" id="snakeStartButton" type="button">Start</button>
+                    <button class="preview-button" id="snakePauseButton" type="button">Pause</button>
+                  </div>
+                  <p class="snake-status" id="snakeStatus">Use arrow keys or WASD.</p>
+                </div>
+              </div>
+            </article>
+
+            <article class="game-card" data-game-card="click-rush">
+              <button class="game-card-preview" type="button" data-open-game="click-rush">
+                <span class="game-card-title">Click Rush</span>
+                <span class="game-card-box click-preview" aria-hidden="true">
+                  <i></i><i></i><i></i>
+                </span>
+              </button>
+              <div class="game-expanded" data-game-expanded="click-rush" hidden>
+                <button class="game-back-button" type="button" data-close-game>Back to games</button>
+                <div class="click-rush-game" aria-label="Click Rush game">
+                  <div class="snake-topbar">
+                    <h2>Click Rush</h2>
+                    <div class="snake-scores" aria-label="Click Rush scores">
+                      <span>Score <strong id="clickRushScore">0</strong></span>
+                      <span>Best <strong id="clickRushBest">0</strong></span>
+                      <span>Time <strong id="clickRushTime">15</strong></span>
+                    </div>
+                  </div>
+                  <div class="click-rush-board" id="clickRushBoard">
+                    <button class="click-rush-target" id="clickRushTarget" type="button" aria-label="Click target"></button>
+                    <div class="snake-game-over" id="clickRushGameOver" hidden>
+                      <strong>Time up</strong>
+                      <span>Score - <b id="clickRushFinalScore">0</b></span>
+                    </div>
+                  </div>
+                  <div class="snake-controls">
+                    <button class="save-button" id="clickRushStartButton" type="button">Start</button>
+                    <button class="preview-button" id="clickRushResetButton" type="button">Reset</button>
+                  </div>
+                  <p class="snake-status" id="clickRushStatus">Click the glowing dot before time runs out.</p>
+                </div>
+              </div>
+            </article>
+
+            <article class="game-card" data-game-card="memory">
+              <button class="game-card-preview" type="button" data-open-game="memory">
+                <span class="game-card-title">Memory Match</span>
+                <span class="game-card-box memory-preview" aria-hidden="true">
+                  <i></i><i></i><i></i><i></i>
+                </span>
+              </button>
+              <div class="game-expanded coming-soon-game" data-game-expanded="memory" hidden>
+                <button class="game-back-button" type="button" data-close-game>Back to games</button>
+                <h2>Memory Match</h2>
+                <p>Coming soon</p>
+              </div>
+            </article>
+
+            <article class="game-card" data-game-card="dodge">
+              <button class="game-card-preview" type="button" data-open-game="dodge">
+                <span class="game-card-title">Orbit Dodge</span>
+                <span class="game-card-box dodge-preview" aria-hidden="true">
+                  <i></i><b></b>
+                </span>
+              </button>
+              <div class="game-expanded coming-soon-game" data-game-expanded="dodge" hidden>
+                <button class="game-back-button" type="button" data-close-game>Back to games</button>
+                <h2>Orbit Dodge</h2>
+                <p>Coming soon</p>
+              </div>
+            </article>
           </div>
-          <div class="snake-board">
-            <canvas id="snakeCanvas" width="360" height="360" aria-label="Snake board"></canvas>
-            <div class="snake-game-over" id="snakeGameOver" hidden>
-              <strong>Game over</strong>
-              <span>Score - <b id="snakeFinalScore">0</b></span>
-            </div>
-          </div>
-          <div class="snake-controls">
-            <button class="save-button" id="snakeStartButton" type="button">Start</button>
-            <button class="preview-button" id="snakePauseButton" type="button">Pause</button>
-          </div>
-          <p class="snake-status" id="snakeStatus">Use arrow keys or WASD.</p>
         </div>
       </section>
 

@@ -81,6 +81,29 @@ const snake = {
   gameOver: false,
 };
 
+const clickRush = {
+  board: $("#clickRushBoard"),
+  target: $("#clickRushTarget"),
+  score: $("#clickRushScore"),
+  best: $("#clickRushBest"),
+  time: $("#clickRushTime"),
+  finalScore: $("#clickRushFinalScore"),
+  gameOverScreen: $("#clickRushGameOver"),
+  status: $("#clickRushStatus"),
+  startButton: $("#clickRushStartButton"),
+  resetButton: $("#clickRushResetButton"),
+  scoreValue: 0,
+  bestValue: 0,
+  timeValue: 15,
+  timer: null,
+  running: false,
+};
+
+const gamesGrid = $("#gamesGrid");
+const gameCards = document.querySelectorAll("[data-game-card]");
+const gameExpandedPanels = document.querySelectorAll("[data-game-expanded]");
+let activeGame = "";
+
 const publicHandleFromPath = () => {
   const match = location.pathname.match(/^\/u\/([^/]+)/);
   return match ? decodeURIComponent(match[1]) : "";
@@ -107,7 +130,7 @@ const setDashboardSection = (section) => {
 
   if (nextSection === "games") {
     loadSnakeBestScore();
-    drawSnake();
+    loadClickRushBestScore();
   }
 };
 
@@ -202,6 +225,7 @@ const showToast = (message) => {
 };
 
 const localSnakeScoreKey = () => `funlol-snake-best:${auth.email.value.trim().toLowerCase() || "local"}`;
+const localClickRushScoreKey = () => `funlol-click-rush-best:${auth.email.value.trim().toLowerCase() || "local"}`;
 
 const drawSnake = () => {
   const canvas = snake.canvas;
@@ -407,11 +431,122 @@ const setSnakeDirection = (x, y) => {
   snake.nextDirection = { x, y };
 };
 
+const updateClickRushScore = (score) => {
+  clickRush.scoreValue = score;
+  clickRush.score.textContent = String(score);
+};
+
+const updateClickRushBest = (score) => {
+  clickRush.bestValue = Math.max(0, Number(score || 0));
+  clickRush.best.textContent = String(clickRush.bestValue);
+  localStorage.setItem(localClickRushScoreKey(), String(clickRush.bestValue));
+};
+
+const loadClickRushBestScore = () => {
+  updateClickRushBest(Number(localStorage.getItem(localClickRushScoreKey()) || 0));
+};
+
+const saveClickRushBestScore = () => {
+  if (clickRush.scoreValue > clickRush.bestValue) {
+    updateClickRushBest(clickRush.scoreValue);
+  }
+};
+
+const moveClickRushTarget = () => {
+  clickRush.target.style.left = `${10 + Math.random() * 80}%`;
+  clickRush.target.style.top = `${10 + Math.random() * 80}%`;
+};
+
+const stopClickRush = () => {
+  clearInterval(clickRush.timer);
+  clickRush.timer = null;
+  clickRush.running = false;
+  clickRush.startButton.textContent = "Start";
+};
+
+const resetClickRush = () => {
+  stopClickRush();
+  updateClickRushScore(0);
+  clickRush.timeValue = 15;
+  clickRush.time.textContent = String(clickRush.timeValue);
+  clickRush.gameOverScreen.hidden = true;
+  clickRush.status.textContent = "Click the glowing dot before time runs out.";
+  moveClickRushTarget();
+};
+
+const endClickRush = () => {
+  stopClickRush();
+  clickRush.finalScore.textContent = String(clickRush.scoreValue);
+  clickRush.gameOverScreen.hidden = false;
+  clickRush.startButton.textContent = "Restart";
+  clickRush.status.textContent = `Time up. Score - ${clickRush.scoreValue}.`;
+  saveClickRushBestScore();
+};
+
+const startClickRush = () => {
+  resetClickRush();
+  clickRush.running = true;
+  clickRush.startButton.textContent = "Restart";
+  clickRush.status.textContent = "Playing";
+  clickRush.timer = setInterval(() => {
+    clickRush.timeValue -= 1;
+    clickRush.time.textContent = String(clickRush.timeValue);
+    if (clickRush.timeValue <= 0) endClickRush();
+  }, 1000);
+};
+
+const openGame = (game) => {
+  activeGame = game;
+  gamesGrid.classList.add("has-expanded");
+  gameCards.forEach((card) => {
+    card.classList.toggle("expanded", card.dataset.gameCard === game);
+  });
+  gameExpandedPanels.forEach((panel) => {
+    panel.hidden = panel.dataset.gameExpanded !== game;
+  });
+
+  if (game === "snake") {
+    loadSnakeBestScore();
+    drawSnake();
+  }
+
+  if (game === "click-rush") {
+    loadClickRushBestScore();
+    resetClickRush();
+  }
+};
+
+const closeActiveGame = () => {
+  activeGame = "";
+  gamesGrid.classList.remove("has-expanded");
+  gameCards.forEach((card) => card.classList.remove("expanded"));
+  gameExpandedPanels.forEach((panel) => {
+    panel.hidden = true;
+  });
+  stopSnake();
+  stopClickRush();
+};
+
+document.querySelectorAll("[data-open-game]").forEach((button) => {
+  button.addEventListener("click", () => openGame(button.dataset.openGame));
+});
+
+document.querySelectorAll("[data-close-game]").forEach((button) => {
+  button.addEventListener("click", closeActiveGame);
+});
+
 snake.startButton.addEventListener("click", startSnake);
 snake.pauseButton.addEventListener("click", pauseSnake);
+clickRush.startButton.addEventListener("click", startClickRush);
+clickRush.resetButton.addEventListener("click", resetClickRush);
+clickRush.target.addEventListener("click", () => {
+  if (!clickRush.running) return;
+  updateClickRushScore(clickRush.scoreValue + 1);
+  moveClickRushTarget();
+});
 
 document.addEventListener("keydown", (event) => {
-  if (document.body.dataset.accountSection !== "games") return;
+  if (document.body.dataset.accountSection !== "games" || activeGame !== "snake") return;
 
   const directions = {
     ArrowUp: [0, -1],
@@ -599,6 +734,7 @@ auth.accountLogoutButton.addEventListener("click", logoutUser);
 
 dashboardButtons.forEach((button) => {
   button.addEventListener("click", () => {
+    if (button.dataset.dashboardTarget !== "games") closeActiveGame();
     setDashboardSection(button.dataset.dashboardTarget);
     exitPreview();
   });
