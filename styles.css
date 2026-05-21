@@ -368,10 +368,101 @@ body.video-dark .backdrop-shade {
   background: #020204;
 }
 
+.dashboard-settings {
+  display: grid;
+  min-height: calc(100vh - 2.5rem);
+  align-items: center;
+  border-radius: 8px;
+  padding: 1rem;
+  background: #020204;
+}
+
 .dashboard-home h1 {
   max-width: 12ch;
   text-align: center;
   font-size: clamp(3.2rem, 10vw, 7rem);
+}
+
+.settings-shell {
+  display: grid;
+  width: min(100%, 42rem);
+  gap: 1rem;
+  margin: 0 auto;
+}
+
+.settings-heading {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.settings-heading p {
+  color: var(--accent-2);
+  font-weight: 900;
+  text-transform: uppercase;
+  text-shadow: 0 0 1rem color-mix(in srgb, var(--accent-2) 72%, transparent);
+}
+
+.settings-heading h1 {
+  font-size: clamp(3rem, 10vw, 6.25rem);
+}
+
+.settings-details {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--accent) 36%, rgba(255, 255, 255, 0.16));
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 15% 0%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 18rem),
+    rgba(255, 255, 255, 0.045);
+  box-shadow:
+    0 0 1.6rem color-mix(in srgb, var(--accent) 14%, transparent),
+    inset 0 0 1.4rem rgba(255, 255, 255, 0.035);
+}
+
+.settings-row {
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.7fr) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: center;
+  min-height: 3.65rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.85rem 1rem;
+}
+
+.settings-row:last-child {
+  border-bottom: 0;
+}
+
+.settings-row span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.settings-row strong,
+.settings-row a {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--text);
+  font-weight: 900;
+  text-decoration: none;
+  text-shadow:
+    0 0 0.7rem rgba(255, 255, 255, 0.45),
+    0 0 1.2rem color-mix(in srgb, var(--accent) 38%, transparent);
+}
+
+.settings-row a:hover,
+.settings-row a:focus-visible {
+  color: #fff;
+  text-decoration: underline;
+}
+
+.settings-note {
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
 .games-library {
@@ -912,7 +1003,9 @@ body.video-dark .backdrop-shade {
 body[data-account-section="home"]:not(.public-profile) .background-image,
 body[data-account-section="home"]:not(.public-profile) .background-video,
 body[data-account-section="games"]:not(.public-profile) .background-image,
-body[data-account-section="games"]:not(.public-profile) .background-video {
+body[data-account-section="games"]:not(.public-profile) .background-video,
+body[data-account-section="settings"]:not(.public-profile) .background-image,
+body[data-account-section="settings"]:not(.public-profile) .background-video {
   display: none !important;
 }
 
@@ -1105,7 +1198,8 @@ body.previewing .shell {
 
 body.previewing .account-sidebar,
 body.previewing .dashboard-home,
-body.previewing .dashboard-games {
+body.previewing .dashboard-games,
+body.previewing .dashboard-settings {
   display: none;
 }
 
@@ -1828,6 +1922,7 @@ textarea:focus {
 
   .dashboard-home,
   .dashboard-games,
+  .dashboard-settings,
   .dashboard-panel {
     min-height: 62vh;
   }
@@ -1846,6 +1941,11 @@ textarea:focus {
 
   .wordle-entry {
     grid-template-columns: 1fr;
+  }
+
+  .settings-row {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
   }
 
   .editor {

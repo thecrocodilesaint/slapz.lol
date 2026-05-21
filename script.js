@@ -37,6 +37,16 @@ const auth = {
   accountLogoutButton: $("#accountLogoutButton"),
 };
 
+const settings = {
+  email: $("#settingsEmail"),
+  displayName: $("#settingsDisplayName"),
+  handle: $("#settingsHandle"),
+  profileLink: $("#settingsProfileLink"),
+  views: $("#settingsViews"),
+  created: $("#settingsCreated"),
+  userId: $("#settingsUserId"),
+};
+
 const dashboardButtons = document.querySelectorAll("[data-dashboard-target]");
 const dashboardPanels = document.querySelectorAll("[data-dashboard-panel]");
 
@@ -44,6 +54,14 @@ const sessionKey = "nightcard-session-token";
 let sessionToken = localStorage.getItem(sessionKey) || "";
 let loadingTimer = null;
 let loadingPercent = 8;
+let accountState = {
+  email: "",
+  userId: "",
+  createdAt: "",
+  profileHandle: "",
+  profilePath: "",
+  profileUrl: "",
+};
 
 const mediaState = {
   avatarData: "",
@@ -181,6 +199,10 @@ const setDashboardSection = (section) => {
   if (nextSection === "games") {
     loadSnakeBestScore();
     loadClickRushBestScore();
+  }
+
+  if (nextSection === "settings") {
+    updateSettingsDetails();
   }
 };
 
@@ -1007,7 +1029,15 @@ const submitAuth = async (mode) => {
     sessionToken = data.token;
     localStorage.setItem(sessionKey, sessionToken);
     auth.email.value = data.email;
+    updateAccountState({ email: data.email });
     setAuthMessage(`Signed in as ${data.email}`);
+    try {
+      const detailsResponse = await fetch("/api/me", { headers: authHeaders() });
+      const details = await detailsResponse.json();
+      if (detailsResponse.ok) updateAccountState(details);
+    } catch {
+      updateSettingsDetails();
+    }
     startLoading("Loading your profile...");
     await loadMyProfile();
     await finishLoadingIntoEditor();
@@ -1036,6 +1066,44 @@ const updatePublicLink = () => {
   $("#publicLink").textContent = url;
 };
 
+const shortId = (value) => {
+  if (!value) return "Hidden until sign in";
+  return value.length > 14 ? `${value.slice(0, 8)}...${value.slice(-4)}` : value;
+};
+
+const formatDate = (value) => {
+  if (!value) return "Unknown";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Unknown";
+  return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+};
+
+const updateAccountState = (data = {}) => {
+  accountState = {
+    ...accountState,
+    email: data.email ?? accountState.email,
+    userId: data.userId ?? accountState.userId,
+    createdAt: data.createdAt ?? accountState.createdAt,
+    profileHandle: data.profileHandle ?? accountState.profileHandle,
+    profilePath: data.profilePath ?? accountState.profilePath,
+    profileUrl: data.profileUrl ?? accountState.profileUrl,
+  };
+  updateSettingsDetails();
+};
+
+function updateSettingsDetails() {
+  const handle = cleanHandle(inputs.handle.value || accountState.profileHandle) || "nightcard";
+  const profilePath = accountState.profilePath || `/u/${handle}`;
+  settings.email.textContent = accountState.email || auth.email.value.trim() || "Not signed in";
+  settings.displayName.textContent = inputs.name.value.trim() || "Nova";
+  settings.handle.textContent = `@${handle}`;
+  settings.profileLink.href = profilePath;
+  settings.profileLink.textContent = profilePath;
+  settings.views.textContent = profile.views.textContent || "0 views";
+  settings.created.textContent = formatDate(accountState.createdAt);
+  settings.userId.textContent = shortId(accountState.userId);
+}
+
 const syncProfile = () => {
   profile.name.textContent = inputs.name.value.trim() || "Nova";
   const handle = cleanHandle(inputs.handle.value) || "nightcard";
@@ -1046,6 +1114,7 @@ const syncProfile = () => {
   $("#featuredText").textContent = profile.bio.textContent;
   syncSocialLinks();
   updatePublicLink();
+  updateSettingsDetails();
 };
 
 const formatViews = (count) => {
@@ -1067,6 +1136,15 @@ auth.loginButton.addEventListener("click", () => submitAuth("login"));
 const logoutUser = () => {
   sessionToken = "";
   localStorage.removeItem(sessionKey);
+  accountState = {
+    email: "",
+    userId: "",
+    createdAt: "",
+    profileHandle: "",
+    profilePath: "",
+    profileUrl: "",
+  };
+  updateSettingsDetails();
   setDashboardSection("home");
   showAuth();
   setAuthMessage("Logged out. Sign in again to edit your profile.");
@@ -1432,6 +1510,11 @@ const applyProfile = (data) => {
   inputs.handle.value = data.handle || "nightcard";
   inputs.bio.value = data.bio || "No bio yet.";
   inputs.location.value = data.location || "Somewhere online";
+  updateAccountState({
+    profileHandle: data.profileHandle || data.handle,
+    profilePath: data.profilePath || (data.handle ? `/u/${data.handle}` : accountState.profilePath),
+    profileUrl: data.profileUrl || accountState.profileUrl,
+  });
   applySocialInputs(data.socialLinks || data.socials || {});
 
   document.body.dataset.theme = data.theme || "black";
@@ -1488,6 +1571,11 @@ $("#saveButton").addEventListener("click", async () => {
 
     $("#publicLink").href = result.url;
     $("#publicLink").textContent = result.url;
+    updateAccountState({
+      profileHandle: result.handle,
+      profilePath: result.url,
+      profileUrl: result.fullUrl,
+    });
     showToast(`Published at ${result.url}`);
   } catch (error) {
     showToast(error.message);
@@ -1560,6 +1648,7 @@ async function bootApp() {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Not signed in");
     auth.email.value = data.email;
+    updateAccountState(data);
     setAuthMessage(`Signed in as ${data.email}`);
     await loadMyProfile();
     await finishLoadingIntoEditor();

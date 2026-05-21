@@ -446,7 +446,15 @@ async function getAuthedUser(req) {
     });
     const user = users[0];
     if (!user) return null;
-    return { token, userId: user.id, email: user.email };
+    return {
+      token,
+      userId: user.id,
+      email: user.email,
+      createdAt: user.created_at,
+      profileHandle: user.profile_handle,
+      profilePath: user.profile_path,
+      profileUrl: user.profile_url,
+    };
   }
 
   const store = readUsersFile();
@@ -455,7 +463,15 @@ async function getAuthedUser(req) {
 
   const user = store.users[session.userId];
   if (!user) return null;
-  return { token, userId: session.userId, email: user.email };
+  return {
+    token,
+    userId: session.userId,
+    email: user.email,
+    createdAt: user.createdAt,
+    profileHandle: user.profileHandle,
+    profilePath: user.profilePath,
+    profileUrl: user.profileUrl,
+  };
 }
 
 function cleanEmail(email) {
@@ -626,7 +642,14 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, 401, { error: "Not signed in" });
       return;
     }
-    sendJson(res, 200, { email: authed.email });
+    sendJson(res, 200, {
+      email: authed.email,
+      userId: authed.userId,
+      createdAt: authed.createdAt,
+      profileHandle: authed.profileHandle,
+      profilePath: authed.profilePath,
+      profileUrl: authed.profileUrl,
+    });
     return;
   }
 
