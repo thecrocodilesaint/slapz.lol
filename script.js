@@ -506,6 +506,10 @@ const wordleValidWords = new Set([
   "YOUNG",
 ]);
 
+let wordleDictionaryWords = [...wordleWords];
+let wordleDictionarySet = new Set(wordleValidWords);
+let wordleDictionaryLoaded = false;
+
 const wordle = {
   board: $("#wordleBoard"),
   input: $("#wordleInput"),
@@ -519,6 +523,30 @@ const wordle = {
   size: 5,
   maxRows: 6,
   complete: false,
+};
+
+const loadWordleDictionary = async () => {
+  try {
+    const response = await fetch("/words-5.txt", { cache: "force-cache" });
+    if (!response.ok) throw new Error("Dictionary file not found");
+
+    const words = (await response.text())
+      .split(/\r?\n/)
+      .map((word) => word.trim().toUpperCase())
+      .filter((word) => /^[A-Z]{5}$/.test(word));
+    const uniqueWords = [...new Set(words)];
+    if (!uniqueWords.length) throw new Error("Dictionary file is empty");
+
+    wordleDictionaryWords = uniqueWords;
+    wordleDictionarySet = new Set(uniqueWords);
+    wordleDictionaryLoaded = true;
+
+    if (activeGame === "wordle" && !wordle.complete) {
+      resetWordle();
+    }
+  } catch (error) {
+    console.warn("Using fallback Wordle dictionary:", error.message);
+  }
 };
 
 const crossy = {
@@ -966,12 +994,14 @@ const setWordleStats = () => {
 };
 
 const resetWordle = () => {
-  wordle.target = wordleWords[Math.floor(Math.random() * wordleWords.length)];
+  wordle.target = wordleDictionaryWords[Math.floor(Math.random() * wordleDictionaryWords.length)];
   wordle.row = 0;
   wordle.complete = false;
   wordle.input.value = "";
   wordle.input.disabled = false;
-  wordle.status.textContent = "Guess the 5 letter word.";
+  wordle.status.textContent = wordleDictionaryLoaded
+    ? "Guess any 5 letter English word."
+    : "Loading the full word list.";
   buildWordleBoard();
   setWordleStats();
   if (activeGame === "wordle") wordle.input.focus();
@@ -1011,7 +1041,7 @@ const submitWordleGuess = () => {
     return;
   }
 
-  if (!wordleValidWords.has(guess)) {
+  if (!wordleDictionarySet.has(guess)) {
     wordle.status.textContent = "That is not in the word list.";
     wordle.input.select();
     return;
@@ -1387,6 +1417,7 @@ document.addEventListener("keydown", (event) => {
 });
 
 resetSnake();
+loadWordleDictionary();
 resetWordle();
 resetCrossy();
 
