@@ -166,6 +166,7 @@ body.public-profile .shell {
 body.public-profile .dashboard-bio {
   display: grid !important;
   grid-template-columns: minmax(18rem, 30rem);
+  grid-template-areas: "preview";
 }
 
 body.loading.auth-required .auth-screen,
@@ -1272,10 +1273,34 @@ body.sidebar-collapsed .sidebar-brand-mark {
 
 .dashboard-bio {
   display: grid;
-  grid-template-columns: minmax(18rem, 28rem) minmax(18rem, 24rem);
+  grid-template-areas:
+    "preview primary"
+    "secondary primary";
+  grid-template-columns: minmax(24rem, 0.95fr) minmax(22rem, 0.78fr);
   gap: 1.25rem;
-  align-items: center;
+  align-items: start;
   justify-content: center;
+  width: 100%;
+  max-width: 88rem;
+  margin: 0 auto;
+}
+
+.bio-preview-panel {
+  grid-area: preview;
+  min-width: 0;
+}
+
+.editor-primary {
+  grid-area: primary;
+}
+
+.editor-secondary {
+  grid-area: secondary;
+}
+
+.editor-primary,
+.editor-secondary {
+  align-self: start;
 }
 
 body[data-account-section="home"]:not(.public-profile) .background-image,
@@ -1488,6 +1513,7 @@ body.previewing .dashboard-settings {
 body.previewing .dashboard-bio {
   display: grid !important;
   grid-template-columns: minmax(18rem, 30rem);
+  grid-template-areas: "preview";
   min-height: 100vh;
 }
 
@@ -2290,7 +2316,16 @@ textarea:focus {
   body.previewing .dashboard-bio,
   .dashboard-bio {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "preview"
+      "primary"
+      "secondary";
     min-height: auto;
+  }
+
+  body.public-profile .dashboard-bio,
+  body.previewing .dashboard-bio {
+    grid-template-areas: "preview";
   }
 
   .profile-card,
