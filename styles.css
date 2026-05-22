@@ -651,10 +651,11 @@ body.sidebar-collapsed .sidebar-brand-mark {
 }
 
 .dashboard-home {
-  display: grid;
+  display: block;
+  position: relative;
   min-height: calc(100vh - 2.5rem);
-  place-items: center;
   border-radius: 8px;
+  padding: 1rem;
   background: transparent;
 }
 
@@ -682,28 +683,52 @@ body.sidebar-collapsed .sidebar-brand-mark {
 }
 
 .dashboard-home h1 {
+  position: absolute;
+  top: clamp(15rem, 40vh, 28rem);
+  left: 50%;
+  z-index: 1;
   max-width: 12ch;
   text-align: center;
   font-size: clamp(3.2rem, 10vw, 7rem);
+  transform: translate(-50%, -50%);
 }
 
 .dashboard-home-content {
-  display: grid;
-  width: min(100%, 72rem);
-  gap: 1.25rem;
-  place-items: center;
+  position: relative;
+  width: 100%;
+  min-height: calc(100vh - 4.5rem);
 }
 
-.friends-widget {
+.home-widgets {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 2;
   display: grid;
-  width: min(100%, 42rem);
+  grid-template-columns: minmax(16rem, 24rem) minmax(0, 1fr) minmax(16rem, 24rem);
+  gap: 1rem;
+  align-items: start;
+}
+
+.friends-widget,
+.notifications-widget {
+  display: grid;
+  width: 100%;
   gap: 0.85rem;
   border-radius: 8px;
   padding: 1rem;
 }
 
+.friends-widget {
+  grid-column: 1;
+}
+
+.notifications-widget {
+  grid-column: 3;
+}
+
 .friends-widget-heading,
-.friends-panel-heading {
+.friends-panel-heading,
+.notifications-heading {
   display: flex;
   gap: 0.75rem;
   align-items: center;
@@ -712,12 +737,27 @@ body.sidebar-collapsed .sidebar-brand-mark {
 
 .friends-widget-heading p,
 .friends-panel-heading p,
-.friend-manager-heading p {
+.friend-manager-heading p,
+.notifications-heading p {
   color: var(--accent-2);
   font-size: 0.78rem;
   font-weight: 900;
   text-transform: uppercase;
   text-shadow: 0 0 1rem color-mix(in srgb, var(--accent-2) 72%, transparent);
+}
+
+.notifications-heading span {
+  display: grid;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 52%, rgba(255, 255, 255, 0.2));
+  border-radius: 999px;
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 18%, rgba(255, 255, 255, 0.06));
+  font-size: 0.78rem;
+  font-weight: 950;
+  box-shadow: 0 0 1rem color-mix(in srgb, var(--accent) 24%, transparent);
 }
 
 .friend-jump-button {
@@ -742,8 +782,63 @@ body.sidebar-collapsed .sidebar-brand-mark {
   padding: 1rem;
 }
 
+.communities-tabs {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  overflow-x: auto;
+  border-radius: 8px;
+  padding: 0.6rem;
+}
+
+.communities-tab {
+  display: inline-flex;
+  min-height: 2.7rem;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0.55rem 0.85rem;
+  color: var(--muted);
+  background: transparent;
+  font: inherit;
+  font-weight: 900;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.communities-tab:hover,
+.communities-tab:focus-visible,
+.communities-tab.active {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--accent) 42%, rgba(255, 255, 255, 0.16));
+  background:
+    radial-gradient(circle at var(--spot-x, 50%) var(--spot-y, 50%), color-mix(in srgb, var(--accent) 16%, transparent), transparent 8rem),
+    rgba(255, 255, 255, 0.065);
+  box-shadow: 0 0 1.1rem color-mix(in srgb, var(--accent) 18%, transparent);
+  text-shadow: 0 0 0.8rem color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.tab-badge {
+  display: grid;
+  min-width: 1.45rem;
+  height: 1.45rem;
+  place-items: center;
+  border-radius: 999px;
+  color: #ffffff;
+  background: #e04757;
+  font-size: 0.72rem;
+  line-height: 1;
+  box-shadow: 0 0 0.95rem rgba(224, 71, 87, 0.58);
+}
+
+.community-panel[hidden] {
+  display: none;
+}
+
 .friend-manager,
-.friends-panel {
+.friends-panel,
+.communities-panel {
   display: grid;
   gap: 1rem;
   border-radius: 8px;
@@ -790,6 +885,14 @@ body.sidebar-collapsed .sidebar-brand-mark {
 
 .friends-list.mini {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  max-height: 14rem;
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
+
+.notifications-list {
+  display: grid;
+  gap: 0.75rem;
   max-height: 14rem;
   overflow-y: auto;
   padding-right: 0.2rem;
@@ -888,6 +991,46 @@ body.sidebar-collapsed .sidebar-brand-mark {
 .friend-remove:focus-visible {
   color: var(--text);
   border-color: color-mix(in srgb, var(--accent) 45%, rgba(255, 255, 255, 0.18));
+}
+
+.friend-request-card {
+  grid-template-columns: 2.8rem minmax(0, 1fr) auto;
+}
+
+.notification-card {
+  grid-template-columns: 2.45rem minmax(0, 1fr);
+  padding: 0.65rem;
+}
+
+.notification-card .friend-avatar {
+  width: 2.45rem;
+  height: 2.45rem;
+  font-size: 0.85rem;
+}
+
+.friend-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.friend-accept {
+  border: 1px solid color-mix(in srgb, var(--accent) 48%, rgba(255, 255, 255, 0.18));
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 18%, rgba(255, 255, 255, 0.07));
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 950;
+  cursor: pointer;
+  text-transform: uppercase;
+  box-shadow: 0 0 1rem color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.friend-accept:hover,
+.friend-accept:focus-visible {
+  background: color-mix(in srgb, var(--accent) 28%, rgba(255, 255, 255, 0.1));
 }
 
 .friend-empty {
@@ -2736,21 +2879,50 @@ textarea:focus {
   }
 
   .dashboard-home h1 {
+    position: static;
     font-size: clamp(2.65rem, 18vw, 4.75rem);
+    transform: none;
   }
 
   .dashboard-home-content {
+    display: grid;
     gap: 1rem;
+    min-height: calc(100svh - 10rem);
+    align-content: start;
+    place-items: stretch;
+  }
+
+  .home-widgets {
+    position: static;
+    grid-template-columns: 1fr;
+  }
+
+  .friends-widget,
+  .notifications-widget {
+    grid-column: auto;
   }
 
   .friends-widget,
   .friend-manager,
-  .friends-panel {
+  .friends-panel,
+  .communities-panel,
+  .notifications-widget {
     padding: 0.85rem;
   }
 
   .communities-shell {
     padding: 0.85rem;
+  }
+
+  .communities-tabs {
+    gap: 0.45rem;
+    padding: 0.5rem;
+  }
+
+  .communities-tab {
+    min-height: 2.5rem;
+    padding: 0.5rem 0.65rem;
+    font-size: 0.82rem;
   }
 
   .friend-form {
@@ -2767,7 +2939,8 @@ textarea:focus {
     grid-template-columns: 2.45rem minmax(0, 1fr);
   }
 
-  .friend-remove {
+  .friend-remove,
+  .friend-actions {
     grid-column: 1 / -1;
   }
 

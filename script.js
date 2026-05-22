@@ -79,6 +79,7 @@ let accountState = {
   profileUrl: "",
 };
 let friends = [];
+let friendRequests = [];
 
 const mediaState = {
   avatarData: "",
@@ -1626,6 +1627,11 @@ const friendsStorageKey = () => {
   return `funlol-friends:${owner}`;
 };
 
+const friendRequestsStorageKey = () => {
+  const owner = accountState.userId || accountState.email || "guest";
+  return `funlol-friend-requests:${owner}`;
+};
+
 const friendUrlFor = (value) => {
   const raw = value.trim();
   if (!raw) return "";
@@ -1673,15 +1679,56 @@ const sanitizeFriends = (items = []) =>
     .filter((friend, index, list) => list.findIndex((item) => item.link === friend.link) === index)
     .slice(0, 24);
 
+const sanitizeFriendRequest = (request) => {
+  const rawName = String(request?.fromName || request?.name || "").trim().slice(0, 32);
+  const rawLink = String(request?.fromLink || request?.link || request?.fromHandle || request?.handle || "").trim();
+  const fromHandle = friendHandleFor(rawLink || String(request?.fromHandle || ""));
+  const fromLink = friendUrlFor(rawLink || fromHandle);
+  const fromName = rawName || (fromHandle ? `@${fromHandle}` : "Friend request");
+
+  if (!fromLink && !fromHandle) return null;
+  return {
+    id: String(request?.id || makeFriendId()),
+    fromName,
+    fromHandle,
+    fromLink,
+    createdAt: request?.createdAt || new Date().toISOString(),
+  };
+};
+
+const sanitizeFriendRequests = (items = []) =>
+  items
+    .map(sanitizeFriendRequest)
+    .filter(Boolean)
+    .filter(
+      (request, index, list) =>
+        list.findIndex((item) => item.id === request.id || (item.fromHandle && item.fromHandle === request.fromHandle)) === index
+    )
+    .slice(0, 40);
+
 const saveFriendsLocal = () => {
   if (isPublicProfilePage) return;
   localStorage.setItem(friendsStorageKey(), JSON.stringify(friends));
+};
+
+const saveFriendRequestsLocal = () => {
+  if (isPublicProfilePage) return;
+  localStorage.setItem(friendRequestsStorageKey(), JSON.stringify(friendRequests));
 };
 
 const loadFriendsLocal = () => {
   if (isPublicProfilePage) return [];
   try {
     return sanitizeFriends(JSON.parse(localStorage.getItem(friendsStorageKey()) || "[]"));
+  } catch {
+    return [];
+  }
+};
+
+const loadFriendRequestsLocal = () => {
+  if (isPublicProfilePage) return [];
+  try {
+    return sanitizeFriendRequests(JSON.parse(localStorage.getItem(friendRequestsStorageKey()) || "[]"));
   } catch {
     return [];
   }
@@ -1734,6 +1781,77 @@ const createFriendCard = (friend, { removable = false } = {}) => {
   return card;
 };
 
+const createNotificationCard = (request) => {
+  const card = document.createElement("article");
+  card.className = "friend-card notification-card";
+
+  const avatar = document.createElement("span");
+  avatar.className = "friend-avatar";
+  avatar.textContent = friendInitials(request.fromName);
+  card.append(avatar);
+
+  const copy = document.createElement("div");
+  copy.className = "friend-copy";
+
+  const title = document.createElement("strong");
+  title.textContent = `${request.fromName} sent a friend request`;
+  copy.append(title);
+
+  const link = document.createElement("a");
+  link.href = request.fromLink || (request.fromHandle ? `/u/${request.fromHandle}` : "#");
+  link.target = "_blank";
+  link.rel = "noreferrer";
+  link.textContent = request.fromHandle ? `@${request.fromHandle}` : "Open profile";
+  copy.append(link);
+
+  card.append(copy);
+  return card;
+};
+
+async function acceptFriendRequest(requestId) {
+  try {
+    if (!sessionToken) throw new Error("Sign in before accepting friend requests");
+    const response = await fetch(`/api/friend-requests/${encodeURIComponent(requestId)}/accept`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Could not accept request");
+
+    setFriends(result.friends || friends, { persist: false });
+    setFriendRequests(result.friendRequests || friendRequests.filter((request) => request.id !== requestId), { persist: false });
+    showToast("Friend request accepted");
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+const createFriendRequestCard = (request) => {
+  const card = createFriendCard(
+    {
+      id: request.id,
+      name: request.fromName,
+      handle: request.fromHandle,
+      link: request.fromLink,
+    },
+    { removable: false }
+  );
+  card.classList.add("friend-request-card");
+
+  const actions = document.createElement("div");
+  actions.className = "friend-actions";
+
+  const acceptButton = document.createElement("button");
+  acceptButton.className = "friend-accept";
+  acceptButton.type = "button";
+  acceptButton.textContent = "Accept";
+  acceptButton.addEventListener("click", () => acceptFriendRequest(request.id));
+  actions.append(acceptButton);
+
+  card.append(actions);
+  return card;
+};
+
 function renderFriends() {
   const homeList = $("#homeFriendsList");
   const communitiesList = $("#communitiesFriendsList");
@@ -1765,10 +1883,67 @@ function renderFriends() {
   });
 }
 
+function renderFriendRequests() {
+  const notificationsList = $("#notificationsList");
+  const notificationsCount = $("#notificationsCount");
+  const requestsList = $("#friendRequestsList");
+  const requestsCount = $("#friendRequestsCount");
+  const badge = $("#friendRequestTabBadge");
+  const requestCountText = `${friendRequests.length} ${friendRequests.length === 1 ? "request" : "requests"}`;
+
+  if (notificationsCount) notificationsCount.textContent = String(friendRequests.length);
+  if (requestsCount) requestsCount.textContent = requestCountText;
+  if (badge) {
+    badge.hidden = friendRequests.length === 0;
+    badge.textContent = String(friendRequests.length);
+  }
+
+  [notificationsList, requestsList].forEach((list) => {
+    if (list) list.textContent = "";
+  });
+
+  if (!friendRequests.length) {
+    const emptyNotifications = document.createElement("p");
+    emptyNotifications.className = "friend-empty";
+    emptyNotifications.textContent = "No notifications yet.";
+    notificationsList?.append(emptyNotifications);
+
+    const emptyRequests = document.createElement("p");
+    emptyRequests.className = "friend-empty";
+    emptyRequests.textContent = "No friend requests yet.";
+    requestsList?.append(emptyRequests);
+    return;
+  }
+
+  friendRequests.forEach((request) => {
+    notificationsList?.append(createNotificationCard(request));
+    requestsList?.append(createFriendRequestCard(request));
+  });
+}
+
 function setFriends(nextFriends, { persist = true } = {}) {
   friends = sanitizeFriends(nextFriends);
   renderFriends();
   if (persist) saveFriendsLocal();
+}
+
+function setFriendRequests(nextRequests, { persist = true } = {}) {
+  friendRequests = sanitizeFriendRequests(nextRequests);
+  renderFriendRequests();
+  if (persist) saveFriendRequestsLocal();
+}
+
+async function refreshFriendState() {
+  if (!sessionToken || isPublicProfilePage) return;
+  try {
+    const response = await fetch("/api/my-profile", { headers: authHeaders() });
+    if (!response.ok) return;
+    const data = await response.json();
+    setFriends(data.friends?.length ? data.friends : friends, { persist: false });
+    setFriendRequests(data.friendRequests || [], { persist: false });
+  } catch {
+    // The dashboard keeps the last loaded friend state if refresh fails.
+  }
 }
 
 const shortId = (value) => {
@@ -1797,6 +1972,9 @@ const updateAccountState = (data = {}) => {
   const nextOwner = accountState.userId || accountState.email;
   if (!isPublicProfilePage && nextOwner && nextOwner !== previousOwner && !friends.length) {
     setFriends(loadFriendsLocal(), { persist: false });
+  }
+  if (!isPublicProfilePage && nextOwner && nextOwner !== previousOwner && !friendRequests.length) {
+    setFriendRequests(loadFriendRequestsLocal(), { persist: false });
   }
   updateSettingsDetails();
 };
@@ -1855,6 +2033,7 @@ const logoutUser = () => {
     profileUrl: "",
   };
   setFriends([], { persist: false });
+  setFriendRequests([], { persist: false });
   updateSettingsDetails();
   setDashboardSection("home");
   showAuth();
@@ -1869,6 +2048,7 @@ dashboardButtons.forEach((button) => {
     const target = button.dataset.dashboardTarget;
     if (target !== "games") closeActiveGame();
     setDashboardSection(target);
+    if (target === "home" || target === "communities") refreshFriendState();
     exitPreview();
     if (target === "bio" && !isPublicProfilePage) {
       showOwnerBioEntryGate();
@@ -1876,6 +2056,21 @@ dashboardButtons.forEach((button) => {
       hideEntryGate();
     }
   });
+});
+
+const setCommunityTab = (tab) => {
+  const nextTab = tab || "add";
+  document.querySelectorAll("[data-community-tab]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.communityTab === nextTab);
+  });
+  document.querySelectorAll("[data-community-panel]").forEach((panel) => {
+    panel.hidden = panel.dataset.communityPanel !== nextTab;
+    panel.classList.toggle("active", panel.dataset.communityPanel === nextTab);
+  });
+};
+
+document.querySelectorAll("[data-community-tab]").forEach((button) => {
+  button.addEventListener("click", () => setCommunityTab(button.dataset.communityTab));
 });
 
 document.querySelectorAll(".editor .swatch").forEach((button) => {
@@ -1942,6 +2137,9 @@ attachMouseBoxEffect($(".account-sidebar"), { lift: 0.55, tilt: 0.65 });
 document.querySelectorAll(".game-card-preview").forEach((card) => {
   attachMouseBoxEffect(card, { lift: 0.85, tilt: 0.8 });
 });
+document.querySelectorAll(".friends-widget, .notifications-widget, .community-panel, .communities-tab").forEach((card) => {
+  attachMouseBoxEffect(card, { lift: 0.45, tilt: 0.5 });
+});
 
 $("#particlesToggle").addEventListener("change", (event) => {
   document.body.classList.toggle("no-motion", !event.target.checked);
@@ -1991,7 +2189,7 @@ document.querySelectorAll("[data-sparkle]").forEach((button) => {
   button.addEventListener("click", () => setSparkleEffect(button.dataset.sparkle));
 });
 
-$("#friendForm").addEventListener("submit", (event) => {
+$("#friendForm").addEventListener("submit", async (event) => {
   event.preventDefault();
   const friend = sanitizeFriend({
     name: friendInputs.name.value,
@@ -2003,10 +2201,25 @@ $("#friendForm").addEventListener("submit", (event) => {
     return;
   }
 
-  setFriends([...friends, friend]);
-  friendInputs.name.value = "";
-  friendInputs.link.value = "";
-  showToast(`Added ${friend.name}`);
+  try {
+    if (!sessionToken) throw new Error("Sign in before sending friend requests");
+    const response = await fetch("/api/friend-requests", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({
+        target: friend.link || friend.handle,
+        targetName: friend.name,
+      }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Could not send friend request");
+
+    friendInputs.name.value = "";
+    friendInputs.link.value = "";
+    showToast(`Friend request sent to @${result.targetHandle || friend.handle}`);
+  } catch (error) {
+    showToast(error.message);
+  }
 });
 
 $("#copyLink").addEventListener("click", async () => {
@@ -2411,6 +2624,7 @@ const collectProfile = () => ({
   cursorTrail: inputs.cursorTrail.value === "dot",
   sparkleEffect: inputs.sparkleEffect.value || "none",
   friends,
+  friendRequests,
   socialLinks: collectSocialLinks(),
   avatarData: mediaState.avatarData,
   avatarName: mediaState.avatarName,
@@ -2445,6 +2659,7 @@ const applyProfile = (data) => {
   setCursorMode(data.cursorTrail === true || data.cursorTrail === "dot" ? "dot" : "normal");
   setSparkleEffect(data.sparkleEffect || "none");
   setFriends(data.friends?.length ? data.friends : loadFriendsLocal(), { persist: false });
+  setFriendRequests(data.friendRequests || loadFriendRequestsLocal(), { persist: false });
 
   document.body.classList.toggle("compact", $("#compactToggle").checked);
   document.body.classList.toggle("no-motion", !$("#particlesToggle").checked);
@@ -2548,6 +2763,7 @@ async function loadMyProfile() {
 document.body.classList.add("video-dark");
 syncProfile();
 renderFriends();
+renderFriendRequests();
 
 async function bootApp() {
   if (isPublicProfilePage) {

@@ -145,13 +145,23 @@
       <section class="dashboard-panel dashboard-home" data-dashboard-panel="home" aria-label="Account home" hidden>
         <div class="dashboard-home-content">
           <h1>Welcome to fun.lol</h1>
-          <section class="friends-widget glass" aria-label="Friends widget">
-            <div class="friends-widget-heading">
-              <p>Friends</p>
-              <button class="friend-jump-button" type="button" data-dashboard-target="communities">Manage</button>
-            </div>
-            <div class="friends-list mini" id="homeFriendsList" aria-live="polite"></div>
-          </section>
+          <div class="home-widgets">
+            <section class="friends-widget glass" aria-label="Friends widget">
+              <div class="friends-widget-heading">
+                <p>Friends</p>
+                <button class="friend-jump-button" type="button" data-dashboard-target="communities">Manage</button>
+              </div>
+              <div class="friends-list mini" id="homeFriendsList" aria-live="polite"></div>
+            </section>
+
+            <section class="notifications-widget glass" aria-label="Notifications widget">
+              <div class="notifications-heading">
+                <p>Notifications</p>
+                <span id="notificationsCount">0</span>
+              </div>
+              <div class="notifications-list" id="notificationsList" aria-live="polite"></div>
+            </section>
+          </div>
         </div>
       </section>
 
@@ -354,10 +364,20 @@
 
       <section class="dashboard-panel dashboard-communities" data-dashboard-panel="communities" aria-label="Communities" hidden>
         <div class="communities-shell">
-          <section class="friend-manager glass" aria-label="Add friends">
+          <nav class="communities-tabs glass" aria-label="Communities sections">
+            <button class="communities-tab active" type="button" data-community-tab="add">Add Friends</button>
+            <button class="communities-tab" type="button" data-community-tab="friends">Your Friends</button>
+            <button class="communities-tab" type="button" data-community-tab="communities">Your Communities</button>
+            <button class="communities-tab" type="button" data-community-tab="requests">
+              Friend Requests
+              <span class="tab-badge" id="friendRequestTabBadge" hidden>0</span>
+            </button>
+          </nav>
+
+          <section class="community-panel friend-manager glass active" data-community-panel="add" aria-label="Add friends">
             <div class="friend-manager-heading">
               <p>Communities</p>
-              <h1>Friends</h1>
+              <h1>Add friends</h1>
             </div>
 
             <form class="friend-form" id="friendForm">
@@ -369,16 +389,32 @@
                 Profile handle or link
                 <input id="friendLinkInput" type="text" maxlength="120" placeholder="@friend or /u/friend" />
               </label>
-              <button class="save-button" type="submit">Add friend</button>
+              <button class="save-button" type="submit">Send request</button>
             </form>
           </section>
 
-          <section class="friends-panel glass" aria-label="Your friends">
+          <section class="community-panel friends-panel glass" data-community-panel="friends" aria-label="Your friends" hidden>
             <div class="friends-panel-heading">
               <p>Your friends</p>
               <span id="friendsCount">0 friends</span>
             </div>
             <div class="friends-list" id="communitiesFriendsList" aria-live="polite"></div>
+          </section>
+
+          <section class="community-panel communities-panel glass" data-community-panel="communities" aria-label="Your communities" hidden>
+            <div class="friends-panel-heading">
+              <p>Your communities</p>
+              <span>Coming soon</span>
+            </div>
+            <p class="friend-empty">Communities will show here later.</p>
+          </section>
+
+          <section class="community-panel friends-panel glass" data-community-panel="requests" aria-label="Friend requests" hidden>
+            <div class="friends-panel-heading">
+              <p>Friend requests</p>
+              <span id="friendRequestsCount">0 requests</span>
+            </div>
+            <div class="friends-list request-list" id="friendRequestsList" aria-live="polite"></div>
           </section>
         </div>
       </section>

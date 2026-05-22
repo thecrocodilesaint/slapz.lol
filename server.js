@@ -184,6 +184,65 @@ function profileToRow(profile) {
   };
 }
 
+function publicProfilePayload(profile) {
+  const { ownerToken, ownerUserId, friendRequests, ...publicProfile } = profile;
+  return publicProfile;
+}
+
+function handleFromFriendTarget(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+
+  try {
+    const targetUrl = raw.startsWith("http") ? new URL(raw) : new URL(raw, "https://fun.lol");
+    const match = targetUrl.pathname.match(/^\/u\/([^/]+)/);
+    if (match) return sanitizeHandle(decodeURIComponent(match[1]));
+  } catch {
+    // Fall through to plain handle cleanup.
+  }
+
+  return sanitizeHandle(raw.replace(/^\/u\//i, ""));
+}
+
+function requestDisplayName(profile) {
+  return String(profile?.name || profile?.handle || "friend").trim().slice(0, 32);
+}
+
+function requestLinkFor(handle) {
+  return handle ? `/u/${handle}` : "";
+}
+
+function friendFromRequest(request) {
+  const handle = sanitizeHandle(request?.fromHandle);
+  const link = request?.fromLink || requestLinkFor(handle);
+  if (!handle && !link) return null;
+  return {
+    id: handle || crypto.randomUUID(),
+    name: String(request?.fromName || handle || "Friend").trim().slice(0, 32),
+    handle,
+    link,
+  };
+}
+
+function ownFriendFromProfile(profile) {
+  const handle = sanitizeHandle(profile?.handle);
+  if (!handle) return null;
+  return {
+    id: handle,
+    name: requestDisplayName(profile),
+    handle,
+    link: requestLinkFor(handle),
+  };
+}
+
+function mergeFriend(list, friend) {
+  if (!friend) return Array.isArray(list) ? list : [];
+  const current = Array.isArray(list) ? list : [];
+  const friendKey = friend.handle || friend.link;
+  if (current.some((item) => (item.handle || item.link) === friendKey)) return current;
+  return [...current, friend].slice(0, 24);
+}
+
 async function prepareProfileForSave(profile, existingProfile) {
   if (!hasSupabase) return profile;
 
@@ -701,6 +760,111 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (req.method === "POST" && url.pathname === "/api/friend-requests") {
+    try {
+      const authed = await getAuthedUser(req);
+      if (!authed) {
+        sendJson(res, 401, { error: "Sign in before sending friend requests" });
+        return;
+      }
+
+      const body = JSON.parse((await readBody(req)) || "{}");
+      const targetHandle = handleFromFriendTarget(body.target || body.handle || body.targetName);
+      if (!targetHandle) {
+        sendJson(res, 400, { error: "Enter a valid profile handle or link" });
+        return;
+      }
+
+      const senderProfile = await getProfileByOwner(authed.userId);
+      if (!senderProfile?.handle) {
+        sendJson(res, 400, { error: "Publish your profile before sending friend requests" });
+        return;
+      }
+
+      if (senderProfile.handle === targetHandle) {
+        sendJson(res, 400, { error: "You cannot send a friend request to yourself" });
+        return;
+      }
+
+      const targetProfile = await getProfile(targetHandle);
+      if (!targetProfile) {
+        sendJson(res, 404, { error: "That profile was not found" });
+        return;
+      }
+
+      const existingRequests = Array.isArray(targetProfile.friendRequests) ? targetProfile.friendRequests : [];
+      const alreadyRequested = existingRequests.some((request) => request.fromHandle === senderProfile.handle);
+      const alreadyFriends = (Array.isArray(targetProfile.friends) ? targetProfile.friends : []).some(
+        (friend) => friend.handle === senderProfile.handle || friend.link === requestLinkFor(senderProfile.handle)
+      );
+
+      if (!alreadyRequested && !alreadyFriends) {
+        targetProfile.friendRequests = [
+          ...existingRequests,
+          {
+            id: crypto.randomUUID(),
+            fromName: requestDisplayName(senderProfile),
+            fromHandle: senderProfile.handle,
+            fromLink: requestLinkFor(senderProfile.handle),
+            createdAt: new Date().toISOString(),
+          },
+        ].slice(-40);
+        targetProfile.updatedAt = new Date().toISOString();
+        await saveProfile(targetProfile);
+      }
+
+      sendJson(res, 200, { targetHandle, status: alreadyFriends ? "friends" : "sent" });
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname.startsWith("/api/friend-requests/") && url.pathname.endsWith("/accept")) {
+    try {
+      const authed = await getAuthedUser(req);
+      if (!authed) {
+        sendJson(res, 401, { error: "Sign in before accepting friend requests" });
+        return;
+      }
+
+      const requestId = decodeURIComponent(url.pathname.split("/")[3] || "");
+      const ownerProfile = await getProfileByOwner(authed.userId);
+      if (!ownerProfile) {
+        sendJson(res, 404, { error: "Publish your profile before accepting requests" });
+        return;
+      }
+
+      const requests = Array.isArray(ownerProfile.friendRequests) ? ownerProfile.friendRequests : [];
+      const request = requests.find((item) => String(item.id) === requestId);
+      if (!request) {
+        sendJson(res, 404, { error: "Friend request was not found" });
+        return;
+      }
+
+      ownerProfile.friends = mergeFriend(ownerProfile.friends, friendFromRequest(request));
+      ownerProfile.friendRequests = requests.filter((item) => String(item.id) !== requestId);
+      ownerProfile.updatedAt = new Date().toISOString();
+      await saveProfile(ownerProfile);
+
+      const senderHandle = sanitizeHandle(request.fromHandle);
+      const senderProfile = senderHandle ? await getProfile(senderHandle) : null;
+      if (senderProfile) {
+        senderProfile.friends = mergeFriend(senderProfile.friends, ownFriendFromProfile(ownerProfile));
+        senderProfile.updatedAt = new Date().toISOString();
+        await saveProfile(senderProfile);
+      }
+
+      sendJson(res, 200, {
+        friends: ownerProfile.friends || [],
+        friendRequests: ownerProfile.friendRequests || [],
+      });
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+    }
+    return;
+  }
+
   if (req.method === "GET" && url.pathname === "/robots.txt") {
     sendText(
       res,
@@ -747,7 +911,7 @@ const server = http.createServer(async (req, res) => {
     if (url.searchParams.get("view") === "1") {
       await incrementProfileViews(profile);
     }
-    const { ownerToken, ownerUserId, ...publicProfile } = profile;
+    const publicProfile = publicProfilePayload(profile);
     if (url.searchParams.get("view") === "1") {
       publicProfile.hasAvatar = Boolean(publicProfile.avatarPath || publicProfile.avatarData);
       publicProfile.hasBackground = Boolean(publicProfile.backgroundPath || publicProfile.backgroundData);
@@ -798,6 +962,8 @@ const server = http.createServer(async (req, res) => {
         profileHandle: handle,
         profilePath,
         profileUrl,
+        friends: Array.isArray(incoming.friends) ? incoming.friends : existingProfile?.friends || [],
+        friendRequests: Array.isArray(incoming.friendRequests) ? incoming.friendRequests : existingProfile?.friendRequests || [],
         ownerUserId: authed.userId,
         views: Number(existingProfile?.views || incoming.views || 0),
         updatedAt: new Date().toISOString(),
