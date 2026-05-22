@@ -185,7 +185,7 @@ function profileToRow(profile) {
 }
 
 function publicProfilePayload(profile) {
-  const { ownerToken, ownerUserId, friendRequests, ...publicProfile } = profile;
+  const { ownerToken, ownerUserId, friendRequests, sentFriendRequests, ...publicProfile } = profile;
   return publicProfile;
 }
 
@@ -235,12 +235,35 @@ function ownFriendFromProfile(profile) {
   };
 }
 
+function sentRequestFromTarget(profile, request) {
+  const handle = sanitizeHandle(profile?.handle);
+  if (!handle) return null;
+  return {
+    id: request.id,
+    targetName: requestDisplayName(profile),
+    targetHandle: handle,
+    targetLink: requestLinkFor(handle),
+    createdAt: request.createdAt,
+  };
+}
+
 function mergeFriend(list, friend) {
   if (!friend) return Array.isArray(list) ? list : [];
   const current = Array.isArray(list) ? list : [];
   const friendKey = friend.handle || friend.link;
   if (current.some((item) => (item.handle || item.link) === friendKey)) return current;
   return [...current, friend].slice(0, 24);
+}
+
+function friendMatchesKey(friend, key) {
+  const rawKey = String(key || "");
+  const handleKey = handleFromFriendTarget(rawKey);
+  return (
+    String(friend?.id || "") === rawKey ||
+    (handleKey && sanitizeHandle(friend?.handle) === handleKey) ||
+    (handleKey && handleFromFriendTarget(friend?.link) === handleKey) ||
+    String(friend?.link || "") === rawKey
+  );
 }
 
 async function prepareProfileForSave(profile, existingProfile) {
@@ -793,27 +816,56 @@ const server = http.createServer(async (req, res) => {
       }
 
       const existingRequests = Array.isArray(targetProfile.friendRequests) ? targetProfile.friendRequests : [];
-      const alreadyRequested = existingRequests.some((request) => request.fromHandle === senderProfile.handle);
+      let request = existingRequests.find((item) => item.fromHandle === senderProfile.handle);
+      const alreadyRequested = Boolean(request);
       const alreadyFriends = (Array.isArray(targetProfile.friends) ? targetProfile.friends : []).some(
         (friend) => friend.handle === senderProfile.handle || friend.link === requestLinkFor(senderProfile.handle)
       );
 
+      let senderChanged = false;
+      if (alreadyFriends) {
+        const sentRequests = Array.isArray(senderProfile.sentFriendRequests) ? senderProfile.sentFriendRequests : [];
+        const nextSentRequests = sentRequests.filter((item) => item.targetHandle !== targetHandle);
+        senderChanged = nextSentRequests.length !== sentRequests.length;
+        senderProfile.sentFriendRequests = nextSentRequests;
+      }
+
       if (!alreadyRequested && !alreadyFriends) {
+        request = {
+          id: crypto.randomUUID(),
+          fromName: requestDisplayName(senderProfile),
+          fromHandle: senderProfile.handle,
+          fromLink: requestLinkFor(senderProfile.handle),
+          createdAt: new Date().toISOString(),
+        };
         targetProfile.friendRequests = [
           ...existingRequests,
-          {
-            id: crypto.randomUUID(),
-            fromName: requestDisplayName(senderProfile),
-            fromHandle: senderProfile.handle,
-            fromLink: requestLinkFor(senderProfile.handle),
-            createdAt: new Date().toISOString(),
-          },
+          request,
         ].slice(-40);
         targetProfile.updatedAt = new Date().toISOString();
         await saveProfile(targetProfile);
       }
 
-      sendJson(res, 200, { targetHandle, status: alreadyFriends ? "friends" : "sent" });
+      if (!alreadyFriends && request) {
+        const sentRequest = sentRequestFromTarget(targetProfile, request);
+        const sentRequests = Array.isArray(senderProfile.sentFriendRequests) ? senderProfile.sentFriendRequests : [];
+        const hasSentRequest = sentRequests.some((item) => item.targetHandle === targetHandle || item.id === request.id);
+        if (!hasSentRequest && sentRequest) {
+          senderProfile.sentFriendRequests = [...sentRequests, sentRequest].slice(-40);
+          senderChanged = true;
+        }
+      }
+
+      if (senderChanged) {
+        senderProfile.updatedAt = new Date().toISOString();
+        await saveProfile(senderProfile);
+      }
+
+      sendJson(res, 200, {
+        targetHandle,
+        status: alreadyFriends ? "friends" : "sent",
+        sentFriendRequests: senderProfile.sentFriendRequests || [],
+      });
     } catch (error) {
       sendJson(res, 400, { error: error.message });
     }
@@ -851,6 +903,9 @@ const server = http.createServer(async (req, res) => {
       const senderProfile = senderHandle ? await getProfile(senderHandle) : null;
       if (senderProfile) {
         senderProfile.friends = mergeFriend(senderProfile.friends, ownFriendFromProfile(ownerProfile));
+        senderProfile.sentFriendRequests = (Array.isArray(senderProfile.sentFriendRequests) ? senderProfile.sentFriendRequests : []).filter(
+          (item) => item.id !== request.id && item.targetHandle !== ownerProfile.handle
+        );
         senderProfile.updatedAt = new Date().toISOString();
         await saveProfile(senderProfile);
       }
@@ -858,6 +913,55 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, 200, {
         friends: ownerProfile.friends || [],
         friendRequests: ownerProfile.friendRequests || [],
+        sentFriendRequests: ownerProfile.sentFriendRequests || [],
+      });
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+    }
+    return;
+  }
+
+  if (req.method === "DELETE" && url.pathname.startsWith("/api/friends/")) {
+    try {
+      const authed = await getAuthedUser(req);
+      if (!authed) {
+        sendJson(res, 401, { error: "Sign in before removing friends" });
+        return;
+      }
+
+      const friendKey = decodeURIComponent(url.pathname.split("/")[3] || "");
+      const ownerProfile = await getProfileByOwner(authed.userId);
+      if (!ownerProfile) {
+        sendJson(res, 404, { error: "Publish your profile before removing friends" });
+        return;
+      }
+
+      const currentFriends = Array.isArray(ownerProfile.friends) ? ownerProfile.friends : [];
+      const removedFriend = currentFriends.find((friend) => friendMatchesKey(friend, friendKey));
+      if (!removedFriend) {
+        sendJson(res, 404, { error: "Friend was not found" });
+        return;
+      }
+
+      ownerProfile.friends = currentFriends.filter((friend) => !friendMatchesKey(friend, friendKey));
+      ownerProfile.updatedAt = new Date().toISOString();
+      await saveProfile(ownerProfile);
+
+      const removedHandle = sanitizeHandle(removedFriend.handle) || handleFromFriendTarget(removedFriend.link);
+      const otherProfile = removedHandle ? await getProfile(removedHandle) : null;
+      if (otherProfile) {
+        const ownerHandle = sanitizeHandle(ownerProfile.handle);
+        otherProfile.friends = (Array.isArray(otherProfile.friends) ? otherProfile.friends : []).filter(
+          (friend) => !friendMatchesKey(friend, ownerHandle)
+        );
+        otherProfile.updatedAt = new Date().toISOString();
+        await saveProfile(otherProfile);
+      }
+
+      sendJson(res, 200, {
+        friends: ownerProfile.friends || [],
+        friendRequests: ownerProfile.friendRequests || [],
+        sentFriendRequests: ownerProfile.sentFriendRequests || [],
       });
     } catch (error) {
       sendJson(res, 400, { error: error.message });
@@ -962,8 +1066,9 @@ const server = http.createServer(async (req, res) => {
         profileHandle: handle,
         profilePath,
         profileUrl,
-        friends: Array.isArray(incoming.friends) ? incoming.friends : existingProfile?.friends || [],
-        friendRequests: Array.isArray(incoming.friendRequests) ? incoming.friendRequests : existingProfile?.friendRequests || [],
+        friends: existingProfile ? existingProfile.friends || [] : Array.isArray(incoming.friends) ? incoming.friends : [],
+        friendRequests: existingProfile ? existingProfile.friendRequests || [] : [],
+        sentFriendRequests: existingProfile ? existingProfile.sentFriendRequests || [] : [],
         ownerUserId: authed.userId,
         views: Number(existingProfile?.views || incoming.views || 0),
         updatedAt: new Date().toISOString(),

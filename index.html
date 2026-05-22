@@ -723,6 +723,17 @@
       <span>Click to enter</span>
       <small id="musicGateHint">Starts music if available</small>
     </button>
+    <div class="confirm-overlay" id="friendRemoveDialog" hidden>
+      <section class="confirm-card glass" role="dialog" aria-modal="true" aria-labelledby="friendRemoveTitle">
+        <p>Remove friend</p>
+        <h2 id="friendRemoveTitle">Are you sure?</h2>
+        <span id="friendRemoveMessage">Do you want to remove this friend?</span>
+        <div class="confirm-actions">
+          <button class="confirm-cancel" id="friendRemoveCancel" type="button">Cancel</button>
+          <button class="confirm-danger" id="friendRemoveConfirm" type="button">Yes, remove</button>
+        </div>
+      </section>
+    </div>
     <div class="toast" id="toast" role="status" aria-live="polite">Profile link copied</div>
     <audio id="backgroundMusic" loop></audio>
     <canvas id="stars" aria-hidden="true"></canvas>

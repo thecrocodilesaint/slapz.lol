@@ -1016,6 +1016,35 @@ body.sidebar-collapsed .sidebar-brand-mark {
   align-items: center;
 }
 
+.request-section {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.request-section + .request-section {
+  margin-top: 0.35rem;
+}
+
+.request-section-title {
+  color: var(--accent-2);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  text-shadow: 0 0 0.8rem color-mix(in srgb, var(--accent-2) 70%, transparent);
+}
+
+.request-status {
+  border: 1px solid color-mix(in srgb, var(--accent-2) 38%, rgba(255, 255, 255, 0.16));
+  border-radius: 999px;
+  padding: 0.42rem 0.65rem;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.045);
+  font-size: 0.72rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 .friend-accept {
   border: 1px solid color-mix(in srgb, var(--accent) 48%, rgba(255, 255, 255, 0.18));
   border-radius: 8px;
@@ -1042,6 +1071,71 @@ body.sidebar-collapsed .sidebar-brand-mark {
   color: var(--muted);
   font-weight: 800;
   text-align: center;
+}
+
+.confirm-overlay {
+  position: fixed;
+  z-index: 8;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(12px) saturate(130%);
+}
+
+.confirm-card {
+  display: grid;
+  width: min(100%, 28rem);
+  gap: 0.75rem;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.confirm-card p {
+  margin: 0;
+  color: var(--accent-2);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.confirm-card h2 {
+  margin: 0;
+  font-size: clamp(1.8rem, 7vw, 3rem);
+}
+
+.confirm-card span {
+  color: var(--muted);
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.confirm-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-top: 0.35rem;
+}
+
+.confirm-cancel,
+.confirm-danger {
+  min-height: 2.8rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.055);
+  font: inherit;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.confirm-danger {
+  border-color: rgba(255, 80, 96, 0.72);
+  background: linear-gradient(135deg, rgba(120, 12, 25, 0.72), rgba(255, 59, 79, 0.82));
+  box-shadow:
+    0 0 1.2rem rgba(255, 59, 79, 0.34),
+    inset 0 0 1rem rgba(255, 255, 255, 0.055);
 }
 
 .settings-shell {
@@ -2942,7 +3036,8 @@ textarea:focus {
   }
 
   .friend-remove,
-  .friend-actions {
+  .friend-actions,
+  .request-status {
     grid-column: 1 / -1;
   }
 

@@ -80,6 +80,9 @@ let accountState = {
 };
 let friends = [];
 let friendRequests = [];
+let sentFriendRequests = [];
+let friendRefreshTimer = 0;
+let pendingFriendRemoval = null;
 
 const mediaState = {
   avatarData: "",
@@ -1597,6 +1600,7 @@ const submitAuth = async (mode) => {
     startLoading("Loading your profile...");
     await loadMyProfile();
     await finishLoadingIntoEditor();
+    startFriendRefreshLoop();
   } catch (error) {
     document.body.classList.remove("loading");
     setAuthMessage(error.message);
@@ -1630,6 +1634,11 @@ const friendsStorageKey = () => {
 const friendRequestsStorageKey = () => {
   const owner = accountState.userId || accountState.email || "guest";
   return `funlol-friend-requests:${owner}`;
+};
+
+const sentFriendRequestsStorageKey = () => {
+  const owner = accountState.userId || accountState.email || "guest";
+  return `funlol-sent-friend-requests:${owner}`;
 };
 
 const friendUrlFor = (value) => {
@@ -1706,6 +1715,33 @@ const sanitizeFriendRequests = (items = []) =>
     )
     .slice(0, 40);
 
+const sanitizeSentFriendRequest = (request) => {
+  const rawName = String(request?.targetName || request?.name || "").trim().slice(0, 32);
+  const rawLink = String(request?.targetLink || request?.link || request?.targetHandle || request?.handle || "").trim();
+  const targetHandle = friendHandleFor(rawLink || String(request?.targetHandle || ""));
+  const targetLink = friendUrlFor(rawLink || targetHandle);
+  const targetName = rawName || (targetHandle ? `@${targetHandle}` : "Friend request");
+
+  if (!targetLink && !targetHandle) return null;
+  return {
+    id: String(request?.id || makeFriendId()),
+    targetName,
+    targetHandle,
+    targetLink,
+    createdAt: request?.createdAt || new Date().toISOString(),
+  };
+};
+
+const sanitizeSentFriendRequests = (items = []) =>
+  items
+    .map(sanitizeSentFriendRequest)
+    .filter(Boolean)
+    .filter(
+      (request, index, list) =>
+        list.findIndex((item) => item.id === request.id || (item.targetHandle && item.targetHandle === request.targetHandle)) === index
+    )
+    .slice(0, 40);
+
 const saveFriendsLocal = () => {
   if (isPublicProfilePage) return;
   localStorage.setItem(friendsStorageKey(), JSON.stringify(friends));
@@ -1716,10 +1752,24 @@ const saveFriendRequestsLocal = () => {
   localStorage.setItem(friendRequestsStorageKey(), JSON.stringify(friendRequests));
 };
 
+const saveSentFriendRequestsLocal = () => {
+  if (isPublicProfilePage) return;
+  localStorage.setItem(sentFriendRequestsStorageKey(), JSON.stringify(sentFriendRequests));
+};
+
 const loadFriendsLocal = () => {
   if (isPublicProfilePage) return [];
   try {
     return sanitizeFriends(JSON.parse(localStorage.getItem(friendsStorageKey()) || "[]"));
+  } catch {
+    return [];
+  }
+};
+
+const loadSentFriendRequestsLocal = () => {
+  if (isPublicProfilePage) return [];
+  try {
+    return sanitizeSentFriendRequests(JSON.parse(localStorage.getItem(sentFriendRequestsStorageKey()) || "[]"));
   } catch {
     return [];
   }
@@ -1773,7 +1823,7 @@ const createFriendCard = (friend, { removable = false } = {}) => {
     removeButton.setAttribute("aria-label", `Remove ${friend.name}`);
     removeButton.textContent = "Remove";
     removeButton.addEventListener("click", () => {
-      setFriends(friends.filter((item) => item.id !== friend.id));
+      openFriendRemoveDialog(friend);
     });
     card.append(removeButton);
   }
@@ -1808,6 +1858,62 @@ const createNotificationCard = (request) => {
   return card;
 };
 
+const createSentFriendRequestCard = (request) => {
+  const card = createFriendCard(
+    {
+      id: request.id,
+      name: request.targetName,
+      handle: request.targetHandle,
+      link: request.targetLink,
+    },
+    { removable: false }
+  );
+  card.classList.add("friend-request-card");
+
+  const status = document.createElement("span");
+  status.className = "request-status";
+  status.textContent = "Pending";
+  card.append(status);
+  return card;
+};
+
+const closeFriendRemoveDialog = () => {
+  $("#friendRemoveDialog").hidden = true;
+  pendingFriendRemoval = null;
+};
+
+const openFriendRemoveDialog = (friend) => {
+  pendingFriendRemoval = friend;
+  $("#friendRemoveMessage").textContent = `Do you want to remove ${friend.name}?`;
+  $("#friendRemoveDialog").hidden = false;
+  $("#friendRemoveConfirm").focus();
+};
+
+async function removeFriend(friend) {
+  try {
+    if (!sessionToken) {
+      setFriends(friends.filter((item) => item.id !== friend.id));
+      showToast(`Removed ${friend.name}`);
+      return;
+    }
+
+    const key = friend.handle || friend.id || friend.link;
+    const response = await fetch(`/api/friends/${encodeURIComponent(key)}`, {
+      method: "DELETE",
+      headers: authHeaders(),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Could not remove friend");
+
+    setFriends(result.friends || friends.filter((item) => item.id !== friend.id), { persist: false });
+    setFriendRequests(result.friendRequests || friendRequests, { persist: false });
+    setSentFriendRequests(result.sentFriendRequests || sentFriendRequests, { persist: false });
+    showToast(`Removed ${friend.name}`);
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
 async function acceptFriendRequest(requestId) {
   try {
     if (!sessionToken) throw new Error("Sign in before accepting friend requests");
@@ -1820,6 +1926,7 @@ async function acceptFriendRequest(requestId) {
 
     setFriends(result.friends || friends, { persist: false });
     setFriendRequests(result.friendRequests || friendRequests.filter((request) => request.id !== requestId), { persist: false });
+    setSentFriendRequests(result.sentFriendRequests || sentFriendRequests, { persist: false });
     showToast("Friend request accepted");
   } catch (error) {
     showToast(error.message);
@@ -1889,7 +1996,7 @@ function renderFriendRequests() {
   const requestsList = $("#friendRequestsList");
   const requestsCount = $("#friendRequestsCount");
   const badge = $("#friendRequestTabBadge");
-  const requestCountText = `${friendRequests.length} ${friendRequests.length === 1 ? "request" : "requests"}`;
+  const requestCountText = `${friendRequests.length} incoming / ${sentFriendRequests.length} sent`;
 
   if (notificationsCount) notificationsCount.textContent = String(friendRequests.length);
   if (requestsCount) requestsCount.textContent = requestCountText;
@@ -1907,7 +2014,13 @@ function renderFriendRequests() {
     emptyNotifications.className = "friend-empty";
     emptyNotifications.textContent = "No notifications yet.";
     notificationsList?.append(emptyNotifications);
+  } else {
+    friendRequests.forEach((request) => {
+      notificationsList?.append(createNotificationCard(request));
+    });
+  }
 
+  if (!friendRequests.length && !sentFriendRequests.length) {
     const emptyRequests = document.createElement("p");
     emptyRequests.className = "friend-empty";
     emptyRequests.textContent = "No friend requests yet.";
@@ -1915,10 +2028,31 @@ function renderFriendRequests() {
     return;
   }
 
-  friendRequests.forEach((request) => {
-    notificationsList?.append(createNotificationCard(request));
-    requestsList?.append(createFriendRequestCard(request));
-  });
+  if (friendRequests.length) {
+    const incomingSection = document.createElement("section");
+    incomingSection.className = "request-section";
+    const incomingTitle = document.createElement("h3");
+    incomingTitle.className = "request-section-title";
+    incomingTitle.textContent = "Incoming";
+    incomingSection.append(incomingTitle);
+    friendRequests.forEach((request) => {
+      incomingSection.append(createFriendRequestCard(request));
+    });
+    requestsList?.append(incomingSection);
+  }
+
+  if (sentFriendRequests.length) {
+    const sentSection = document.createElement("section");
+    sentSection.className = "request-section";
+    const sentTitle = document.createElement("h3");
+    sentTitle.className = "request-section-title";
+    sentTitle.textContent = "Sent by you";
+    sentSection.append(sentTitle);
+    sentFriendRequests.forEach((request) => {
+      sentSection.append(createSentFriendRequestCard(request));
+    });
+    requestsList?.append(sentSection);
+  }
 }
 
 function setFriends(nextFriends, { persist = true } = {}) {
@@ -1933,18 +2067,39 @@ function setFriendRequests(nextRequests, { persist = true } = {}) {
   if (persist) saveFriendRequestsLocal();
 }
 
+function setSentFriendRequests(nextRequests, { persist = true } = {}) {
+  sentFriendRequests = sanitizeSentFriendRequests(nextRequests);
+  renderFriendRequests();
+  if (persist) saveSentFriendRequestsLocal();
+}
+
 async function refreshFriendState() {
   if (!sessionToken || isPublicProfilePage) return;
   try {
     const response = await fetch("/api/my-profile", { headers: authHeaders() });
     if (!response.ok) return;
     const data = await response.json();
-    setFriends(data.friends?.length ? data.friends : friends, { persist: false });
+    setFriends(data.friends || [], { persist: false });
     setFriendRequests(data.friendRequests || [], { persist: false });
+    setSentFriendRequests(data.sentFriendRequests || [], { persist: false });
   } catch {
     // The dashboard keeps the last loaded friend state if refresh fails.
   }
 }
+
+const stopFriendRefreshLoop = () => {
+  if (friendRefreshTimer) {
+    clearInterval(friendRefreshTimer);
+    friendRefreshTimer = 0;
+  }
+};
+
+const startFriendRefreshLoop = () => {
+  stopFriendRefreshLoop();
+  if (!sessionToken || isPublicProfilePage) return;
+  refreshFriendState();
+  friendRefreshTimer = setInterval(refreshFriendState, 10000);
+};
 
 const shortId = (value) => {
   if (!value) return "Hidden until sign in";
@@ -1975,6 +2130,9 @@ const updateAccountState = (data = {}) => {
   }
   if (!isPublicProfilePage && nextOwner && nextOwner !== previousOwner && !friendRequests.length) {
     setFriendRequests(loadFriendRequestsLocal(), { persist: false });
+  }
+  if (!isPublicProfilePage && nextOwner && nextOwner !== previousOwner && !sentFriendRequests.length) {
+    setSentFriendRequests(loadSentFriendRequestsLocal(), { persist: false });
   }
   updateSettingsDetails();
 };
@@ -2022,6 +2180,7 @@ auth.form.addEventListener("submit", (event) => {
 auth.loginButton.addEventListener("click", () => submitAuth("login"));
 
 const logoutUser = () => {
+  stopFriendRefreshLoop();
   sessionToken = "";
   localStorage.removeItem(sessionKey);
   accountState = {
@@ -2034,6 +2193,7 @@ const logoutUser = () => {
   };
   setFriends([], { persist: false });
   setFriendRequests([], { persist: false });
+  setSentFriendRequests([], { persist: false });
   updateSettingsDetails();
   setDashboardSection("home");
   showAuth();
@@ -2042,6 +2202,16 @@ const logoutUser = () => {
 
 auth.logoutButton.addEventListener("click", logoutUser);
 auth.accountLogoutButton.addEventListener("click", logoutUser);
+
+$("#friendRemoveCancel").addEventListener("click", closeFriendRemoveDialog);
+$("#friendRemoveConfirm").addEventListener("click", async () => {
+  const friend = pendingFriendRemoval;
+  closeFriendRemoveDialog();
+  if (friend) await removeFriend(friend);
+});
+$("#friendRemoveDialog").addEventListener("click", (event) => {
+  if (event.target.id === "friendRemoveDialog") closeFriendRemoveDialog();
+});
 
 dashboardButtons.forEach((button) => {
   button.addEventListener("click", () => {
@@ -2216,6 +2386,7 @@ $("#friendForm").addEventListener("submit", async (event) => {
 
     friendInputs.name.value = "";
     friendInputs.link.value = "";
+    setSentFriendRequests(result.sentFriendRequests || sentFriendRequests, { persist: false });
     showToast(`Friend request sent to @${result.targetHandle || friend.handle}`);
   } catch (error) {
     showToast(error.message);
@@ -2604,6 +2775,10 @@ $("#previewButton").addEventListener("click", () => enterPreview(false));
 $("#exitPreview").addEventListener("click", exitPreview);
 
 document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !$("#friendRemoveDialog").hidden) {
+    closeFriendRemoveDialog();
+    return;
+  }
   if (isPublicProfilePage) return;
   if (event.key === "Escape" && document.body.classList.contains("previewing")) {
     exitPreview();
@@ -2625,6 +2800,7 @@ const collectProfile = () => ({
   sparkleEffect: inputs.sparkleEffect.value || "none",
   friends,
   friendRequests,
+  sentFriendRequests,
   socialLinks: collectSocialLinks(),
   avatarData: mediaState.avatarData,
   avatarName: mediaState.avatarName,
@@ -2658,8 +2834,9 @@ const applyProfile = (data) => {
   $("#darkenVideoToggle").checked = data.darkVideo !== false;
   setCursorMode(data.cursorTrail === true || data.cursorTrail === "dot" ? "dot" : "normal");
   setSparkleEffect(data.sparkleEffect || "none");
-  setFriends(data.friends?.length ? data.friends : loadFriendsLocal(), { persist: false });
-  setFriendRequests(data.friendRequests || loadFriendRequestsLocal(), { persist: false });
+  setFriends(Array.isArray(data.friends) ? data.friends : loadFriendsLocal(), { persist: false });
+  setFriendRequests(Array.isArray(data.friendRequests) ? data.friendRequests : loadFriendRequestsLocal(), { persist: false });
+  setSentFriendRequests(Array.isArray(data.sentFriendRequests) ? data.sentFriendRequests : loadSentFriendRequestsLocal(), { persist: false });
 
   document.body.classList.toggle("compact", $("#compactToggle").checked);
   document.body.classList.toggle("no-motion", !$("#particlesToggle").checked);
@@ -2788,7 +2965,9 @@ async function bootApp() {
     setAuthMessage(`Signed in as ${data.email}`);
     await loadMyProfile();
     await finishLoadingIntoEditor();
+    startFriendRefreshLoop();
   } catch {
+    stopFriendRefreshLoop();
     sessionToken = "";
     localStorage.removeItem(sessionKey);
     document.body.classList.remove("loading");
