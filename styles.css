@@ -566,7 +566,7 @@ body.sidebar-collapsed .sidebar-brand-mark {
   min-height: calc(100vh - 2.5rem);
   place-items: center;
   border-radius: 8px;
-  background: #020204;
+  background: transparent;
 }
 
 .dashboard-games {
@@ -574,13 +574,13 @@ body.sidebar-collapsed .sidebar-brand-mark {
   overflow-y: auto;
   border-radius: 8px;
   padding: 1rem;
-  background: #020204;
+  background: transparent;
 }
 
 .dashboard-communities {
   min-height: calc(100vh - 2.5rem);
   border-radius: 8px;
-  background: #020204;
+  background: transparent;
 }
 
 .dashboard-settings {
@@ -589,7 +589,7 @@ body.sidebar-collapsed .sidebar-brand-mark {
   align-items: center;
   border-radius: 8px;
   padding: 1rem;
-  background: #020204;
+  background: transparent;
 }
 
 .dashboard-home h1 {
@@ -600,8 +600,8 @@ body.sidebar-collapsed .sidebar-brand-mark {
 
 .settings-shell {
   display: grid;
-  width: min(100%, 42rem);
-  gap: 1rem;
+  width: min(100%, 76rem);
+  gap: 1.15rem;
   margin: 0 auto;
 }
 
@@ -636,12 +636,12 @@ body.sidebar-collapsed .sidebar-brand-mark {
 
 .settings-row {
   display: grid;
-  grid-template-columns: minmax(8rem, 0.7fr) minmax(0, 1fr);
-  gap: 1rem;
+  grid-template-columns: minmax(11rem, 0.45fr) minmax(0, 1fr);
+  gap: 1.5rem;
   align-items: center;
-  min-height: 3.65rem;
+  min-height: 4.35rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 0.85rem 1rem;
+  padding: 1rem 1.25rem;
 }
 
 .settings-row:last-child {
@@ -685,15 +685,15 @@ body.sidebar-collapsed .sidebar-brand-mark {
 }
 
 .games-library {
-  width: min(100%, 62rem);
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
   min-width: 0;
 }
 
 .games-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: 1.25rem;
   align-items: start;
 }
 
@@ -711,7 +711,7 @@ body.sidebar-collapsed .sidebar-brand-mark {
 }
 
 .game-card.expanded {
-  width: min(100%, 50rem);
+  width: min(100%, 72rem);
   margin: 0 auto;
   animation: gameExpand 460ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
@@ -964,7 +964,7 @@ body.sidebar-collapsed .sidebar-brand-mark {
 }
 
 .game-expanded:not(.coming-soon-game) {
-  grid-template-columns: minmax(0, 30rem) minmax(12rem, 16rem);
+  grid-template-columns: minmax(0, 38rem) minmax(14rem, 20rem);
   align-items: start;
   justify-content: center;
 }
@@ -1057,7 +1057,7 @@ body.sidebar-collapsed .sidebar-brand-mark {
 .wordle-game,
 .crossy-game {
   display: grid;
-  width: min(100%, 30rem);
+  width: min(100%, 36rem);
   gap: 1rem;
   place-self: center;
 }
@@ -1109,7 +1109,7 @@ body.sidebar-collapsed .sidebar-brand-mark {
 .snake-board,
 .crossy-board {
   position: relative;
-  width: min(100%, 26rem);
+  width: min(100%, 32rem);
   justify-self: center;
 }
 
@@ -1191,7 +1191,7 @@ body.sidebar-collapsed .sidebar-brand-mark {
 
 .click-rush-board {
   position: relative;
-  width: min(100%, 26rem);
+  width: min(100%, 32rem);
   aspect-ratio: 1;
   justify-self: center;
   overflow: hidden;
