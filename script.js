@@ -2333,7 +2333,7 @@ const runPublicLoopTransition = async () => {
     }
   }
 
-  await wait(1120);
+  await wait(1000);
   document.body.classList.add("public-loop-revealing");
 
   if (audio.src && shouldRestartAudio) {
