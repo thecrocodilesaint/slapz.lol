@@ -160,6 +160,7 @@ body.public-profile .music-player {
 
 body.public-profile .shell {
   grid-template-columns: minmax(18rem, 30rem);
+  justify-content: center;
 }
 
 body.public-profile .dashboard-bio {
@@ -245,17 +246,18 @@ body.video-dark .backdrop-shade {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(12rem, 15rem) minmax(0, 64rem);
+  grid-template-columns: clamp(13rem, 14vw, 16rem) minmax(0, 1fr);
   gap: 1.25rem;
   align-items: stretch;
-  justify-content: center;
+  justify-content: stretch;
+  width: 100%;
   min-height: 100vh;
   padding: 1.25rem;
   transition: grid-template-columns 220ms ease;
 }
 
 body.sidebar-collapsed:not(.public-profile):not(.previewing) .shell {
-  grid-template-columns: 4.75rem minmax(0, 72rem);
+  grid-template-columns: 4.75rem minmax(0, 1fr);
 }
 
 .dashboard-quick-controls {
@@ -1472,6 +1474,7 @@ body[data-account-section="settings"]:not(.public-profile) .background-video {
 
 body.previewing .shell {
   grid-template-columns: minmax(18rem, 30rem);
+  justify-content: center;
 }
 
 body.previewing .account-sidebar,
