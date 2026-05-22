@@ -2039,6 +2039,113 @@ const dataUrlToObjectUrl = (dataUrl) => {
   return URL.createObjectURL(new Blob([bytes], { type: mime }));
 };
 
+let publicLoopTransitionRunning = false;
+let publicLoopFadeStarted = false;
+let publicLoopAudioFrame = 0;
+
+const preferredMusicVolume = () => Math.max(0, Math.min(1, Number($("#volumeInput").value) / 100 || 0.55));
+
+const cancelPublicAudioFade = () => {
+  if (publicLoopAudioFrame) {
+    cancelAnimationFrame(publicLoopAudioFrame);
+    publicLoopAudioFrame = 0;
+  }
+};
+
+const fadePublicMusicTo = (targetVolume, duration = 900) => {
+  const audio = $("#backgroundMusic");
+  if (!audio.src) return Promise.resolve();
+  cancelPublicAudioFade();
+
+  const startVolume = audio.volume;
+  const startedAt = performance.now();
+  const target = Math.max(0, Math.min(1, targetVolume));
+
+  return new Promise((resolve) => {
+    const tick = (now) => {
+      const progress = Math.min(1, (now - startedAt) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      audio.volume = startVolume + (target - startVolume) * eased;
+
+      if (progress < 1) {
+        publicLoopAudioFrame = requestAnimationFrame(tick);
+        return;
+      }
+
+      publicLoopAudioFrame = 0;
+      audio.volume = target;
+      resolve();
+    };
+
+    publicLoopAudioFrame = requestAnimationFrame(tick);
+  });
+};
+
+const resetPublicLoopTransition = () => {
+  publicLoopTransitionRunning = false;
+  publicLoopFadeStarted = false;
+  document.body.classList.remove("public-loop-transitioning", "public-loop-revealing");
+};
+
+const shouldRunPublicLoopTransition = () => {
+  const video = $("#backgroundVideo");
+  return isPublicProfilePage && document.body.classList.contains("has-video") && Boolean(video.src);
+};
+
+const runPublicLoopTransition = async () => {
+  if (!shouldRunPublicLoopTransition() || publicLoopTransitionRunning) return;
+
+  const video = $("#backgroundVideo");
+  const audio = $("#backgroundMusic");
+  const targetVolume = preferredMusicVolume();
+  const shouldRestartAudio = Boolean(audio.src && (!audio.paused || audio.currentTime > 0));
+
+  publicLoopTransitionRunning = true;
+  publicLoopFadeStarted = true;
+  fadePublicMusicTo(0, 180);
+
+  document.body.classList.remove("public-loop-revealing");
+  document.body.classList.add("public-loop-transitioning");
+
+  video.pause();
+  video.currentTime = 0;
+  video.play().catch(() => {});
+
+  if (audio.src) {
+    audio.pause();
+    audio.currentTime = 0;
+    audio.volume = 0;
+    if (shouldRestartAudio) {
+      audio.play().catch(() => {});
+    }
+  }
+
+  await wait(1120);
+  document.body.classList.add("public-loop-revealing");
+
+  if (audio.src && shouldRestartAudio) {
+    fadePublicMusicTo(targetVolume, 900);
+  }
+
+  await wait(860);
+  document.body.classList.remove("public-loop-transitioning", "public-loop-revealing");
+  publicLoopTransitionRunning = false;
+  publicLoopFadeStarted = false;
+  if (audio.src && shouldRestartAudio) audio.volume = targetVolume;
+};
+
+const handlePublicVideoTimeUpdate = () => {
+  const video = $("#backgroundVideo");
+  if (!shouldRunPublicLoopTransition() || publicLoopFadeStarted || publicLoopTransitionRunning) return;
+  if (!Number.isFinite(video.duration) || video.duration <= 1.5) return;
+
+  const fadeLead = Math.min(1.35, Math.max(0.55, video.duration * 0.12));
+  if (video.duration - video.currentTime <= fadeLead) {
+    publicLoopFadeStarted = true;
+    fadePublicMusicTo(0, fadeLead * 1000);
+  }
+};
+
 const setAvatarSource = (src, name = "") => {
   const avatar = $("#avatar");
   avatar.src =
@@ -2066,6 +2173,7 @@ $("#avatarInput").addEventListener("change", async (event) => {
 const setBackgroundSource = (src, name = "", type = "") => {
   const video = $("#backgroundVideo");
   const image = $("#backgroundImage");
+  resetPublicLoopTransition();
   video.pause();
   video.removeAttribute("src");
   image.style.backgroundImage = "";
@@ -2085,9 +2193,20 @@ const setBackgroundSource = (src, name = "", type = "") => {
   }
 
   video.src = src;
+  video.loop = !isPublicProfilePage;
   video.play().catch(() => {});
   document.body.classList.add("has-video");
 };
+
+$("#backgroundVideo").addEventListener("loadedmetadata", () => {
+  $("#backgroundVideo").loop = !isPublicProfilePage;
+  publicLoopFadeStarted = false;
+});
+
+$("#backgroundVideo").addEventListener("timeupdate", handlePublicVideoTimeUpdate);
+$("#backgroundVideo").addEventListener("ended", () => {
+  runPublicLoopTransition();
+});
 
 const setMusicSource = (src, name = "") => {
   const audio = $("#backgroundMusic");
