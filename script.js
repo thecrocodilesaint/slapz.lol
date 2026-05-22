@@ -26,6 +26,11 @@ const socialInputs = {
   github: $("#githubInput"),
 };
 
+const friendInputs = {
+  name: $("#friendNameInput"),
+  link: $("#friendLinkInput"),
+};
+
 const auth = {
   screen: $("#authScreen"),
   form: $("#authForm"),
@@ -73,6 +78,7 @@ let accountState = {
   profilePath: "",
   profileUrl: "",
 };
+let friends = [];
 
 const mediaState = {
   avatarData: "",
@@ -1615,6 +1621,156 @@ const updatePublicLink = () => {
   $("#publicLink").textContent = url;
 };
 
+const friendsStorageKey = () => {
+  const owner = accountState.userId || accountState.email || "guest";
+  return `funlol-friends:${owner}`;
+};
+
+const friendUrlFor = (value) => {
+  const raw = value.trim();
+  if (!raw) return "";
+  if (isFullUrl(raw)) return raw.startsWith("//") ? `https:${raw}` : raw;
+  if (raw.startsWith("/u/")) return raw;
+  const handle = cleanHandle(raw);
+  return handle ? `/u/${handle}` : raw;
+};
+
+const friendHandleFor = (value) => {
+  const raw = value.trim();
+  if (!raw) return "";
+  try {
+    const url = raw.startsWith("http") ? new URL(raw) : new URL(raw, location.origin);
+    const match = url.pathname.match(/^\/u\/([^/]+)/);
+    if (match) return cleanHandle(decodeURIComponent(match[1]));
+  } catch {
+    // Fall through to plain handle cleanup.
+  }
+  return cleanHandle(raw);
+};
+
+const makeFriendId = () => (crypto.randomUUID ? crypto.randomUUID() : `friend-${Date.now()}-${Math.random()}`);
+
+const sanitizeFriend = (friend) => {
+  const rawName = String(friend?.name || "").trim().slice(0, 32);
+  const rawLink = String(friend?.link || friend?.url || friend?.handle || "").trim();
+  const handle = friendHandleFor(rawLink);
+  const link = friendUrlFor(rawLink || handle);
+  const name = rawName || (handle ? `@${handle}` : "Friend");
+
+  if (!link && !handle) return null;
+  return {
+    id: friend?.id || makeFriendId(),
+    name,
+    handle,
+    link,
+  };
+};
+
+const sanitizeFriends = (items = []) =>
+  items
+    .map(sanitizeFriend)
+    .filter(Boolean)
+    .filter((friend, index, list) => list.findIndex((item) => item.link === friend.link) === index)
+    .slice(0, 24);
+
+const saveFriendsLocal = () => {
+  if (isPublicProfilePage) return;
+  localStorage.setItem(friendsStorageKey(), JSON.stringify(friends));
+};
+
+const loadFriendsLocal = () => {
+  if (isPublicProfilePage) return [];
+  try {
+    return sanitizeFriends(JSON.parse(localStorage.getItem(friendsStorageKey()) || "[]"));
+  } catch {
+    return [];
+  }
+};
+
+const friendInitials = (name) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("") || "F";
+
+const createFriendCard = (friend, { removable = false } = {}) => {
+  const card = document.createElement("article");
+  card.className = "friend-card";
+
+  const avatar = document.createElement("span");
+  avatar.className = "friend-avatar";
+  avatar.textContent = friendInitials(friend.name);
+  card.append(avatar);
+
+  const copy = document.createElement("div");
+  copy.className = "friend-copy";
+
+  const name = document.createElement("strong");
+  name.textContent = friend.name;
+  copy.append(name);
+
+  const link = document.createElement("a");
+  link.href = friend.link || (friend.handle ? `/u/${friend.handle}` : "#");
+  link.target = "_blank";
+  link.rel = "noreferrer";
+  link.textContent = friend.handle ? `@${friend.handle}` : friend.link;
+  copy.append(link);
+  card.append(copy);
+
+  if (removable) {
+    const removeButton = document.createElement("button");
+    removeButton.className = "friend-remove";
+    removeButton.type = "button";
+    removeButton.setAttribute("aria-label", `Remove ${friend.name}`);
+    removeButton.textContent = "Remove";
+    removeButton.addEventListener("click", () => {
+      setFriends(friends.filter((item) => item.id !== friend.id));
+    });
+    card.append(removeButton);
+  }
+
+  return card;
+};
+
+function renderFriends() {
+  const homeList = $("#homeFriendsList");
+  const communitiesList = $("#communitiesFriendsList");
+  const count = $("#friendsCount");
+  const friendCountText = `${friends.length} ${friends.length === 1 ? "friend" : "friends"}`;
+  if (count) count.textContent = friendCountText;
+
+  [homeList, communitiesList].forEach((list) => {
+    if (!list) return;
+    list.textContent = "";
+  });
+
+  if (!friends.length) {
+    const emptyHome = document.createElement("p");
+    emptyHome.className = "friend-empty";
+    emptyHome.textContent = "No friends added yet.";
+    homeList?.append(emptyHome);
+
+    const emptyCommunities = document.createElement("p");
+    emptyCommunities.className = "friend-empty";
+    emptyCommunities.textContent = "Add friends above and they will show here.";
+    communitiesList?.append(emptyCommunities);
+    return;
+  }
+
+  friends.forEach((friend) => {
+    homeList?.append(createFriendCard(friend));
+    communitiesList?.append(createFriendCard(friend, { removable: true }));
+  });
+}
+
+function setFriends(nextFriends, { persist = true } = {}) {
+  friends = sanitizeFriends(nextFriends);
+  renderFriends();
+  if (persist) saveFriendsLocal();
+}
+
 const shortId = (value) => {
   if (!value) return "Hidden until sign in";
   return value.length > 14 ? `${value.slice(0, 8)}...${value.slice(-4)}` : value;
@@ -1628,6 +1784,7 @@ const formatDate = (value) => {
 };
 
 const updateAccountState = (data = {}) => {
+  const previousOwner = accountState.userId || accountState.email;
   accountState = {
     ...accountState,
     email: data.email ?? accountState.email,
@@ -1637,6 +1794,10 @@ const updateAccountState = (data = {}) => {
     profilePath: data.profilePath ?? accountState.profilePath,
     profileUrl: data.profileUrl ?? accountState.profileUrl,
   };
+  const nextOwner = accountState.userId || accountState.email;
+  if (!isPublicProfilePage && nextOwner && nextOwner !== previousOwner && !friends.length) {
+    setFriends(loadFriendsLocal(), { persist: false });
+  }
   updateSettingsDetails();
 };
 
@@ -1693,6 +1854,7 @@ const logoutUser = () => {
     profilePath: "",
     profileUrl: "",
   };
+  setFriends([], { persist: false });
   updateSettingsDetails();
   setDashboardSection("home");
   showAuth();
@@ -1827,6 +1989,24 @@ const setSparkleEffect = (effect) => {
 
 document.querySelectorAll("[data-sparkle]").forEach((button) => {
   button.addEventListener("click", () => setSparkleEffect(button.dataset.sparkle));
+});
+
+$("#friendForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const friend = sanitizeFriend({
+    name: friendInputs.name.value,
+    link: friendInputs.link.value,
+  });
+
+  if (!friend) {
+    showToast("Add a profile handle or link first");
+    return;
+  }
+
+  setFriends([...friends, friend]);
+  friendInputs.name.value = "";
+  friendInputs.link.value = "";
+  showToast(`Added ${friend.name}`);
 });
 
 $("#copyLink").addEventListener("click", async () => {
@@ -2111,6 +2291,7 @@ const collectProfile = () => ({
   darkVideo: $("#darkenVideoToggle").checked,
   cursorTrail: inputs.cursorTrail.value === "dot",
   sparkleEffect: inputs.sparkleEffect.value || "none",
+  friends,
   socialLinks: collectSocialLinks(),
   avatarData: mediaState.avatarData,
   avatarName: mediaState.avatarName,
@@ -2144,6 +2325,7 @@ const applyProfile = (data) => {
   $("#darkenVideoToggle").checked = data.darkVideo !== false;
   setCursorMode(data.cursorTrail === true || data.cursorTrail === "dot" ? "dot" : "normal");
   setSparkleEffect(data.sparkleEffect || "none");
+  setFriends(data.friends?.length ? data.friends : loadFriendsLocal(), { persist: false });
 
   document.body.classList.toggle("compact", $("#compactToggle").checked);
   document.body.classList.toggle("no-motion", !$("#particlesToggle").checked);
@@ -2246,6 +2428,7 @@ async function loadMyProfile() {
 
 document.body.classList.add("video-dark");
 syncProfile();
+renderFriends();
 
 async function bootApp() {
   if (isPublicProfilePage) {

@@ -142,7 +142,16 @@
       </div>
 
       <section class="dashboard-panel dashboard-home" data-dashboard-panel="home" aria-label="Account home" hidden>
-        <h1>Welcome to fun.lol</h1>
+        <div class="dashboard-home-content">
+          <h1>Welcome to fun.lol</h1>
+          <section class="friends-widget glass" aria-label="Friends widget">
+            <div class="friends-widget-heading">
+              <p>Friends</p>
+              <button class="friend-jump-button" type="button" data-dashboard-target="communities">Manage</button>
+            </div>
+            <div class="friends-list mini" id="homeFriendsList" aria-live="polite"></div>
+          </section>
+        </div>
       </section>
 
       <section class="dashboard-panel dashboard-games" data-dashboard-panel="games" aria-label="Games" hidden>
@@ -342,7 +351,36 @@
         </div>
       </section>
 
-      <section class="dashboard-panel dashboard-communities" data-dashboard-panel="communities" aria-label="Communities" hidden></section>
+      <section class="dashboard-panel dashboard-communities" data-dashboard-panel="communities" aria-label="Communities" hidden>
+        <div class="communities-shell">
+          <section class="friend-manager glass" aria-label="Add friends">
+            <div class="friend-manager-heading">
+              <p>Communities</p>
+              <h1>Friends</h1>
+            </div>
+
+            <form class="friend-form" id="friendForm">
+              <label>
+                Friend name
+                <input id="friendNameInput" type="text" maxlength="32" placeholder="Display name" />
+              </label>
+              <label>
+                Profile handle or link
+                <input id="friendLinkInput" type="text" maxlength="120" placeholder="@friend or /u/friend" />
+              </label>
+              <button class="save-button" type="submit">Add friend</button>
+            </form>
+          </section>
+
+          <section class="friends-panel glass" aria-label="Your friends">
+            <div class="friends-panel-heading">
+              <p>Your friends</p>
+              <span id="friendsCount">0 friends</span>
+            </div>
+            <div class="friends-list" id="communitiesFriendsList" aria-live="polite"></div>
+          </section>
+        </div>
+      </section>
 
       <section class="dashboard-panel dashboard-settings" data-dashboard-panel="settings" aria-label="Account settings" hidden>
         <div class="settings-shell">

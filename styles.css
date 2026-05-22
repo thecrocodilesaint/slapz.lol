@@ -629,6 +629,218 @@ body.sidebar-collapsed .sidebar-brand-mark {
   font-size: clamp(3.2rem, 10vw, 7rem);
 }
 
+.dashboard-home-content {
+  display: grid;
+  width: min(100%, 72rem);
+  gap: 1.25rem;
+  place-items: center;
+}
+
+.friends-widget {
+  display: grid;
+  width: min(100%, 42rem);
+  gap: 0.85rem;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.friends-widget-heading,
+.friends-panel-heading {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.friends-widget-heading p,
+.friends-panel-heading p,
+.friend-manager-heading p {
+  color: var(--accent-2);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  text-shadow: 0 0 1rem color-mix(in srgb, var(--accent-2) 72%, transparent);
+}
+
+.friend-jump-button {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 900;
+  cursor: pointer;
+  text-transform: uppercase;
+  box-shadow: inset 0 0 1rem rgba(255, 255, 255, 0.035);
+}
+
+.communities-shell {
+  display: grid;
+  width: min(100%, 86rem);
+  gap: 1.25rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.friend-manager,
+.friends-panel {
+  display: grid;
+  gap: 1rem;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.friend-manager-heading {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.friend-manager-heading h1 {
+  font-size: clamp(3rem, 10vw, 6.25rem);
+}
+
+.friend-form {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) minmax(14rem, 1.2fr) auto;
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.friend-form label {
+  margin: 0;
+}
+
+.friend-form .save-button {
+  margin: 0;
+  padding-inline: 1rem;
+}
+
+.friends-panel-heading span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.friends-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: 0.8rem;
+}
+
+.friends-list.mini {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  max-height: 14rem;
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
+
+.friend-card {
+  display: grid;
+  grid-template-columns: 2.8rem minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: center;
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, rgba(255, 255, 255, 0.16));
+  border-radius: 8px;
+  padding: 0.75rem;
+  background:
+    radial-gradient(circle at 20% 0%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 10rem),
+    rgba(255, 255, 255, 0.045);
+  box-shadow:
+    0 0 1.15rem color-mix(in srgb, var(--accent) 10%, transparent),
+    inset 0 0 1rem rgba(255, 255, 255, 0.035);
+}
+
+.friends-list.mini .friend-card {
+  grid-template-columns: 2.45rem minmax(0, 1fr);
+  padding: 0.65rem;
+}
+
+.friend-avatar {
+  display: grid;
+  width: 2.8rem;
+  height: 2.8rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, rgba(255, 255, 255, 0.18));
+  border-radius: 50%;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+  font-weight: 950;
+  box-shadow:
+    0 0 1rem color-mix(in srgb, var(--accent) 18%, transparent),
+    inset 0 0 1rem rgba(255, 255, 255, 0.045);
+  text-shadow: 0 0 0.75rem color-mix(in srgb, var(--accent) 65%, transparent);
+}
+
+.friends-list.mini .friend-avatar {
+  width: 2.45rem;
+  height: 2.45rem;
+  font-size: 0.85rem;
+}
+
+.friend-copy {
+  display: grid;
+  min-width: 0;
+  gap: 0.15rem;
+}
+
+.friend-copy strong,
+.friend-copy a {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.friend-copy strong {
+  color: var(--text);
+  font-weight: 900;
+  text-shadow: 0 0 0.8rem color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.friend-copy a {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.friend-copy a:hover,
+.friend-copy a:focus-visible {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+.friend-remove {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.5rem 0.65rem;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.045);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 900;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.friend-remove:hover,
+.friend-remove:focus-visible {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--accent) 45%, rgba(255, 255, 255, 0.18));
+}
+
+.friend-empty {
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  padding: 1rem;
+  color: var(--muted);
+  font-weight: 800;
+  text-align: center;
+}
+
 .settings-shell {
   display: grid;
   width: min(100%, 76rem);
@@ -2467,6 +2679,38 @@ textarea:focus {
 
   .dashboard-home h1 {
     font-size: clamp(2.65rem, 18vw, 4.75rem);
+  }
+
+  .dashboard-home-content {
+    gap: 1rem;
+  }
+
+  .friends-widget,
+  .friend-manager,
+  .friends-panel {
+    padding: 0.85rem;
+  }
+
+  .communities-shell {
+    padding: 0.85rem;
+  }
+
+  .friend-form {
+    grid-template-columns: 1fr;
+  }
+
+  .friends-list,
+  .friends-list.mini {
+    grid-template-columns: 1fr;
+    max-height: none;
+  }
+
+  .friend-card {
+    grid-template-columns: 2.45rem minmax(0, 1fr);
+  }
+
+  .friend-remove {
+    grid-column: 1 / -1;
   }
 
   body.public-profile .dashboard-bio,
