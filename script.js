@@ -55,6 +55,8 @@ const sessionKey = "nightcard-session-token";
 const dashboardThemeKey = "funlol-dashboard-theme";
 const dashboardMuteKey = "funlol-dashboard-mute-outside-bio";
 const sidebarCollapsedKey = "funlol-sidebar-collapsed";
+const finePointerQuery = window.matchMedia ? window.matchMedia("(hover: hover) and (pointer: fine)") : null;
+const canUsePointerEffects = () => (finePointerQuery ? finePointerQuery.matches : true);
 let sessionToken = localStorage.getItem(sessionKey) || "";
 let loadingTimer = null;
 let loadingPercent = 8;
@@ -1744,6 +1746,8 @@ const attachMouseBoxEffect = (element, { lift = 1, tilt = 1 } = {}) => {
   if (!element) return;
 
   element.addEventListener("pointermove", (event) => {
+    if (!canUsePointerEffects() || event.pointerType !== "mouse") return;
+
     const rect = element.getBoundingClientRect();
     const x = (event.clientX - rect.left) / rect.width;
     const y = (event.clientY - rect.top) / rect.height;
@@ -2281,7 +2285,8 @@ let lastCursorY = 0;
 let cursorHasPosition = false;
 
 function applyCursorTrail(mode) {
-  activeCursorTrail = Boolean(mode);
+  activeCursorTrail = Boolean(mode) && canUsePointerEffects();
+  if (!activeCursorTrail) cursorHasPosition = false;
   document.body.classList.toggle("cursor-effect", activeCursorTrail);
   cursorDot.hidden = !activeCursorTrail || !cursorHasPosition;
   cursorTrailDots.forEach((dot) => {
@@ -2289,7 +2294,25 @@ function applyCursorTrail(mode) {
   });
 }
 
+const syncCursorForPointer = () => {
+  applyCursorTrail(inputs.cursorTrail.value === "dot");
+};
+
+if (finePointerQuery?.addEventListener) {
+  finePointerQuery.addEventListener("change", syncCursorForPointer);
+} else if (finePointerQuery?.addListener) {
+  finePointerQuery.addListener(syncCursorForPointer);
+}
+
 window.addEventListener("pointermove", (event) => {
+  if (!canUsePointerEffects() || event.pointerType !== "mouse") {
+    cursorDot.hidden = true;
+    cursorTrailDots.forEach((dot) => {
+      dot.node.hidden = true;
+    });
+    return;
+  }
+
   lastCursorX = event.clientX;
   lastCursorY = event.clientY;
   cursorHasPosition = true;
@@ -2312,9 +2335,9 @@ window.addEventListener("pointerleave", () => {
 });
 
 window.addEventListener("pointerenter", () => {
-  cursorDot.hidden = !activeCursorTrail;
+  cursorDot.hidden = !activeCursorTrail || !cursorHasPosition;
   cursorTrailDots.forEach((dot) => {
-    dot.node.hidden = !activeCursorTrail;
+    dot.node.hidden = !activeCursorTrail || !cursorHasPosition;
   });
 });
 
