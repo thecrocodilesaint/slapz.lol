@@ -66,6 +66,36 @@ body[data-theme="black"] {
   --panel: rgba(5, 5, 8, 0.34);
 }
 
+body[data-sparkle-effect="white"] {
+  --sparkle-1: #ffffff;
+  --sparkle-2: #dbeafe;
+  --sparkle-3: #f8fafc;
+}
+
+body[data-sparkle-effect="gold"] {
+  --sparkle-1: #ffd166;
+  --sparkle-2: #fff3a3;
+  --sparkle-3: #ff8f5f;
+}
+
+body[data-sparkle-effect="pink"] {
+  --sparkle-1: #ff7ac8;
+  --sparkle-2: #ffd1ef;
+  --sparkle-3: #ff4f8f;
+}
+
+body[data-sparkle-effect="aqua"] {
+  --sparkle-1: #54f4ff;
+  --sparkle-2: #c6fff8;
+  --sparkle-3: #5f9dff;
+}
+
+body[data-sparkle-effect="purple"] {
+  --sparkle-1: #bda2ff;
+  --sparkle-2: #f2e7ff;
+  --sparkle-3: #7c5cff;
+}
+
 body.no-motion #stars {
   display: none;
 }
@@ -1606,6 +1636,63 @@ h1 {
     0 0 3.4rem color-mix(in srgb, var(--accent-2) 34%, transparent);
 }
 
+#name {
+  position: relative;
+  display: inline-block;
+  isolation: isolate;
+}
+
+body[data-sparkle-effect]:not([data-sparkle-effect="none"]) #name::before,
+body[data-sparkle-effect]:not([data-sparkle-effect="none"]) #name::after {
+  position: absolute;
+  z-index: -1;
+  width: 0.16em;
+  height: 0.16em;
+  border-radius: 2px;
+  content: "";
+  background: var(--sparkle-1);
+  box-shadow:
+    1.3em 0.25em 0 0 var(--sparkle-2),
+    0.75em -0.28em 0 -0.03em var(--sparkle-3),
+    2.1em 0.75em 0 -0.04em var(--sparkle-1),
+    -0.65em 0.92em 0 -0.04em var(--sparkle-2);
+  filter:
+    drop-shadow(0 0 0.38rem var(--sparkle-1))
+    drop-shadow(0 0 0.8rem color-mix(in srgb, var(--sparkle-1) 62%, transparent));
+  opacity: 0.85;
+  pointer-events: none;
+  transform: rotate(45deg) scale(0.82);
+  animation: nameSparkle 1800ms ease-in-out infinite;
+}
+
+body[data-sparkle-effect]:not([data-sparkle-effect="none"]) #name::before {
+  top: 0.05em;
+  left: -0.12em;
+}
+
+body[data-sparkle-effect]:not([data-sparkle-effect="none"]) #name::after {
+  right: 0.1em;
+  bottom: 0.12em;
+  animation-delay: 650ms;
+  box-shadow:
+    -1.1em -0.12em 0 0 var(--sparkle-2),
+    -0.45em 0.65em 0 -0.03em var(--sparkle-1),
+    -2em 0.32em 0 -0.04em var(--sparkle-3),
+    0.55em -0.72em 0 -0.04em var(--sparkle-2);
+}
+
+@keyframes nameSparkle {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: rotate(45deg) scale(0.56);
+  }
+  42% {
+    opacity: 1;
+    transform: rotate(45deg) scale(1);
+  }
+}
+
 .uid {
   margin-top: 0.55rem;
   color: var(--muted);
@@ -2011,6 +2098,76 @@ textarea:focus {
 .theme-grid {
   display: flex;
   gap: 0.55rem;
+}
+
+.sparkle-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.sparkle-option {
+  position: relative;
+  min-height: 2.55rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.55rem 0.55rem 0.55rem 1.9rem;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.045);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: inset 0 0 1rem rgba(255, 255, 255, 0.035);
+}
+
+.sparkle-option::before {
+  position: absolute;
+  left: 0.7rem;
+  top: 50%;
+  width: 0.62rem;
+  height: 0.62rem;
+  border-radius: 2px;
+  content: "";
+  background: #525766;
+  box-shadow: 0 0 0.75rem rgba(255, 255, 255, 0.16);
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.sparkle-option.white::before {
+  background: #fff;
+  box-shadow: 0 0 0.95rem rgba(255, 255, 255, 0.78);
+}
+
+.sparkle-option.gold::before {
+  background: #ffd166;
+  box-shadow: 0 0 0.95rem rgba(255, 209, 102, 0.8);
+}
+
+.sparkle-option.pink::before {
+  background: #ff7ac8;
+  box-shadow: 0 0 0.95rem rgba(255, 122, 200, 0.8);
+}
+
+.sparkle-option.aqua::before {
+  background: #54f4ff;
+  box-shadow: 0 0 0.95rem rgba(84, 244, 255, 0.8);
+}
+
+.sparkle-option.purple::before {
+  background: #bda2ff;
+  box-shadow: 0 0 0.95rem rgba(189, 162, 255, 0.8);
+}
+
+.sparkle-option.active {
+  border-color: color-mix(in srgb, var(--accent) 55%, rgba(255, 255, 255, 0.18));
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow:
+    0 0 1.1rem color-mix(in srgb, var(--accent) 24%, transparent),
+    inset 0 0 1rem rgba(255, 255, 255, 0.055);
+  text-shadow: 0 0 0.7rem color-mix(in srgb, var(--accent) 62%, transparent);
 }
 
 .cursor-segment {

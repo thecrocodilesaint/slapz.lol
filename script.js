@@ -14,6 +14,7 @@ const inputs = {
   bio: $("#bioInput"),
   location: $("#locationInput"),
   cursorTrail: $("#cursorTrailInput"),
+  sparkleEffect: $("#sparkleEffectInput"),
 };
 
 const socialInputs = {
@@ -1811,6 +1812,23 @@ document.querySelectorAll(".cursor-option").forEach((button) => {
   button.addEventListener("click", () => setCursorMode(button.dataset.cursor));
 });
 
+const sparkleEffects = new Set(["none", "white", "gold", "pink", "aqua", "purple"]);
+
+const setSparkleEffect = (effect) => {
+  const nextEffect = sparkleEffects.has(effect) ? effect : "none";
+  inputs.sparkleEffect.value = nextEffect;
+  document.body.dataset.sparkleEffect = nextEffect;
+  document.querySelectorAll("[data-sparkle]").forEach((button) => {
+    const isActive = button.dataset.sparkle === nextEffect;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-checked", String(isActive));
+  });
+};
+
+document.querySelectorAll("[data-sparkle]").forEach((button) => {
+  button.addEventListener("click", () => setSparkleEffect(button.dataset.sparkle));
+});
+
 $("#copyLink").addEventListener("click", async () => {
   const handle = profile.handle.textContent.slice(1);
   const link = `${location.origin}/u/${handle}`;
@@ -2092,6 +2110,7 @@ const collectProfile = () => ({
   animatedBackground: $("#particlesToggle").checked,
   darkVideo: $("#darkenVideoToggle").checked,
   cursorTrail: inputs.cursorTrail.value === "dot",
+  sparkleEffect: inputs.sparkleEffect.value || "none",
   socialLinks: collectSocialLinks(),
   avatarData: mediaState.avatarData,
   avatarName: mediaState.avatarName,
@@ -2124,6 +2143,7 @@ const applyProfile = (data) => {
   $("#particlesToggle").checked = data.animatedBackground !== false;
   $("#darkenVideoToggle").checked = data.darkVideo !== false;
   setCursorMode(data.cursorTrail === true || data.cursorTrail === "dot" ? "dot" : "normal");
+  setSparkleEffect(data.sparkleEffect || "none");
 
   document.body.classList.toggle("compact", $("#compactToggle").checked);
   document.body.classList.toggle("no-motion", !$("#particlesToggle").checked);
