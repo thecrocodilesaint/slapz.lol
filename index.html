@@ -17,6 +17,30 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body data-theme="black">
+    <svg class="sidebar-symbols" aria-hidden="true" width="0" height="0" focusable="false">
+      <symbol id="sidebar-icon-user-round" viewBox="0 0 24 24">
+        <path d="M18 20a6 6 0 0 0-12 0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+        <circle cx="12" cy="10" r="4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="sidebar-icon-gamepad" viewBox="0 0 24 24">
+        <path d="M6 12h4M8 10v4M15 13h.01M18 11h.01" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M7 8h10a5 5 0 0 1 4 8l-1 1.5a2.5 2.5 0 0 1-4-.2L15 16H9l-1 1.3a2.5 2.5 0 0 1-4 .2L3 16a5 5 0 0 1 4-8Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="sidebar-icon-users-round" viewBox="0 0 24 24">
+        <path d="M16 20a5 5 0 0 0-10 0M19 18a4 4 0 0 0-3-3.9M6 14.1A4 4 0 0 0 3 18" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+        <circle cx="11" cy="9" r="3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M17 10a2.5 2.5 0 0 0 0-5M5 10a2.5 2.5 0 0 1 0-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="sidebar-icon-sliders" viewBox="0 0 24 24">
+        <path d="M4 6h7M15 6h5M4 12h12M20 12h0M4 18h5M13 18h7" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+        <circle cx="13" cy="6" r="2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+        <circle cx="18" cy="12" r="2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+        <circle cx="11" cy="18" r="2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+      <symbol id="sidebar-icon-log-out" viewBox="0 0 24 24">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+    </svg>
     <div id="backgroundImage" class="background-image" aria-hidden="true"></div>
     <video id="backgroundVideo" class="background-video" muted loop playsinline></video>
     <div class="backdrop-shade" aria-hidden="true"></div>
@@ -63,18 +87,46 @@
     <main class="shell" aria-label="Account dashboard">
       <aside class="account-sidebar glass" id="accountSidebar" aria-label="Account navigation">
         <div class="sidebar-head">
-          <button class="sidebar-brand" type="button" data-dashboard-target="home" data-short="F">fun.lol</button>
+          <button class="sidebar-brand" type="button" data-dashboard-target="home">
+            <span class="sidebar-brand-mark" aria-hidden="true">F</span>
+            <span class="sidebar-label">fun.lol</span>
+          </button>
           <button class="sidebar-collapse-button" id="sidebarCollapseButton" type="button" aria-controls="accountSidebar" aria-expanded="true" aria-label="Collapse sidebar">
             <span id="sidebarCollapseIcon" aria-hidden="true">&lt;</span>
           </button>
         </div>
         <nav class="account-nav">
-          <button class="account-nav-button active" type="button" data-dashboard-target="bio" data-short="B">Bio</button>
-          <button class="account-nav-button" type="button" data-dashboard-target="games" data-short="G">Games</button>
-          <button class="account-nav-button" type="button" data-dashboard-target="communities" data-short="C">Communities</button>
-          <button class="account-nav-button" type="button" data-dashboard-target="settings" data-short="S">Settings</button>
+          <button class="account-nav-button active" type="button" data-dashboard-target="bio">
+            <span class="sidebar-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><use href="#sidebar-icon-user-round"></use></svg>
+            </span>
+            <span class="sidebar-label">Bio</span>
+          </button>
+          <button class="account-nav-button" type="button" data-dashboard-target="games">
+            <span class="sidebar-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><use href="#sidebar-icon-gamepad"></use></svg>
+            </span>
+            <span class="sidebar-label">Games</span>
+          </button>
+          <button class="account-nav-button" type="button" data-dashboard-target="communities">
+            <span class="sidebar-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><use href="#sidebar-icon-users-round"></use></svg>
+            </span>
+            <span class="sidebar-label">Communities</span>
+          </button>
+          <button class="account-nav-button" type="button" data-dashboard-target="settings">
+            <span class="sidebar-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><use href="#sidebar-icon-sliders"></use></svg>
+            </span>
+            <span class="sidebar-label">Settings</span>
+          </button>
         </nav>
-        <button class="sidebar-logout" id="accountLogoutButton" type="button" data-short="X">Log out</button>
+        <button class="sidebar-logout" id="accountLogoutButton" type="button">
+          <span class="sidebar-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><use href="#sidebar-icon-log-out"></use></svg>
+          </span>
+          <span class="sidebar-label">Log out</span>
+        </button>
       </aside>
 
       <div class="dashboard-quick-controls glass" id="dashboardQuickControls" aria-label="Dashboard controls">

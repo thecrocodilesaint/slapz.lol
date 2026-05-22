@@ -234,6 +234,13 @@ body.video-dark .backdrop-shade {
   background: rgba(4, 5, 10, 0.58);
 }
 
+.sidebar-symbols {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
 .shell {
   position: relative;
   z-index: 1;
@@ -434,6 +441,10 @@ body.sidebar-collapsed .sidebar-head {
 }
 
 .sidebar-brand {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: center;
   min-height: 3.2rem;
   text-align: left;
   font-size: 1.35rem;
@@ -443,27 +454,64 @@ body.sidebar-collapsed .sidebar-head {
     0 0 1.6rem color-mix(in srgb, var(--accent) 42%, transparent);
 }
 
+.account-nav-button,
+.sidebar-logout {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.sidebar-icon,
+.sidebar-brand-mark {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.17);
+  border-radius: 8px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 0 0.85rem rgba(255, 255, 255, 0.045);
+}
+
+.sidebar-brand-mark {
+  font-size: 1rem;
+  font-weight: 950;
+}
+
+.sidebar-icon svg {
+  width: 1.18rem;
+  height: 1.18rem;
+  stroke-width: 2.2;
+  filter: drop-shadow(0 0 0.45rem rgba(255, 255, 255, 0.5));
+}
+
+.sidebar-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 body.sidebar-collapsed .sidebar-brand,
 body.sidebar-collapsed .account-nav-button,
 body.sidebar-collapsed .sidebar-logout {
   display: grid;
+  grid-template-columns: 1fr;
   min-height: 3rem;
   place-items: center;
   padding: 0;
-  font-size: 0;
   text-align: center;
 }
 
-body.sidebar-collapsed .sidebar-brand::before,
-body.sidebar-collapsed .account-nav-button::before,
-body.sidebar-collapsed .sidebar-logout::before {
-  content: attr(data-short);
-  font-size: 1rem;
-  font-weight: 900;
+body.sidebar-collapsed .sidebar-label {
+  display: none;
 }
 
-body.sidebar-collapsed .sidebar-brand::before {
-  font-size: 1.2rem;
+body.sidebar-collapsed .sidebar-icon,
+body.sidebar-collapsed .sidebar-brand-mark {
+  width: 2.15rem;
+  height: 2.15rem;
 }
 
 .account-nav {
@@ -488,6 +536,16 @@ body.sidebar-collapsed .sidebar-brand::before {
     0 0 1rem color-mix(in srgb, var(--accent) 18%, transparent),
     inset 0 0 1rem rgba(255, 255, 255, 0.045);
   text-shadow: 0 0 0.75rem color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+.account-nav-button.active .sidebar-icon,
+.account-nav-button:hover .sidebar-icon,
+.sidebar-logout:hover .sidebar-icon,
+.sidebar-brand:hover .sidebar-brand-mark {
+  border-color: color-mix(in srgb, var(--accent) 50%, rgba(255, 255, 255, 0.18));
+  box-shadow:
+    0 0 0.95rem color-mix(in srgb, var(--accent) 22%, transparent),
+    inset 0 0 0.85rem rgba(255, 255, 255, 0.055);
 }
 
 .sidebar-logout {
