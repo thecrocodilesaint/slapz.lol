@@ -275,6 +275,10 @@ function sanitizeThemeColor(color) {
   return /^#[0-9a-f]{6}$/i.test(value) ? value : "#f5f7fb";
 }
 
+function sanitizeChatText(text) {
+  return String(text || "").trim().replace(/\s+/g, " ").slice(0, 500);
+}
+
 function cleanIdList(items) {
   return [...new Set((Array.isArray(items) ? items : []).map((item) => String(item || "").trim()).filter(Boolean))];
 }
@@ -309,6 +313,17 @@ function normalizeTribe(tribe, ownerProfile) {
     memberIds,
     pendingInviteIds: cleanIdList(tribe?.pendingInviteIds),
     pendingJoinIds: cleanIdList(tribe?.pendingJoinIds),
+    messages: (Array.isArray(tribe?.messages) ? tribe.messages : [])
+      .map((message) => ({
+        id: String(message?.id || crypto.randomUUID()),
+        senderId: String(message?.senderId || ""),
+        senderDisplayName: String(message?.senderDisplayName || "Member").trim().slice(0, 32),
+        senderHandle: sanitizeHandle(message?.senderHandle),
+        text: sanitizeChatText(message?.text),
+        createdAt: message?.createdAt || now,
+      }))
+      .filter((message) => message.senderId && message.text)
+      .slice(-300),
     themeColor: sanitizeThemeColor(tribe?.themeColor),
     createdAt: tribe?.createdAt || now,
     updatedAt: tribe?.updatedAt || now,
@@ -340,9 +355,10 @@ function serializeTribe(tribe, ownerProfile, viewerProfile, profiles = []) {
     };
   });
   const viewerId = String(viewerProfile?.ownerUserId || "");
+  const { messages, ...safeTribe } = tribe;
 
   return {
-    ...tribe,
+    ...safeTribe,
     ownerDisplayName: requestDisplayName(ownerProfile),
     ownerHandle: sanitizeHandle(ownerProfile?.handle || tribe.ownerHandle),
     members,
@@ -350,6 +366,11 @@ function serializeTribe(tribe, ownerProfile, viewerProfile, profiles = []) {
     isMember: Boolean(viewerId && tribe.memberIds.includes(viewerId)),
     hasPendingJoin: Boolean(viewerId && tribe.pendingJoinIds.includes(viewerId)),
   };
+}
+
+function canAccessTribe(tribe, userId) {
+  const viewerId = String(userId || "");
+  return Boolean(viewerId && (tribe.ownerId === viewerId || tribe.memberIds.includes(viewerId)));
 }
 
 async function listTribeSummaries(viewerProfile) {
@@ -1189,6 +1210,69 @@ const server = http.createServer(async (req, res) => {
       await saveProfile(ownerProfile);
 
       sendJson(res, 201, await tribeStateFor(ownerProfile));
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+    }
+    return;
+  }
+
+  if ((req.method === "GET" || req.method === "POST") && url.pathname.startsWith("/api/tribes/") && url.pathname.endsWith("/messages")) {
+    try {
+      const authed = await getAuthedUser(req);
+      if (!authed) {
+        sendJson(res, 401, { error: "Sign in before opening tribe chats" });
+        return;
+      }
+
+      const viewerProfile = await getProfileByOwner(authed.userId);
+      if (!viewerProfile) {
+        sendJson(res, 404, { error: "Publish your profile before opening tribe chats" });
+        return;
+      }
+
+      const tribeId = decodeURIComponent(url.pathname.split("/")[3] || "");
+      const found = await findTribeById(tribeId);
+      if (!found) {
+        sendJson(res, 404, { error: "Tribe was not found" });
+        return;
+      }
+
+      const { ownerProfile, tribe, tribeIndex, tribes } = found;
+      if (!canAccessTribe(tribe, authed.userId)) {
+        sendJson(res, 403, { error: "Only tribe members can open this chat" });
+        return;
+      }
+
+      if (req.method === "GET") {
+        sendJson(res, 200, { messages: tribe.messages || [] });
+        return;
+      }
+
+      const body = JSON.parse((await readBody(req)) || "{}");
+      const text = sanitizeChatText(body.text);
+      if (!text) {
+        sendJson(res, 400, { error: "Write a message first" });
+        return;
+      }
+
+      const now = new Date().toISOString();
+      const message = {
+        id: crypto.randomUUID(),
+        senderId: authed.userId,
+        senderDisplayName: requestDisplayName(viewerProfile),
+        senderHandle: sanitizeHandle(viewerProfile.handle),
+        text,
+        createdAt: now,
+      };
+
+      tribe.messages = [...(Array.isArray(tribe.messages) ? tribe.messages : []), message].slice(-300);
+      tribe.updatedAt = now;
+      tribes[tribeIndex] = tribe;
+      ownerProfile.tribes = tribes;
+      ownerProfile.updatedAt = now;
+      await saveProfile(ownerProfile);
+
+      sendJson(res, 201, { messages: tribe.messages });
     } catch (error) {
       sendJson(res, 400, { error: error.message });
     }

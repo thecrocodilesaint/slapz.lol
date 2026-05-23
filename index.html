@@ -369,6 +369,7 @@
             <button class="communities-tab" type="button" data-community-tab="friends">Your Friends</button>
             <button class="communities-tab" type="button" data-community-tab="communities">Your Tribes</button>
             <button class="communities-tab" type="button" data-community-tab="join">Join a Tribe</button>
+            <button class="communities-tab" type="button" data-community-tab="chats">Your Tribe Chats</button>
             <button class="communities-tab" type="button" data-community-tab="requests">
               Friend Requests
               <span class="tab-badge" id="friendRequestTabBadge" hidden>0</span>
@@ -478,6 +479,27 @@
                 <div class="tribe-scroll-box compact" id="allTribesList" aria-live="polite"></div>
               </aside>
             </div>
+          </section>
+
+          <section class="community-panel communities-panel glass" data-community-panel="chats" aria-label="Your tribe chats" hidden>
+            <div class="friends-panel-heading">
+              <p>Your tribe chats</p>
+              <span id="tribeChatsCount">0 chats</span>
+            </div>
+
+            <div class="tribe-chat-grid" id="tribeChatGrid" aria-live="polite"></div>
+
+            <section class="tribe-chat-active" id="tribeChatActive" aria-label="Active tribe chat" hidden>
+              <div class="friends-panel-heading">
+                <p id="activeTribeChatName">Tribe chat</p>
+                <button class="friend-remove" id="exitTribeChatButton" type="button">Exit Chat</button>
+              </div>
+              <div class="tribe-chat-messages" id="tribeChatMessages" aria-live="polite"></div>
+              <form class="tribe-chat-form" id="tribeChatForm">
+                <input id="tribeChatInput" type="text" maxlength="500" placeholder="Message your tribe" autocomplete="off" />
+                <button class="save-button" type="submit">Send</button>
+              </form>
+            </section>
           </section>
 
           <section class="community-panel friends-panel glass" data-community-panel="requests" aria-label="Friend requests" hidden>
