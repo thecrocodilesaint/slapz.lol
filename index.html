@@ -134,6 +134,17 @@
         <button class="dashboard-mute-button" id="dashboardMuteButton" type="button" aria-pressed="false">
           Mute outside Bio
         </button>
+        <div class="dashboard-cursor-bar" role="group" aria-label="Dashboard pointer">
+          <div class="dashboard-cursor-mode" role="radiogroup" aria-label="Pointer style">
+            <button class="dashboard-cursor-button active" type="button" data-dashboard-cursor="normal" role="radio" aria-checked="true">Normal</button>
+            <button class="dashboard-cursor-button" type="button" data-dashboard-cursor="dot" role="radio" aria-checked="false">Dot</button>
+          </div>
+          <div class="dashboard-cursor-colors" role="group" aria-label="Pointer colour">
+            <button class="dashboard-cursor-color white active" type="button" data-cursor-color="white" aria-label="White pointer"></button>
+            <button class="dashboard-cursor-color blue" type="button" data-cursor-color="blue" aria-label="Blue pointer"></button>
+            <button class="dashboard-cursor-color pink" type="button" data-cursor-color="pink" aria-label="Pink pointer"></button>
+          </div>
+        </div>
         <div class="dashboard-theme-picker" role="group" aria-label="Dashboard theme">
           <button class="dashboard-swatch black active" type="button" data-dashboard-theme="black" aria-label="Black dashboard theme"></button>
           <button class="dashboard-swatch violet" type="button" data-dashboard-theme="violet" aria-label="Violet dashboard theme"></button>

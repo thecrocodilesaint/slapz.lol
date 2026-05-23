@@ -56,11 +56,15 @@ const settings = {
 const dashboardButtons = document.querySelectorAll("[data-dashboard-target]");
 const dashboardPanels = document.querySelectorAll("[data-dashboard-panel]");
 const dashboardThemeButtons = document.querySelectorAll("[data-dashboard-theme]");
+const dashboardCursorButtons = document.querySelectorAll("[data-dashboard-cursor]");
+const cursorColorButtons = document.querySelectorAll("[data-cursor-color]");
 
 const sessionKey = "nightcard-session-token";
 const dashboardThemeKey = "funlol-dashboard-theme";
 const dashboardMuteKey = "funlol-dashboard-mute-outside-bio";
 const sidebarCollapsedKey = "funlol-sidebar-collapsed";
+const dashboardCursorModeKey = "funlol-dashboard-cursor-mode";
+const cursorColorKey = "funlol-cursor-color";
 const finePointerQuery = window.matchMedia ? window.matchMedia("(hover: hover) and (pointer: fine)") : null;
 const canUsePointerEffects = () => (finePointerQuery ? finePointerQuery.matches : true);
 let sessionToken = localStorage.getItem(sessionKey) || "";
@@ -70,6 +74,7 @@ let profileTheme = document.body.dataset.theme || "black";
 let dashboardTheme = localStorage.getItem(dashboardThemeKey) || "black";
 let dashboardMusicMutedOutsideBio = localStorage.getItem(dashboardMuteKey) === "true";
 let sidebarCollapsed = localStorage.getItem(sidebarCollapsedKey) === "true";
+let cursorColor = localStorage.getItem(cursorColorKey) || "white";
 let accountState = {
   email: "",
   userId: "",
@@ -2887,23 +2892,54 @@ $("#darkenVideoToggle").addEventListener("change", (event) => {
 });
 
 inputs.cursorTrail.addEventListener("change", () => {
-  applyCursorTrail(inputs.cursorTrail.value === "dot");
+  setCursorMode(inputs.cursorTrail.value);
 });
+
+const cursorColors = new Set(["white", "blue", "pink"]);
+
+const syncCursorModeButtons = (mode) => {
+  document.querySelectorAll(".cursor-option").forEach((button) => {
+    const isActive = button.dataset.cursor === mode;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-checked", String(isActive));
+  });
+  dashboardCursorButtons.forEach((button) => {
+    const isActive = button.dataset.dashboardCursor === mode;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-checked", String(isActive));
+  });
+};
 
 const setCursorMode = (mode) => {
   const nextMode = mode === "dot" ? "dot" : "normal";
   inputs.cursorTrail.value = nextMode;
-  document.querySelectorAll(".cursor-option").forEach((button) => {
-    const isActive = button.dataset.cursor === nextMode;
-    button.classList.toggle("active", isActive);
-    button.setAttribute("aria-checked", String(isActive));
-  });
+  localStorage.setItem(dashboardCursorModeKey, nextMode);
+  syncCursorModeButtons(nextMode);
   applyCursorTrail(nextMode === "dot");
 };
 
 document.querySelectorAll(".cursor-option").forEach((button) => {
   button.addEventListener("click", () => setCursorMode(button.dataset.cursor));
 });
+
+dashboardCursorButtons.forEach((button) => {
+  button.addEventListener("click", () => setCursorMode(button.dataset.dashboardCursor));
+});
+
+const setCursorColor = (color) => {
+  cursorColor = cursorColors.has(color) ? color : "white";
+  document.body.dataset.cursorColor = cursorColor;
+  localStorage.setItem(cursorColorKey, cursorColor);
+  cursorColorButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.cursorColor === cursorColor);
+  });
+};
+
+cursorColorButtons.forEach((button) => {
+  button.addEventListener("click", () => setCursorColor(button.dataset.cursorColor));
+});
+
+setCursorColor(cursorColor);
 
 const sparkleEffects = new Set(["none", "white", "gold", "pink", "aqua", "purple"]);
 
@@ -3608,6 +3644,7 @@ const collectProfile = () => ({
   animatedBackground: $("#particlesToggle").checked,
   darkVideo: $("#darkenVideoToggle").checked,
   cursorTrail: inputs.cursorTrail.value === "dot",
+  cursorColor,
   sparkleEffect: inputs.sparkleEffect.value || "none",
   friends,
   friendRequests,
@@ -3644,6 +3681,7 @@ const applyProfile = (data) => {
   $("#particlesToggle").checked = data.animatedBackground !== false;
   $("#darkenVideoToggle").checked = data.darkVideo !== false;
   setCursorMode(data.cursorTrail === true || data.cursorTrail === "dot" ? "dot" : "normal");
+  setCursorColor(data.cursorColor || cursorColor || "white");
   setSparkleEffect(data.sparkleEffect || "none");
   setFriends(Array.isArray(data.friends) ? data.friends : loadFriendsLocal(), { persist: false });
   setFriendRequests(Array.isArray(data.friendRequests) ? data.friendRequests : loadFriendRequestsLocal(), { persist: false });
@@ -3829,6 +3867,8 @@ function applyCursorTrail(mode) {
 const syncCursorForPointer = () => {
   applyCursorTrail(inputs.cursorTrail.value === "dot");
 };
+
+setCursorMode(localStorage.getItem(dashboardCursorModeKey) || inputs.cursorTrail.value || "normal");
 
 if (finePointerQuery?.addEventListener) {
   finePointerQuery.addEventListener("change", syncCursorForPointer);
