@@ -368,6 +368,7 @@
             <button class="communities-tab active" type="button" data-community-tab="add">Add Friends</button>
             <button class="communities-tab" type="button" data-community-tab="friends">Your Friends</button>
             <button class="communities-tab" type="button" data-community-tab="communities">Your Tribes</button>
+            <button class="communities-tab" type="button" data-community-tab="join">Join a Tribe</button>
             <button class="communities-tab" type="button" data-community-tab="requests">
               Friend Requests
               <span class="tab-badge" id="friendRequestTabBadge" hidden>0</span>
@@ -402,11 +403,81 @@
           </section>
 
           <section class="community-panel communities-panel glass" data-community-panel="communities" aria-label="Your tribes" hidden>
-            <div class="friends-panel-heading">
+            <div class="friends-panel-heading tribes-main-heading">
+              <button class="friend-jump-button" id="showCreateTribeButton" type="button">Create Tribe</button>
               <p>Your tribes</p>
-              <span>Coming soon</span>
             </div>
-            <p class="friend-empty">Tribes will show here later.</p>
+
+            <div class="tribe-workspace">
+              <div class="tribe-column">
+                <form class="tribe-create-form" id="tribeCreateForm" hidden>
+                  <label>
+                    Tribe name
+                    <input id="tribeNameInput" type="text" maxlength="36" placeholder="Enter tribe name" />
+                  </label>
+                  <label>
+                    Tribe colour
+                    <input id="tribeThemeInput" type="color" value="#f5f7fb" />
+                  </label>
+                  <div class="tribe-invite-field">
+                    <span>Invite friends</span>
+                    <div class="tribe-invite-list" id="tribeInviteFriendList" aria-live="polite"></div>
+                  </div>
+                  <button class="save-button" type="submit">Create tribe</button>
+                </form>
+
+                <div class="tribe-scroll-box" id="yourTribesList" aria-live="polite"></div>
+              </div>
+
+              <aside class="tribe-detail-panel" aria-label="Selected tribe details">
+                <div class="friends-panel-heading">
+                  <p id="selectedTribeName">Select a tribe</p>
+                  <span id="selectedTribeRole">No tribe selected</span>
+                </div>
+
+                <form class="tribe-manage-form" id="tribeManageForm" hidden>
+                  <label>
+                    Tribe name
+                    <input id="tribeEditNameInput" type="text" maxlength="36" />
+                  </label>
+                  <label>
+                    Tribe colour
+                    <input id="tribeEditThemeInput" type="color" value="#f5f7fb" />
+                  </label>
+                  <div class="tribe-action-row">
+                    <button class="save-button" type="submit">Save changes</button>
+                    <button class="friend-remove" id="deleteTribeButton" type="button">Delete tribe</button>
+                  </div>
+                </form>
+
+                <div class="tribe-member-list" id="tribeMemberList" aria-live="polite"></div>
+              </aside>
+            </div>
+          </section>
+
+          <section class="community-panel communities-panel glass" data-community-panel="join" aria-label="Join a tribe" hidden>
+            <div class="friends-panel-heading">
+              <p>Join a tribe</p>
+              <span id="allTribesCount">0 tribes</span>
+            </div>
+
+            <div class="tribe-workspace">
+              <div class="tribe-column">
+                <label class="tribe-search">
+                  Search tribes
+                  <input id="tribeSearchInput" type="search" placeholder="Search by tribe name" />
+                </label>
+                <div class="tribe-scroll-box" id="tribeSearchResults" aria-live="polite"></div>
+              </div>
+
+              <aside class="tribe-detail-panel" aria-label="All tribes">
+                <div class="friends-panel-heading">
+                  <p>All tribes</p>
+                  <span>Browse</span>
+                </div>
+                <div class="tribe-scroll-box compact" id="allTribesList" aria-live="polite"></div>
+              </aside>
+            </div>
           </section>
 
           <section class="community-panel friends-panel glass" data-community-panel="requests" aria-label="Friend requests" hidden>

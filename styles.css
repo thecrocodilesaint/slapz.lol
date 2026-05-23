@@ -776,6 +776,10 @@ body.sidebar-collapsed .sidebar-brand-mark {
   box-shadow: inset 0 0 1rem rgba(255, 255, 255, 0.035);
 }
 
+.tribes-main-heading {
+  justify-content: flex-start;
+}
+
 .communities-shell {
   display: grid;
   width: min(100%, 86rem);
@@ -1071,6 +1075,199 @@ body.sidebar-collapsed .sidebar-brand-mark {
   color: var(--muted);
   font-weight: 800;
   text-align: center;
+}
+
+.request-note {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.tribe-notification-card {
+  grid-template-columns: 2.45rem minmax(0, 1fr) auto;
+}
+
+.tribe-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.72fr);
+  gap: 1rem;
+  align-items: start;
+  min-height: 0;
+}
+
+.tribe-column,
+.tribe-detail-panel,
+.tribe-create-form,
+.tribe-manage-form {
+  display: grid;
+  min-width: 0;
+  gap: 0.85rem;
+}
+
+.tribe-detail-panel {
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, rgba(255, 255, 255, 0.16));
+  border-radius: 8px;
+  padding: 0.85rem;
+  background:
+    radial-gradient(circle at 90% 0%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 14rem),
+    rgba(255, 255, 255, 0.04);
+}
+
+.tribe-create-form,
+.tribe-manage-form {
+  border: 1px solid color-mix(in srgb, var(--accent-2) 38%, rgba(255, 255, 255, 0.14));
+  border-radius: 8px;
+  padding: 0.85rem;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.tribe-create-form label,
+.tribe-manage-form label,
+.tribe-search {
+  display: grid;
+  gap: 0.45rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.tribe-create-form input,
+.tribe-manage-form input,
+.tribe-search input {
+  min-height: 3rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.75rem 0.85rem;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+  font: inherit;
+  font-weight: 850;
+  outline: none;
+}
+
+.tribe-create-form input[type="color"],
+.tribe-manage-form input[type="color"] {
+  width: 100%;
+  padding: 0.3rem;
+  cursor: pointer;
+}
+
+.tribe-invite-field {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.tribe-invite-field > span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.tribe-invite-list {
+  display: grid;
+  gap: 0.45rem;
+  max-height: 10rem;
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
+
+.tribe-invite-option {
+  display: flex;
+  gap: 0.55rem;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.045);
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.tribe-scroll-box,
+.tribe-member-list {
+  display: grid;
+  gap: 0.7rem;
+  max-height: 22rem;
+  min-height: 12rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, rgba(255, 255, 255, 0.14));
+  border-radius: 8px;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.tribe-scroll-box.compact {
+  max-height: 26rem;
+}
+
+.tribe-card {
+  --tribe-color: var(--accent);
+  display: grid;
+  gap: 0.55rem;
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--tribe-color) 44%, rgba(255, 255, 255, 0.16));
+  border-radius: 8px;
+  padding: 0.75rem;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--tribe-color) 18%, transparent), transparent 10rem),
+    rgba(255, 255, 255, 0.045);
+  box-shadow:
+    0 0 1.1rem color-mix(in srgb, var(--tribe-color) 16%, transparent),
+    inset 0 0 1rem rgba(255, 255, 255, 0.035);
+}
+
+.tribe-card[role="button"] {
+  cursor: pointer;
+}
+
+.tribe-card.active,
+.tribe-card:hover,
+.tribe-card:focus-visible {
+  border-color: color-mix(in srgb, var(--tribe-color) 68%, rgba(255, 255, 255, 0.22));
+  box-shadow:
+    0 0 1.35rem color-mix(in srgb, var(--tribe-color) 28%, transparent),
+    inset 0 0 1.1rem rgba(255, 255, 255, 0.045);
+}
+
+.tribe-card-head {
+  display: grid;
+  grid-template-columns: 0.85rem minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.tribe-dot {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+  background: var(--tribe-color);
+  box-shadow: 0 0 1rem var(--tribe-color);
+}
+
+.tribe-meta {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.tribe-action-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.tribe-member-card {
+  grid-template-columns: 2.45rem minmax(0, 1fr) auto;
 }
 
 .confirm-overlay {
@@ -3025,6 +3222,20 @@ textarea:focus {
     grid-template-columns: 1fr;
   }
 
+  .tribe-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .tribe-scroll-box,
+  .tribe-scroll-box.compact,
+  .tribe-member-list {
+    max-height: 18rem;
+  }
+
+  .tribe-action-row {
+    grid-template-columns: 1fr;
+  }
+
   .friends-list,
   .friends-list.mini {
     grid-template-columns: 1fr;
@@ -3032,6 +3243,11 @@ textarea:focus {
   }
 
   .friend-card {
+    grid-template-columns: 2.45rem minmax(0, 1fr);
+  }
+
+  .tribe-notification-card,
+  .tribe-member-card {
     grid-template-columns: 2.45rem minmax(0, 1fr);
   }
 

@@ -185,7 +185,7 @@ function profileToRow(profile) {
 }
 
 function publicProfilePayload(profile) {
-  const { ownerToken, ownerUserId, friendRequests, sentFriendRequests, ...publicProfile } = profile;
+  const { ownerToken, ownerUserId, friendRequests, sentFriendRequests, tribes, tribeInvites, tribeJoinRequests, ...publicProfile } = profile;
   return publicProfile;
 }
 
@@ -264,6 +264,125 @@ function friendMatchesKey(friend, key) {
     (handleKey && handleFromFriendTarget(friend?.link) === handleKey) ||
     String(friend?.link || "") === rawKey
   );
+}
+
+function sanitizeTribeName(name) {
+  return String(name || "").trim().replace(/\s+/g, " ").slice(0, 36);
+}
+
+function sanitizeThemeColor(color) {
+  const value = String(color || "").trim();
+  return /^#[0-9a-f]{6}$/i.test(value) ? value : "#f5f7fb";
+}
+
+function cleanIdList(items) {
+  return [...new Set((Array.isArray(items) ? items : []).map((item) => String(item || "").trim()).filter(Boolean))];
+}
+
+function tribeMemberFromProfile(profile) {
+  const handle = sanitizeHandle(profile?.handle);
+  return {
+    userId: String(profile?.ownerUserId || ""),
+    displayName: requestDisplayName(profile),
+    handle,
+    link: requestLinkFor(handle),
+  };
+}
+
+function normalizeTribe(tribe, ownerProfile) {
+  const now = new Date().toISOString();
+  const ownerId = String(tribe?.ownerId || ownerProfile?.ownerUserId || "");
+  const rawMemberIds = Array.isArray(tribe?.memberIds)
+    ? tribe.memberIds
+    : Array.isArray(tribe?.members)
+      ? tribe.members.map((member) => member?.userId || member?.id)
+      : [];
+  const memberIds = cleanIdList(rawMemberIds);
+  if (ownerId && !memberIds.includes(ownerId)) memberIds.unshift(ownerId);
+
+  return {
+    tribeId: String(tribe?.tribeId || crypto.randomUUID()),
+    name: sanitizeTribeName(tribe?.name) || "Untitled tribe",
+    ownerId,
+    ownerDisplayName: requestDisplayName(ownerProfile) || String(tribe?.ownerDisplayName || "Owner").slice(0, 32),
+    ownerHandle: sanitizeHandle(ownerProfile?.handle || tribe?.ownerHandle),
+    memberIds,
+    pendingInviteIds: cleanIdList(tribe?.pendingInviteIds),
+    pendingJoinIds: cleanIdList(tribe?.pendingJoinIds),
+    themeColor: sanitizeThemeColor(tribe?.themeColor),
+    createdAt: tribe?.createdAt || now,
+    updatedAt: tribe?.updatedAt || now,
+  };
+}
+
+function normalizeTribesForProfile(profile) {
+  return (Array.isArray(profile?.tribes) ? profile.tribes : []).map((tribe) => normalizeTribe(tribe, profile));
+}
+
+function profileFriendHandles(profile) {
+  return new Set(
+    (Array.isArray(profile?.friends) ? profile.friends : [])
+      .map((friend) => sanitizeHandle(friend?.handle) || handleFromFriendTarget(friend?.link))
+      .filter(Boolean)
+  );
+}
+
+function serializeTribe(tribe, ownerProfile, viewerProfile, profiles = []) {
+  const profileByOwnerId = new Map(profiles.map((profile) => [String(profile.ownerUserId || ""), profile]));
+  const members = tribe.memberIds.map((memberId) => {
+    const memberProfile = profileByOwnerId.get(String(memberId)) || (String(memberId) === String(ownerProfile?.ownerUserId) ? ownerProfile : null);
+    if (memberProfile) return tribeMemberFromProfile(memberProfile);
+    return {
+      userId: String(memberId),
+      displayName: "Unknown member",
+      handle: "",
+      link: "",
+    };
+  });
+  const viewerId = String(viewerProfile?.ownerUserId || "");
+
+  return {
+    ...tribe,
+    ownerDisplayName: requestDisplayName(ownerProfile),
+    ownerHandle: sanitizeHandle(ownerProfile?.handle || tribe.ownerHandle),
+    members,
+    isOwner: Boolean(viewerId && viewerId === tribe.ownerId),
+    isMember: Boolean(viewerId && tribe.memberIds.includes(viewerId)),
+    hasPendingJoin: Boolean(viewerId && tribe.pendingJoinIds.includes(viewerId)),
+  };
+}
+
+async function listTribeSummaries(viewerProfile) {
+  const profiles = await listProfiles();
+  return profiles
+    .flatMap((profile) => normalizeTribesForProfile(profile).map((tribe) => serializeTribe(tribe, profile, viewerProfile, profiles)))
+    .sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")));
+}
+
+async function findTribeById(tribeId) {
+  const profiles = await listProfiles();
+  const cleanTribeId = String(tribeId || "");
+  for (const ownerProfile of profiles) {
+    const tribes = normalizeTribesForProfile(ownerProfile);
+    const tribeIndex = tribes.findIndex((tribe) => tribe.tribeId === cleanTribeId);
+    if (tribeIndex >= 0) {
+      return {
+        ownerProfile,
+        tribe: tribes[tribeIndex],
+        tribeIndex,
+        tribes,
+      };
+    }
+  }
+  return null;
+}
+
+async function tribeStateFor(profile) {
+  return {
+    tribes: await listTribeSummaries(profile),
+    tribeInvites: Array.isArray(profile?.tribeInvites) ? profile.tribeInvites : [],
+    tribeJoinRequests: Array.isArray(profile?.tribeJoinRequests) ? profile.tribeJoinRequests : [],
+  };
 }
 
 async function prepareProfileForSave(profile, existingProfile) {
@@ -969,6 +1088,420 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (req.method === "GET" && url.pathname === "/api/tribes") {
+    try {
+      const authed = await getAuthedUser(req);
+      if (!authed) {
+        sendJson(res, 401, { error: "Sign in before viewing tribes" });
+        return;
+      }
+
+      const viewerProfile = await getProfileByOwner(authed.userId);
+      if (!viewerProfile) {
+        sendJson(res, 404, { error: "Publish your profile before using tribes" });
+        return;
+      }
+
+      const state = await tribeStateFor(viewerProfile);
+      const search = String(url.searchParams.get("search") || "").trim().toLowerCase();
+      sendJson(res, 200, {
+        ...state,
+        tribes: search ? state.tribes.filter((tribe) => tribe.name.toLowerCase().includes(search)) : state.tribes,
+      });
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/tribes") {
+    try {
+      const authed = await getAuthedUser(req);
+      if (!authed) {
+        sendJson(res, 401, { error: "Sign in before creating tribes" });
+        return;
+      }
+
+      const body = JSON.parse((await readBody(req)) || "{}");
+      const ownerProfile = await getProfileByOwner(authed.userId);
+      if (!ownerProfile?.handle) {
+        sendJson(res, 400, { error: "Publish your profile before creating tribes" });
+        return;
+      }
+
+      const name = sanitizeTribeName(body.name);
+      if (!name) {
+        sendJson(res, 400, { error: "Enter a tribe name" });
+        return;
+      }
+
+      const now = new Date().toISOString();
+      const tribeId = crypto.randomUUID();
+      const tribe = normalizeTribe(
+        {
+          tribeId,
+          name,
+          ownerId: authed.userId,
+          ownerDisplayName: requestDisplayName(ownerProfile),
+          ownerHandle: ownerProfile.handle,
+          memberIds: [authed.userId],
+          pendingInviteIds: [],
+          pendingJoinIds: [],
+          themeColor: sanitizeThemeColor(body.themeColor),
+          createdAt: now,
+          updatedAt: now,
+        },
+        ownerProfile
+      );
+
+      const friendHandles = profileFriendHandles(ownerProfile);
+      const inviteHandles = [...new Set((Array.isArray(body.inviteHandles) ? body.inviteHandles : []).map(sanitizeHandle).filter(Boolean))]
+        .filter((handle) => handle !== ownerProfile.handle && friendHandles.has(handle))
+        .slice(0, 24);
+
+      for (const inviteHandle of inviteHandles) {
+        const targetProfile = await getProfile(inviteHandle);
+        if (!targetProfile?.ownerUserId || tribe.memberIds.includes(targetProfile.ownerUserId)) continue;
+        if (!tribe.pendingInviteIds.includes(targetProfile.ownerUserId)) tribe.pendingInviteIds.push(targetProfile.ownerUserId);
+
+        const currentInvites = Array.isArray(targetProfile.tribeInvites) ? targetProfile.tribeInvites : [];
+        const hasInvite = currentInvites.some((invite) => invite.tribeId === tribeId && invite.ownerId === authed.userId);
+        if (hasInvite) continue;
+
+        targetProfile.tribeInvites = [
+          ...currentInvites,
+          {
+            id: crypto.randomUUID(),
+            tribeId,
+            tribeName: tribe.name,
+            ownerId: authed.userId,
+            ownerDisplayName: requestDisplayName(ownerProfile),
+            ownerHandle: ownerProfile.handle,
+            createdAt: now,
+          },
+        ].slice(-40);
+        targetProfile.updatedAt = now;
+        await saveProfile(targetProfile);
+      }
+
+      ownerProfile.tribes = [...normalizeTribesForProfile(ownerProfile), tribe].slice(-50);
+      ownerProfile.updatedAt = now;
+      await saveProfile(ownerProfile);
+
+      sendJson(res, 201, await tribeStateFor(ownerProfile));
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname.startsWith("/api/tribe-invites/")) {
+    try {
+      const authed = await getAuthedUser(req);
+      if (!authed) {
+        sendJson(res, 401, { error: "Sign in before answering tribe invites" });
+        return;
+      }
+
+      const parts = url.pathname.split("/");
+      const inviteId = decodeURIComponent(parts[3] || "");
+      const action = parts[4] || "";
+      if (!["accept", "decline"].includes(action)) {
+        sendJson(res, 404, { error: "Not found" });
+        return;
+      }
+
+      const viewerProfile = await getProfileByOwner(authed.userId);
+      if (!viewerProfile) {
+        sendJson(res, 404, { error: "Publish your profile before answering tribe invites" });
+        return;
+      }
+
+      const invites = Array.isArray(viewerProfile.tribeInvites) ? viewerProfile.tribeInvites : [];
+      const invite = invites.find((item) => String(item.id) === inviteId);
+      if (!invite) {
+        sendJson(res, 404, { error: "Tribe invite was not found" });
+        return;
+      }
+
+      const found = await findTribeById(invite.tribeId);
+      if (found) {
+        const { ownerProfile, tribe, tribeIndex, tribes } = found;
+        tribe.pendingInviteIds = tribe.pendingInviteIds.filter((id) => id !== authed.userId);
+        if (action === "accept" && !tribe.memberIds.includes(authed.userId)) {
+          tribe.memberIds.push(authed.userId);
+        }
+        tribe.updatedAt = new Date().toISOString();
+        tribes[tribeIndex] = tribe;
+        ownerProfile.tribes = tribes;
+        ownerProfile.updatedAt = tribe.updatedAt;
+        await saveProfile(ownerProfile);
+      }
+
+      viewerProfile.tribeInvites = invites.filter((item) => String(item.id) !== inviteId);
+      viewerProfile.updatedAt = new Date().toISOString();
+      await saveProfile(viewerProfile);
+
+      sendJson(res, 200, await tribeStateFor(viewerProfile));
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname.startsWith("/api/tribes/") && url.pathname.endsWith("/join")) {
+    try {
+      const authed = await getAuthedUser(req);
+      if (!authed) {
+        sendJson(res, 401, { error: "Sign in before joining tribes" });
+        return;
+      }
+
+      const requesterProfile = await getProfileByOwner(authed.userId);
+      if (!requesterProfile?.handle) {
+        sendJson(res, 400, { error: "Publish your profile before joining tribes" });
+        return;
+      }
+
+      const tribeId = decodeURIComponent(url.pathname.split("/")[3] || "");
+      const found = await findTribeById(tribeId);
+      if (!found) {
+        sendJson(res, 404, { error: "Tribe was not found" });
+        return;
+      }
+
+      const { ownerProfile, tribe, tribeIndex, tribes } = found;
+      if (tribe.ownerId === authed.userId || tribe.memberIds.includes(authed.userId)) {
+        sendJson(res, 200, { ...(await tribeStateFor(requesterProfile)), status: "joined" });
+        return;
+      }
+
+      if (!tribe.pendingJoinIds.includes(authed.userId)) {
+        tribe.pendingJoinIds.push(authed.userId);
+        tribe.updatedAt = new Date().toISOString();
+        tribes[tribeIndex] = tribe;
+        ownerProfile.tribes = tribes;
+
+        const currentRequests = Array.isArray(ownerProfile.tribeJoinRequests) ? ownerProfile.tribeJoinRequests : [];
+        const hasRequest = currentRequests.some((request) => request.tribeId === tribe.tribeId && request.requesterId === authed.userId);
+        if (!hasRequest) {
+          ownerProfile.tribeJoinRequests = [
+            ...currentRequests,
+            {
+              id: crypto.randomUUID(),
+              tribeId: tribe.tribeId,
+              tribeName: tribe.name,
+              requesterId: authed.userId,
+              requesterDisplayName: requestDisplayName(requesterProfile),
+              requesterHandle: requesterProfile.handle,
+              createdAt: tribe.updatedAt,
+            },
+          ].slice(-40);
+        }
+        ownerProfile.updatedAt = tribe.updatedAt;
+        await saveProfile(ownerProfile);
+      }
+
+      sendJson(res, 200, { ...(await tribeStateFor(requesterProfile)), status: "requested" });
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname.startsWith("/api/tribe-join-requests/")) {
+    try {
+      const authed = await getAuthedUser(req);
+      if (!authed) {
+        sendJson(res, 401, { error: "Sign in before answering tribe requests" });
+        return;
+      }
+
+      const parts = url.pathname.split("/");
+      const requestId = decodeURIComponent(parts[3] || "");
+      const action = parts[4] || "";
+      if (!["accept", "decline"].includes(action)) {
+        sendJson(res, 404, { error: "Not found" });
+        return;
+      }
+
+      const ownerProfile = await getProfileByOwner(authed.userId);
+      if (!ownerProfile) {
+        sendJson(res, 404, { error: "Publish your profile before answering tribe requests" });
+        return;
+      }
+
+      const requests = Array.isArray(ownerProfile.tribeJoinRequests) ? ownerProfile.tribeJoinRequests : [];
+      const request = requests.find((item) => String(item.id) === requestId);
+      if (!request) {
+        sendJson(res, 404, { error: "Tribe request was not found" });
+        return;
+      }
+
+      const tribes = normalizeTribesForProfile(ownerProfile);
+      const tribeIndex = tribes.findIndex((tribe) => tribe.tribeId === request.tribeId);
+      if (tribeIndex >= 0) {
+        const tribe = tribes[tribeIndex];
+        tribe.pendingJoinIds = tribe.pendingJoinIds.filter((id) => id !== request.requesterId);
+        if (action === "accept" && !tribe.memberIds.includes(request.requesterId)) {
+          tribe.memberIds.push(request.requesterId);
+        }
+        tribe.updatedAt = new Date().toISOString();
+        tribes[tribeIndex] = tribe;
+        ownerProfile.tribes = tribes;
+      }
+
+      ownerProfile.tribeJoinRequests = requests.filter((item) => String(item.id) !== requestId);
+      ownerProfile.updatedAt = new Date().toISOString();
+      await saveProfile(ownerProfile);
+
+      sendJson(res, 200, await tribeStateFor(ownerProfile));
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+    }
+    return;
+  }
+
+  if (req.method === "PATCH" && url.pathname.startsWith("/api/tribes/")) {
+    try {
+      const authed = await getAuthedUser(req);
+      if (!authed) {
+        sendJson(res, 401, { error: "Sign in before editing tribes" });
+        return;
+      }
+
+      const tribeId = decodeURIComponent(url.pathname.split("/")[3] || "");
+      const body = JSON.parse((await readBody(req)) || "{}");
+      const ownerProfile = await getProfileByOwner(authed.userId);
+      if (!ownerProfile) {
+        sendJson(res, 404, { error: "Publish your profile before editing tribes" });
+        return;
+      }
+
+      const tribes = normalizeTribesForProfile(ownerProfile);
+      const tribeIndex = tribes.findIndex((tribe) => tribe.tribeId === tribeId && tribe.ownerId === authed.userId);
+      if (tribeIndex < 0) {
+        sendJson(res, 403, { error: "Only the tribe owner can edit this tribe" });
+        return;
+      }
+
+      const tribe = tribes[tribeIndex];
+      const nextName = sanitizeTribeName(body.name);
+      if (!nextName) {
+        sendJson(res, 400, { error: "Enter a tribe name" });
+        return;
+      }
+
+      tribe.name = nextName;
+      tribe.themeColor = sanitizeThemeColor(body.themeColor);
+      tribe.updatedAt = new Date().toISOString();
+      tribes[tribeIndex] = tribe;
+      ownerProfile.tribes = tribes;
+      ownerProfile.tribeJoinRequests = (Array.isArray(ownerProfile.tribeJoinRequests) ? ownerProfile.tribeJoinRequests : []).map((request) =>
+        request.tribeId === tribe.tribeId ? { ...request, tribeName: tribe.name } : request
+      );
+      ownerProfile.updatedAt = tribe.updatedAt;
+      await saveProfile(ownerProfile);
+
+      sendJson(res, 200, await tribeStateFor(ownerProfile));
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+    }
+    return;
+  }
+
+  if (req.method === "DELETE" && url.pathname.startsWith("/api/tribes/") && url.pathname.includes("/members/")) {
+    try {
+      const authed = await getAuthedUser(req);
+      if (!authed) {
+        sendJson(res, 401, { error: "Sign in before removing tribe members" });
+        return;
+      }
+
+      const parts = url.pathname.split("/");
+      const tribeId = decodeURIComponent(parts[3] || "");
+      const memberId = decodeURIComponent(parts[5] || "");
+      const ownerProfile = await getProfileByOwner(authed.userId);
+      if (!ownerProfile) {
+        sendJson(res, 404, { error: "Publish your profile before managing tribes" });
+        return;
+      }
+
+      const tribes = normalizeTribesForProfile(ownerProfile);
+      const tribeIndex = tribes.findIndex((tribe) => tribe.tribeId === tribeId && tribe.ownerId === authed.userId);
+      if (tribeIndex < 0) {
+        sendJson(res, 403, { error: "Only the tribe owner can remove members" });
+        return;
+      }
+
+      const tribe = tribes[tribeIndex];
+      if (!memberId || memberId === tribe.ownerId) {
+        sendJson(res, 400, { error: "The tribe owner cannot be removed" });
+        return;
+      }
+
+      tribe.memberIds = tribe.memberIds.filter((id) => id !== memberId);
+      tribe.updatedAt = new Date().toISOString();
+      tribes[tribeIndex] = tribe;
+      ownerProfile.tribes = tribes;
+      ownerProfile.updatedAt = tribe.updatedAt;
+      await saveProfile(ownerProfile);
+
+      sendJson(res, 200, await tribeStateFor(ownerProfile));
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+    }
+    return;
+  }
+
+  if (req.method === "DELETE" && url.pathname.startsWith("/api/tribes/")) {
+    try {
+      const authed = await getAuthedUser(req);
+      if (!authed) {
+        sendJson(res, 401, { error: "Sign in before deleting tribes" });
+        return;
+      }
+
+      const tribeId = decodeURIComponent(url.pathname.split("/")[3] || "");
+      const ownerProfile = await getProfileByOwner(authed.userId);
+      if (!ownerProfile) {
+        sendJson(res, 404, { error: "Publish your profile before deleting tribes" });
+        return;
+      }
+
+      const tribes = normalizeTribesForProfile(ownerProfile);
+      const tribe = tribes.find((item) => item.tribeId === tribeId && item.ownerId === authed.userId);
+      if (!tribe) {
+        sendJson(res, 403, { error: "Only the tribe owner can delete this tribe" });
+        return;
+      }
+
+      ownerProfile.tribes = tribes.filter((item) => item.tribeId !== tribeId);
+      ownerProfile.tribeJoinRequests = (Array.isArray(ownerProfile.tribeJoinRequests) ? ownerProfile.tribeJoinRequests : []).filter(
+        (request) => request.tribeId !== tribeId
+      );
+      ownerProfile.updatedAt = new Date().toISOString();
+      await saveProfile(ownerProfile);
+
+      const profiles = await listProfiles();
+      for (const profile of profiles) {
+        if (profile.ownerUserId === ownerProfile.ownerUserId) continue;
+        const invites = Array.isArray(profile.tribeInvites) ? profile.tribeInvites : [];
+        const nextInvites = invites.filter((invite) => invite.tribeId !== tribeId);
+        if (nextInvites.length !== invites.length) {
+          profile.tribeInvites = nextInvites;
+          profile.updatedAt = new Date().toISOString();
+          await saveProfile(profile);
+        }
+      }
+
+      sendJson(res, 200, await tribeStateFor(ownerProfile));
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+    }
+    return;
+  }
+
   if (req.method === "GET" && url.pathname === "/robots.txt") {
     sendText(
       res,
@@ -1069,6 +1602,9 @@ const server = http.createServer(async (req, res) => {
         friends: existingProfile ? existingProfile.friends || [] : Array.isArray(incoming.friends) ? incoming.friends : [],
         friendRequests: existingProfile ? existingProfile.friendRequests || [] : [],
         sentFriendRequests: existingProfile ? existingProfile.sentFriendRequests || [] : [],
+        tribes: existingProfile ? existingProfile.tribes || [] : Array.isArray(incoming.tribes) ? incoming.tribes : [],
+        tribeInvites: existingProfile ? existingProfile.tribeInvites || [] : [],
+        tribeJoinRequests: existingProfile ? existingProfile.tribeJoinRequests || [] : [],
         ownerUserId: authed.userId,
         views: Number(existingProfile?.views || incoming.views || 0),
         updatedAt: new Date().toISOString(),
