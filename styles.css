@@ -373,14 +373,13 @@ body.sidebar-collapsed:not(.public-profile):not(.previewing) .shell {
   z-index: 4;
   top: 1rem;
   left: 50%;
-  display: flex;
-  gap: 0.7rem;
-  align-items: center;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.65rem;
+  align-items: start;
+  justify-items: center;
   max-width: calc(100vw - 2rem);
-  border-radius: 8px;
-  padding: 0.55rem;
+  width: min(100%, 34rem);
   transform: translateX(-50%);
 }
 
@@ -389,6 +388,28 @@ body.public-profile .dashboard-quick-controls,
 body.previewing .dashboard-quick-controls,
 body.entry-locked .dashboard-quick-controls {
   display: none;
+}
+
+.dashboard-control-bar {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  gap: 0.65rem;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  border-radius: 8px;
+  padding: 0.5rem;
+}
+
+.dashboard-control-label {
+  flex: 0 0 auto;
+  color: var(--accent-2);
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  text-shadow: 0 0 0.8rem color-mix(in srgb, var(--accent-2) 68%, transparent);
 }
 
 .dashboard-mute-button {
@@ -418,11 +439,6 @@ body.entry-locked .dashboard-quick-controls {
   display: flex;
   gap: 0.45rem;
   align-items: center;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 0.25rem;
-  background: rgba(255, 255, 255, 0.045);
-  box-shadow: inset 0 0 1rem rgba(255, 255, 255, 0.035);
 }
 
 .dashboard-cursor-mode,
@@ -430,6 +446,7 @@ body.entry-locked .dashboard-quick-controls {
   display: flex;
   gap: 0.35rem;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .dashboard-cursor-button {
@@ -482,6 +499,9 @@ body.entry-locked .dashboard-quick-controls {
   display: flex;
   gap: 0.45rem;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
 }
 
 .dashboard-swatch {
@@ -3503,7 +3523,7 @@ textarea:focus {
     right: 0.75rem;
     bottom: 0.75rem;
     left: 0.75rem;
-    justify-content: center;
+    width: auto;
     transform: none;
   }
 
@@ -3514,8 +3534,6 @@ textarea:focus {
   }
 
   .dashboard-cursor-bar {
-    order: 3;
-    width: 100%;
     justify-content: center;
   }
 

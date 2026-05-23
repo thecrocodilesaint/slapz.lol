@@ -130,11 +130,9 @@
         </button>
       </aside>
 
-      <div class="dashboard-quick-controls glass" id="dashboardQuickControls" aria-label="Dashboard controls">
-        <button class="dashboard-mute-button" id="dashboardMuteButton" type="button" aria-pressed="false">
-          Mute outside Bio
-        </button>
-        <div class="dashboard-cursor-bar" role="group" aria-label="Dashboard pointer">
+      <div class="dashboard-quick-controls" id="dashboardQuickControls" aria-label="Dashboard controls">
+        <section class="dashboard-control-bar dashboard-cursor-bar glass" aria-label="Cursor settings">
+          <span class="dashboard-control-label">Cursor</span>
           <div class="dashboard-cursor-mode" role="radiogroup" aria-label="Pointer style">
             <button class="dashboard-cursor-button active" type="button" data-dashboard-cursor="normal" role="radio" aria-checked="true">Normal</button>
             <button class="dashboard-cursor-button" type="button" data-dashboard-cursor="dot" role="radio" aria-checked="false">Dot</button>
@@ -144,13 +142,22 @@
             <button class="dashboard-cursor-color blue" type="button" data-cursor-color="blue" aria-label="Blue pointer"></button>
             <button class="dashboard-cursor-color pink" type="button" data-cursor-color="pink" aria-label="Pink pointer"></button>
           </div>
-        </div>
-        <div class="dashboard-theme-picker" role="group" aria-label="Dashboard theme">
-          <button class="dashboard-swatch black active" type="button" data-dashboard-theme="black" aria-label="Black dashboard theme"></button>
-          <button class="dashboard-swatch violet" type="button" data-dashboard-theme="violet" aria-label="Violet dashboard theme"></button>
-          <button class="dashboard-swatch aqua" type="button" data-dashboard-theme="aqua" aria-label="Aqua dashboard theme"></button>
-          <button class="dashboard-swatch ember" type="button" data-dashboard-theme="ember" aria-label="Ember dashboard theme"></button>
-        </div>
+        </section>
+        <section class="dashboard-control-bar dashboard-theme-bar glass" aria-label="Theme settings">
+          <span class="dashboard-control-label">Theme</span>
+          <div class="dashboard-theme-picker" role="group" aria-label="Dashboard theme">
+            <button class="dashboard-swatch black active" type="button" data-dashboard-theme="black" aria-label="Black dashboard theme"></button>
+            <button class="dashboard-swatch violet" type="button" data-dashboard-theme="violet" aria-label="Violet dashboard theme"></button>
+            <button class="dashboard-swatch aqua" type="button" data-dashboard-theme="aqua" aria-label="Aqua dashboard theme"></button>
+            <button class="dashboard-swatch ember" type="button" data-dashboard-theme="ember" aria-label="Ember dashboard theme"></button>
+          </div>
+        </section>
+        <section class="dashboard-control-bar dashboard-mute-bar glass" aria-label="Mute outside Bio settings">
+          <span class="dashboard-control-label">Bio audio</span>
+          <button class="dashboard-mute-button" id="dashboardMuteButton" type="button" aria-pressed="false">
+            Mute outside Bio
+          </button>
+        </section>
       </div>
 
       <section class="dashboard-panel dashboard-home" data-dashboard-panel="home" aria-label="Account home" hidden>
