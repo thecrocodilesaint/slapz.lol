@@ -122,14 +122,14 @@ body.cursor-effect * {
   cursor: none;
 }
 
-body.landing-page .shell,
-body.landing-page .auth-screen,
-body.landing-page .preview-toolbar,
-body.landing-page .music-gate {
+body.landing-active .shell,
+body.landing-active .auth-screen,
+body.landing-active .preview-toolbar,
+body.landing-active .music-gate {
   display: none;
 }
 
-body.landing-page .landing-page {
+body.landing-active .landing-page {
   display: block;
 }
 

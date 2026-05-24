@@ -622,7 +622,7 @@ const publicHandleFromPath = () => {
 const isPublicProfilePage = Boolean(publicHandleFromPath());
 
 if (isPublicProfilePage) {
-  document.body.classList.remove("landing-page");
+  document.body.classList.remove("landing-active");
   document.body.classList.add("public-profile", "previewing");
   $("#previewToolbar").hidden = true;
 }
@@ -1561,7 +1561,7 @@ const playOwnerWelcome = async () => {
   if (isPublicProfilePage) return;
 
   hideEntryGate();
-  document.body.classList.remove("landing-page", "auth-required", "previewing", "welcome-leaving", "owner-entering");
+  document.body.classList.remove("landing-active", "auth-required", "previewing", "welcome-leaving", "owner-entering");
   document.body.classList.add("welcoming");
   await nextFrame();
   document.body.classList.remove("loading");
@@ -1583,7 +1583,7 @@ const finishLoadingIntoEditor = async () => {
 const showEditor = () => {
   clearInterval(loadingTimer);
   hideEntryGate();
-  document.body.classList.remove("landing-page", "auth-required", "loading", "welcoming", "welcome-leaving", "owner-entering");
+  document.body.classList.remove("landing-active", "auth-required", "loading", "welcoming", "welcome-leaving", "owner-entering");
 };
 
 const showLanding = () => {
@@ -1593,12 +1593,12 @@ const showLanding = () => {
   exitPreview();
   document.title = "fun.lol | Custom Bio Pages, Friends, Tribes & Games";
   document.body.classList.remove("auth-required", "loading", "welcoming", "welcome-leaving", "owner-entering");
-  document.body.classList.add("landing-page");
+  document.body.classList.add("landing-active");
 };
 
 const showAuth = (mode = "signup") => {
   if (!isPublicProfilePage) {
-    document.body.classList.remove("landing-page", "loading");
+    document.body.classList.remove("landing-active", "loading");
     hideEntryGate();
     exitPreview();
     document.body.classList.add("auth-required");
