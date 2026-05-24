@@ -1,0 +1,1548 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+2 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+4 0 obj
+<< /Length 5279 >>
+stream
+BT
+/F2 20 Tf
+1 0 0 1 48.00 744.00 Tm
+(fun.lol Software Architecture Diagram Document) Tj
+/F1 10 Tf
+1 0 0 1 48.00 707.00 Tm
+(Generated: 2026-05-24) Tj
+/F1 10 Tf
+1 0 0 1 48.00 690.50 Tm
+(Source inspection scope: `index.html`, `script.js`, `styles.css`, `server.js`, `package.json`, and) Tj
+/F1 10 Tf
+1 0 0 1 48.00 677.00 Tm
+(`supabase-schema.sql`.) Tj
+/F2 15 Tf
+1 0 0 1 48.00 652.50 Tm
+(A. Architecture Overview) Tj
+/F1 10 Tf
+1 0 0 1 48.00 628.25 Tm
+(fun.lol is implemented as a lightweight single-page web application with a Node.js backend. The) Tj
+/F1 10 Tf
+1 0 0 1 48.00 614.75 Tm
+(frontend is delivered from static files and switches between an authenticated dashboard, a) Tj
+/F1 10 Tf
+1 0 0 1 48.00 601.25 Tm
+(bio/profile editor, public profile pages, games, friends, tribes, and tribe chats. The backend) Tj
+/F1 10 Tf
+1 0 0 1 48.00 587.75 Tm
+(exposes JSON API routes for authentication, profile publishing, media delivery, friends, tribes,) Tj
+/F1 10 Tf
+1 0 0 1 48.00 574.25 Tm
+(tribe chat, and the server-backed Snake score.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 557.75 Tm
+(Confirmed implementation:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 541.25 Tm
+(- Frontend files: `index.html`, `script.js`, and `styles.css`.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 527.75 Tm
+(- Backend entry point: `server.js`, using Node's built-in `http` module rather than Express or) Tj
+/F1 10 Tf
+1 0 0 1 48.00 514.25 Tm
+(another framework.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 500.75 Tm
+(- Static routing: `/` serves `index.html`; `/u/:handle` also serves `index.html` so the client can) Tj
+/F1 10 Tf
+1 0 0 1 48.00 487.25 Tm
+(load a public profile by handle.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 473.75 Tm
+(- API routing: `/api/...` routes are handled directly in `server.js`.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 460.25 Tm
+(- Local persistence fallback: `data/users.json` and `data/profiles.json`.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 446.75 Tm
+(- Optional Supabase persistence: enabled when `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are) Tj
+/F1 10 Tf
+1 0 0 1 48.00 433.25 Tm
+(present.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 419.75 Tm
+(- Supabase tables currently defined in `supabase-schema.sql`: `app_users`, `app_sessions`, and) Tj
+/F1 10 Tf
+1 0 0 1 48.00 406.25 Tm
+(`app_profiles`.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 392.75 Tm
+(- Supabase Storage bucket used by the server when configured: `profile-media`.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 379.25 Tm
+(- Public discovery support: `/robots.txt` and `/sitemap.xml`.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 365.75 Tm
+(Storage model:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 349.25 Tm
+(- In local mode, users and sessions are stored in `data/users.json`; profiles and most social) Tj
+/F1 10 Tf
+1 0 0 1 48.00 335.75 Tm
+(features are stored in `data/profiles.json`.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 322.25 Tm
+(- In Supabase mode, users are stored in `app_users`, sessions in `app_sessions`, and profile data) Tj
+/F1 10 Tf
+1 0 0 1 48.00 308.75 Tm
+(in `app_profiles.data` as JSONB.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 295.25 Tm
+(- Friends, friend requests, tribes, tribe invites, join requests, tribe messages, profile settings,) Tj
+/F1 10 Tf
+1 0 0 1 48.00 281.75 Tm
+(media references, social links, and most profile customization data are logical entities currently) Tj
+/F1 10 Tf
+1 0 0 1 48.00 268.25 Tm
+(nested inside profile JSON.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 254.75 Tm
+(- Media files are stored as data URLs in profile JSON when Supabase is not configured. When) Tj
+/F1 10 Tf
+1 0 0 1 48.00 241.25 Tm
+(Supabase is configured, uploaded avatar, background, and music files are moved into Supabase) Tj
+/F1 10 Tf
+1 0 0 1 48.00 227.75 Tm
+(Storage and referenced by path.) Tj
+/F2 12 Tf
+1 0 0 1 48.00 209.25 Tm
+(API Route Summary) Tj
+/F1 8 Tf
+1 0 0 1 48.00 193.05 Tm
+(Area: Authentication; Routes: `POST /api/signup`, `POST /api/login`, `GET /api/me`; Confirmed behavior: Creates users,) Tj
+/F1 8 Tf
+1 0 0 1 48.00 182.25 Tm
+(validates credentials, returns session token and account profile metadata.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 169.45 Tm
+(Area: Profile; Routes: `GET /api/my-profile`, `GET /api/profiles/:handle`, `PUT /api/profiles/:handle`; Confirmed behavior:) Tj
+/F1 8 Tf
+1 0 0 1 48.00 158.65 Tm
+(Loads owned profile, loads public profile, publishes profile changes.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 145.85 Tm
+(Area: Public media; Routes: `GET /api/profiles/:handle/avatar`, `/background`, `/music`; Confirmed behavior: Delivers) Tj
+/F1 8 Tf
+1 0 0 1 48.00 135.05 Tm
+(uploaded media from Supabase Storage path or local data URL fallback.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 122.25 Tm
+(Area: Friends; Routes: `POST /api/friend-requests`, `POST /api/friend-requests/:id/accept`, `DELETE /api/friends/:key`;) Tj
+/F1 8 Tf
+1 0 0 1 48.00 111.45 Tm
+(Confirmed behavior: Sends, accepts, and removes friendships.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 98.65 Tm
+(Area: Tribes; Routes: `GET /api/tribes`, `POST /api/tribes`, `PATCH /api/tribes/:tribeId`, `DELETE /api/tribes/:tribeId`;) Tj
+/F1 8 Tf
+1 0 0 1 48.00 87.85 Tm
+(Confirmed behavior: Lists, creates, updates, and deletes tribes.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 75.05 Tm
+(Area: Tribe membership; Routes: `POST /api/tribes/:tribeId/join`, `POST /api/tribe-invites/:id/:action`, `POST /api/tribe-) Tj
+/F1 8 Tf
+1 0 0 1 48.00 64.25 Tm
+(join-requests/:id/:action`, `DELETE /api/tribes/:tribeId/members/:memberId`; Confirmed behavior: Handles invite, join, owner) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 20 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 4 0 R >>
+endobj
+6 0 obj
+<< /Length 4925 >>
+stream
+BT
+/F1 8 Tf
+1 0 0 1 48.00 744.00 Tm
+(approval, decline, and member removal flows.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 731.20 Tm
+(Area: Tribe chat; Routes: `GET /api/tribes/:tribeId/messages`, `POST /api/tribes/:tribeId/messages`; Confirmed behavior:) Tj
+/F1 8 Tf
+1 0 0 1 48.00 720.40 Tm
+(Loads and appends messages for members only.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 707.60 Tm
+(Area: Games; Routes: `GET /api/games/snake-score`, `PUT /api/games/snake-score`; Confirmed behavior: Saves the authenticated) Tj
+/F1 8 Tf
+1 0 0 1 48.00 696.80 Tm
+(user's Snake high score.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 684.00 Tm
+(Area: SEO; Routes: `GET /robots.txt`, `GET /sitemap.xml`; Confirmed behavior: Allows crawlers and lists the home page plus) Tj
+/F1 8 Tf
+1 0 0 1 48.00 673.20 Tm
+(public profile URLs.) Tj
+/F2 15 Tf
+1 0 0 1 48.00 648.40 Tm
+(B. System Architecture Diagram) Tj
+/F3 7 Tf
+1 0 0 1 48.00 621.15 Tm
+(mermaid) Tj
+/F3 7 Tf
+1 0 0 1 48.00 611.70 Tm
+(flowchart LR) Tj
+/F3 7 Tf
+1 0 0 1 48.00 602.25 Tm
+(  Visitor[Public visitor] --> Browser[User browser]) Tj
+/F3 7 Tf
+1 0 0 1 48.00 592.80 Tm
+(  User[Logged-in user] --> Browser) Tj
+/F3 7 Tf
+1 0 0 1 48.00 583.35 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 573.90 Tm
+(  Browser --> PublicProfile[Public profile page /u/:handle]) Tj
+/F3 7 Tf
+1 0 0 1 48.00 564.45 Tm
+(  Browser --> Dashboard[Private dashboard]) Tj
+/F3 7 Tf
+1 0 0 1 48.00 555.00 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 545.55 Tm
+(  Dashboard --> AuthUI[Auth and session UI]) Tj
+/F3 7 Tf
+1 0 0 1 48.00 536.10 Tm
+(  Dashboard --> ProfileBuilder[Bio/Profile builder]) Tj
+/F3 7 Tf
+1 0 0 1 48.00 526.65 Tm
+(  Dashboard --> FriendsUI[Friends UI]) Tj
+/F3 7 Tf
+1 0 0 1 48.00 517.20 Tm
+(  Dashboard --> NotificationsUI[Notifications UI]) Tj
+/F3 7 Tf
+1 0 0 1 48.00 507.75 Tm
+(  Dashboard --> TribesUI[Tribes UI]) Tj
+/F3 7 Tf
+1 0 0 1 48.00 498.30 Tm
+(  Dashboard --> TribeChatUI[Tribe chat UI]) Tj
+/F3 7 Tf
+1 0 0 1 48.00 488.85 Tm
+(  Dashboard --> GamesUI[Games UI]) Tj
+/F3 7 Tf
+1 0 0 1 48.00 479.40 Tm
+(  ProfileBuilder --> MediaUploadUI[Media upload controls]) Tj
+/F3 7 Tf
+1 0 0 1 48.00 469.95 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 460.50 Tm
+(  PublicProfile --> ProfileAPI[Profile API]) Tj
+/F3 7 Tf
+1 0 0 1 48.00 451.05 Tm
+(  AuthUI --> AuthAPI[Auth API]) Tj
+/F3 7 Tf
+1 0 0 1 48.00 441.60 Tm
+(  ProfileBuilder --> ProfileAPI) Tj
+/F3 7 Tf
+1 0 0 1 48.00 432.15 Tm
+(  MediaUploadUI --> MediaAPI[Media API]) Tj
+/F3 7 Tf
+1 0 0 1 48.00 422.70 Tm
+(  FriendsUI --> FriendsAPI[Friends API]) Tj
+/F3 7 Tf
+1 0 0 1 48.00 413.25 Tm
+(  NotificationsUI --> FriendsAPI) Tj
+/F3 7 Tf
+1 0 0 1 48.00 403.80 Tm
+(  NotificationsUI --> TribesAPI[Tribes API]) Tj
+/F3 7 Tf
+1 0 0 1 48.00 394.35 Tm
+(  TribesUI --> TribesAPI) Tj
+/F3 7 Tf
+1 0 0 1 48.00 384.90 Tm
+(  TribeChatUI --> TribeChatAPI[Tribe chat API]) Tj
+/F3 7 Tf
+1 0 0 1 48.00 375.45 Tm
+(  GamesUI --> GamesAPI[Games API]) Tj
+/F3 7 Tf
+1 0 0 1 48.00 366.00 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 356.55 Tm
+(  AuthAPI --> NodeBackend[Node.js server.js]) Tj
+/F3 7 Tf
+1 0 0 1 48.00 347.10 Tm
+(  ProfileAPI --> NodeBackend) Tj
+/F3 7 Tf
+1 0 0 1 48.00 337.65 Tm
+(  MediaAPI --> NodeBackend) Tj
+/F3 7 Tf
+1 0 0 1 48.00 328.20 Tm
+(  FriendsAPI --> NodeBackend) Tj
+/F3 7 Tf
+1 0 0 1 48.00 318.75 Tm
+(  TribesAPI --> NodeBackend) Tj
+/F3 7 Tf
+1 0 0 1 48.00 309.30 Tm
+(  TribeChatAPI --> NodeBackend) Tj
+/F3 7 Tf
+1 0 0 1 48.00 299.85 Tm
+(  GamesAPI --> NodeBackend) Tj
+/F3 7 Tf
+1 0 0 1 48.00 290.40 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 280.95 Tm
+(  NodeBackend --> LocalJSON[\(Local JSON storage\)]) Tj
+/F3 7 Tf
+1 0 0 1 48.00 271.50 Tm
+(  NodeBackend --> SupabaseDB[\(Optional Supabase database\)]) Tj
+/F3 7 Tf
+1 0 0 1 48.00 262.05 Tm
+(  NodeBackend --> SupabaseStorage[\(Optional Supabase Storage profile-media\)]) Tj
+/F3 7 Tf
+1 0 0 1 48.00 252.60 Tm
+(  NodeBackend --> SEO[Sitemap and robots.txt]) Tj
+/F3 7 Tf
+1 0 0 1 48.00 243.15 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 233.70 Tm
+(  SupabaseDB --> AppUsers[app_users]) Tj
+/F3 7 Tf
+1 0 0 1 48.00 224.25 Tm
+(  SupabaseDB --> AppSessions[app_sessions]) Tj
+/F3 7 Tf
+1 0 0 1 48.00 214.80 Tm
+(  SupabaseDB --> AppProfiles[app_profiles JSONB data]) Tj
+/F2 15 Tf
+1 0 0 1 48.00 192.35 Tm
+(C. Entity Relationship Diagram) Tj
+/F1 10 Tf
+1 0 0 1 48.00 168.10 Tm
+(This ERD documents the logical product model. Confirmed physical Supabase tables are `app_users`,) Tj
+/F1 10 Tf
+1 0 0 1 48.00 154.60 Tm
+(`app_sessions`, and `app_profiles`; the other entities are currently represented inside profile) Tj
+/F1 10 Tf
+1 0 0 1 48.00 141.10 Tm
+(JSON or derived from profile JSON.) Tj
+/F3 7 Tf
+1 0 0 1 48.00 121.60 Tm
+(mermaid) Tj
+/F3 7 Tf
+1 0 0 1 48.00 112.15 Tm
+(erDiagram) Tj
+/F3 7 Tf
+1 0 0 1 48.00 102.70 Tm
+(  USER ||--o| PROFILE : owns) Tj
+/F3 7 Tf
+1 0 0 1 48.00 93.25 Tm
+(  USER ||--o{ ACCOUNT_SETTINGS : has) Tj
+/F3 7 Tf
+1 0 0 1 48.00 83.80 Tm
+(  PROFILE ||--o{ SOCIAL_LINK : contains) Tj
+/F3 7 Tf
+1 0 0 1 48.00 74.35 Tm
+(  PROFILE ||--o{ MEDIA_ASSET : references) Tj
+/F3 7 Tf
+1 0 0 1 48.00 64.90 Tm
+(  USER ||--o{ GAME_SCORE : earns) Tj
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 20 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 6 0 R >>
+endobj
+8 0 obj
+<< /Length 4180 >>
+stream
+BT
+/F3 7 Tf
+1 0 0 1 48.00 744.00 Tm
+(  USER ||--o{ FRIEND_REQUEST : sends) Tj
+/F3 7 Tf
+1 0 0 1 48.00 734.55 Tm
+(  USER ||--o{ FRIEND_REQUEST : receives) Tj
+/F3 7 Tf
+1 0 0 1 48.00 725.10 Tm
+(  USER ||--o{ FRIENDSHIP : participates) Tj
+/F3 7 Tf
+1 0 0 1 48.00 715.65 Tm
+(  USER ||--o{ NOTIFICATION : receives) Tj
+/F3 7 Tf
+1 0 0 1 48.00 706.20 Tm
+(  USER ||--o{ TRIBE : owns) Tj
+/F3 7 Tf
+1 0 0 1 48.00 696.75 Tm
+(  TRIBE ||--o{ TRIBE_MEMBER : includes) Tj
+/F3 7 Tf
+1 0 0 1 48.00 687.30 Tm
+(  TRIBE ||--o{ TRIBE_INVITE : sends) Tj
+/F3 7 Tf
+1 0 0 1 48.00 677.85 Tm
+(  TRIBE ||--o{ TRIBE_JOIN_REQUEST : receives) Tj
+/F3 7 Tf
+1 0 0 1 48.00 668.40 Tm
+(  TRIBE ||--o{ TRIBE_MESSAGE : contains) Tj
+/F3 7 Tf
+1 0 0 1 48.00 658.95 Tm
+(  USER ||--o{ TRIBE_MESSAGE : sends) Tj
+/F3 7 Tf
+1 0 0 1 48.00 649.50 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 640.05 Tm
+(  USER {{) Tj
+/F3 7 Tf
+1 0 0 1 48.00 630.60 Tm
+(    string id) Tj
+/F3 7 Tf
+1 0 0 1 48.00 621.15 Tm
+(    string email) Tj
+/F3 7 Tf
+1 0 0 1 48.00 611.70 Tm
+(    string password_hash) Tj
+/F3 7 Tf
+1 0 0 1 48.00 602.25 Tm
+(    string profile_handle) Tj
+/F3 7 Tf
+1 0 0 1 48.00 592.80 Tm
+(    string profile_path) Tj
+/F3 7 Tf
+1 0 0 1 48.00 583.35 Tm
+(    string profile_url) Tj
+/F3 7 Tf
+1 0 0 1 48.00 573.90 Tm
+(    integer snake_high_score) Tj
+/F3 7 Tf
+1 0 0 1 48.00 564.45 Tm
+(    datetime created_at) Tj
+/F3 7 Tf
+1 0 0 1 48.00 555.00 Tm
+(  }}) Tj
+/F3 7 Tf
+1 0 0 1 48.00 545.55 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 536.10 Tm
+(  PROFILE {{) Tj
+/F3 7 Tf
+1 0 0 1 48.00 526.65 Tm
+(    string handle) Tj
+/F3 7 Tf
+1 0 0 1 48.00 517.20 Tm
+(    string owner_user_id) Tj
+/F3 7 Tf
+1 0 0 1 48.00 507.75 Tm
+(    integer views) Tj
+/F3 7 Tf
+1 0 0 1 48.00 498.30 Tm
+(    string name) Tj
+/F3 7 Tf
+1 0 0 1 48.00 488.85 Tm
+(    string bio) Tj
+/F3 7 Tf
+1 0 0 1 48.00 479.40 Tm
+(    string location) Tj
+/F3 7 Tf
+1 0 0 1 48.00 469.95 Tm
+(    string theme) Tj
+/F3 7 Tf
+1 0 0 1 48.00 460.50 Tm
+(    boolean compactLinks) Tj
+/F3 7 Tf
+1 0 0 1 48.00 451.05 Tm
+(    boolean animatedBackground) Tj
+/F3 7 Tf
+1 0 0 1 48.00 441.60 Tm
+(    boolean darkVideo) Tj
+/F3 7 Tf
+1 0 0 1 48.00 432.15 Tm
+(    boolean cursorTrail) Tj
+/F3 7 Tf
+1 0 0 1 48.00 422.70 Tm
+(    string cursorColor) Tj
+/F3 7 Tf
+1 0 0 1 48.00 413.25 Tm
+(    string sparkleEffect) Tj
+/F3 7 Tf
+1 0 0 1 48.00 403.80 Tm
+(    datetime updatedAt) Tj
+/F3 7 Tf
+1 0 0 1 48.00 394.35 Tm
+(  }}) Tj
+/F3 7 Tf
+1 0 0 1 48.00 384.90 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 375.45 Tm
+(  SOCIAL_LINK {{) Tj
+/F3 7 Tf
+1 0 0 1 48.00 366.00 Tm
+(    string platform) Tj
+/F3 7 Tf
+1 0 0 1 48.00 356.55 Tm
+(    string value) Tj
+/F3 7 Tf
+1 0 0 1 48.00 347.10 Tm
+(    string normalized_url) Tj
+/F3 7 Tf
+1 0 0 1 48.00 337.65 Tm
+(  }}) Tj
+/F3 7 Tf
+1 0 0 1 48.00 328.20 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 318.75 Tm
+(  FRIEND_REQUEST {{) Tj
+/F3 7 Tf
+1 0 0 1 48.00 309.30 Tm
+(    string id) Tj
+/F3 7 Tf
+1 0 0 1 48.00 299.85 Tm
+(    string fromName) Tj
+/F3 7 Tf
+1 0 0 1 48.00 290.40 Tm
+(    string fromHandle) Tj
+/F3 7 Tf
+1 0 0 1 48.00 280.95 Tm
+(    string fromLink) Tj
+/F3 7 Tf
+1 0 0 1 48.00 271.50 Tm
+(    datetime createdAt) Tj
+/F3 7 Tf
+1 0 0 1 48.00 262.05 Tm
+(  }}) Tj
+/F3 7 Tf
+1 0 0 1 48.00 252.60 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 243.15 Tm
+(  FRIENDSHIP {{) Tj
+/F3 7 Tf
+1 0 0 1 48.00 233.70 Tm
+(    string id) Tj
+/F3 7 Tf
+1 0 0 1 48.00 224.25 Tm
+(    string name) Tj
+/F3 7 Tf
+1 0 0 1 48.00 214.80 Tm
+(    string handle) Tj
+/F3 7 Tf
+1 0 0 1 48.00 205.35 Tm
+(    string link) Tj
+/F3 7 Tf
+1 0 0 1 48.00 195.90 Tm
+(  }}) Tj
+/F3 7 Tf
+1 0 0 1 48.00 186.45 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 177.00 Tm
+(  NOTIFICATION {{) Tj
+/F3 7 Tf
+1 0 0 1 48.00 167.55 Tm
+(    string id) Tj
+/F3 7 Tf
+1 0 0 1 48.00 158.10 Tm
+(    string type) Tj
+/F3 7 Tf
+1 0 0 1 48.00 148.65 Tm
+(    string title) Tj
+/F3 7 Tf
+1 0 0 1 48.00 139.20 Tm
+(    string actorHandle) Tj
+/F3 7 Tf
+1 0 0 1 48.00 129.75 Tm
+(    datetime createdAt) Tj
+/F3 7 Tf
+1 0 0 1 48.00 120.30 Tm
+(  }}) Tj
+/F3 7 Tf
+1 0 0 1 48.00 110.85 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 101.40 Tm
+(  TRIBE {{) Tj
+/F3 7 Tf
+1 0 0 1 48.00 91.95 Tm
+(    string tribeId) Tj
+/F3 7 Tf
+1 0 0 1 48.00 82.50 Tm
+(    string name) Tj
+/F3 7 Tf
+1 0 0 1 48.00 73.05 Tm
+(    string ownerId) Tj
+/F3 7 Tf
+1 0 0 1 48.00 63.60 Tm
+(    string ownerDisplayName) Tj
+ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 20 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 8 0 R >>
+endobj
+10 0 obj
+<< /Length 3817 >>
+stream
+BT
+/F3 7 Tf
+1 0 0 1 48.00 744.00 Tm
+(    string ownerHandle) Tj
+/F3 7 Tf
+1 0 0 1 48.00 734.55 Tm
+(    string themeColor) Tj
+/F3 7 Tf
+1 0 0 1 48.00 725.10 Tm
+(    datetime createdAt) Tj
+/F3 7 Tf
+1 0 0 1 48.00 715.65 Tm
+(    datetime updatedAt) Tj
+/F3 7 Tf
+1 0 0 1 48.00 706.20 Tm
+(  }}) Tj
+/F3 7 Tf
+1 0 0 1 48.00 696.75 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 687.30 Tm
+(  TRIBE_MEMBER {{) Tj
+/F3 7 Tf
+1 0 0 1 48.00 677.85 Tm
+(    string tribeId) Tj
+/F3 7 Tf
+1 0 0 1 48.00 668.40 Tm
+(    string userId) Tj
+/F3 7 Tf
+1 0 0 1 48.00 658.95 Tm
+(    string displayName) Tj
+/F3 7 Tf
+1 0 0 1 48.00 649.50 Tm
+(    string handle) Tj
+/F3 7 Tf
+1 0 0 1 48.00 640.05 Tm
+(    string link) Tj
+/F3 7 Tf
+1 0 0 1 48.00 630.60 Tm
+(  }}) Tj
+/F3 7 Tf
+1 0 0 1 48.00 621.15 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 611.70 Tm
+(  TRIBE_INVITE {{) Tj
+/F3 7 Tf
+1 0 0 1 48.00 602.25 Tm
+(    string id) Tj
+/F3 7 Tf
+1 0 0 1 48.00 592.80 Tm
+(    string tribeId) Tj
+/F3 7 Tf
+1 0 0 1 48.00 583.35 Tm
+(    string tribeName) Tj
+/F3 7 Tf
+1 0 0 1 48.00 573.90 Tm
+(    string ownerId) Tj
+/F3 7 Tf
+1 0 0 1 48.00 564.45 Tm
+(    string ownerDisplayName) Tj
+/F3 7 Tf
+1 0 0 1 48.00 555.00 Tm
+(    string ownerHandle) Tj
+/F3 7 Tf
+1 0 0 1 48.00 545.55 Tm
+(    datetime createdAt) Tj
+/F3 7 Tf
+1 0 0 1 48.00 536.10 Tm
+(  }}) Tj
+/F3 7 Tf
+1 0 0 1 48.00 526.65 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 517.20 Tm
+(  TRIBE_JOIN_REQUEST {{) Tj
+/F3 7 Tf
+1 0 0 1 48.00 507.75 Tm
+(    string id) Tj
+/F3 7 Tf
+1 0 0 1 48.00 498.30 Tm
+(    string tribeId) Tj
+/F3 7 Tf
+1 0 0 1 48.00 488.85 Tm
+(    string tribeName) Tj
+/F3 7 Tf
+1 0 0 1 48.00 479.40 Tm
+(    string requesterId) Tj
+/F3 7 Tf
+1 0 0 1 48.00 469.95 Tm
+(    string requesterDisplayName) Tj
+/F3 7 Tf
+1 0 0 1 48.00 460.50 Tm
+(    string requesterHandle) Tj
+/F3 7 Tf
+1 0 0 1 48.00 451.05 Tm
+(    datetime createdAt) Tj
+/F3 7 Tf
+1 0 0 1 48.00 441.60 Tm
+(  }}) Tj
+/F3 7 Tf
+1 0 0 1 48.00 432.15 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 422.70 Tm
+(  TRIBE_MESSAGE {{) Tj
+/F3 7 Tf
+1 0 0 1 48.00 413.25 Tm
+(    string id) Tj
+/F3 7 Tf
+1 0 0 1 48.00 403.80 Tm
+(    string senderId) Tj
+/F3 7 Tf
+1 0 0 1 48.00 394.35 Tm
+(    string senderDisplayName) Tj
+/F3 7 Tf
+1 0 0 1 48.00 384.90 Tm
+(    string senderHandle) Tj
+/F3 7 Tf
+1 0 0 1 48.00 375.45 Tm
+(    string text) Tj
+/F3 7 Tf
+1 0 0 1 48.00 366.00 Tm
+(    datetime createdAt) Tj
+/F3 7 Tf
+1 0 0 1 48.00 356.55 Tm
+(  }}) Tj
+/F3 7 Tf
+1 0 0 1 48.00 347.10 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 337.65 Tm
+(  GAME_SCORE {{) Tj
+/F3 7 Tf
+1 0 0 1 48.00 328.20 Tm
+(    string userId) Tj
+/F3 7 Tf
+1 0 0 1 48.00 318.75 Tm
+(    string game) Tj
+/F3 7 Tf
+1 0 0 1 48.00 309.30 Tm
+(    integer highScore) Tj
+/F3 7 Tf
+1 0 0 1 48.00 299.85 Tm
+(    datetime updatedAt) Tj
+/F3 7 Tf
+1 0 0 1 48.00 290.40 Tm
+(  }}) Tj
+/F3 7 Tf
+1 0 0 1 48.00 280.95 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 271.50 Tm
+(  MEDIA_ASSET {{) Tj
+/F3 7 Tf
+1 0 0 1 48.00 262.05 Tm
+(    string ownerUserId) Tj
+/F3 7 Tf
+1 0 0 1 48.00 252.60 Tm
+(    string handle) Tj
+/F3 7 Tf
+1 0 0 1 48.00 243.15 Tm
+(    string field) Tj
+/F3 7 Tf
+1 0 0 1 48.00 233.70 Tm
+(    string mimeType) Tj
+/F3 7 Tf
+1 0 0 1 48.00 224.25 Tm
+(    string storagePath) Tj
+/F3 7 Tf
+1 0 0 1 48.00 214.80 Tm
+(    string fileName) Tj
+/F3 7 Tf
+1 0 0 1 48.00 205.35 Tm
+(  }}) Tj
+/F3 7 Tf
+1 0 0 1 48.00 195.90 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 186.45 Tm
+(  ACCOUNT_SETTINGS {{) Tj
+/F3 7 Tf
+1 0 0 1 48.00 177.00 Tm
+(    string userId) Tj
+/F3 7 Tf
+1 0 0 1 48.00 167.55 Tm
+(    string dashboardTheme) Tj
+/F3 7 Tf
+1 0 0 1 48.00 158.10 Tm
+(    string cursorMode) Tj
+/F3 7 Tf
+1 0 0 1 48.00 148.65 Tm
+(    string cursorColor) Tj
+/F3 7 Tf
+1 0 0 1 48.00 139.20 Tm
+(    boolean muteOutsideBio) Tj
+/F3 7 Tf
+1 0 0 1 48.00 129.75 Tm
+(    boolean sidebarCollapsed) Tj
+/F3 7 Tf
+1 0 0 1 48.00 120.30 Tm
+(  }}) Tj
+/F2 15 Tf
+1 0 0 1 48.00 97.85 Tm
+(D. Sequence Diagrams) Tj
+/F2 12 Tf
+1 0 0 1 48.00 68.60 Tm
+(1. User Sign Up and Login) Tj
+ET
+endstream
+endobj
+11 0 obj
+<< /Type /Page /Parent 20 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 10 0 R >>
+endobj
+12 0 obj
+<< /Length 4852 >>
+stream
+BT
+/F3 7 Tf
+1 0 0 1 48.00 744.00 Tm
+(mermaid) Tj
+/F3 7 Tf
+1 0 0 1 48.00 734.55 Tm
+(sequenceDiagram) Tj
+/F3 7 Tf
+1 0 0 1 48.00 725.10 Tm
+(  actor User) Tj
+/F3 7 Tf
+1 0 0 1 48.00 715.65 Tm
+(  participant Browser) Tj
+/F3 7 Tf
+1 0 0 1 48.00 706.20 Tm
+(  participant API as Node API) Tj
+/F3 7 Tf
+1 0 0 1 48.00 696.75 Tm
+(  participant Store as Local JSON or Supabase) Tj
+/F3 7 Tf
+1 0 0 1 48.00 687.30 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 677.85 Tm
+(  User->>Browser: Enter email and password) Tj
+/F3 7 Tf
+1 0 0 1 48.00 668.40 Tm
+(  Browser->>API: POST /api/signup) Tj
+/F3 7 Tf
+1 0 0 1 48.00 658.95 Tm
+(  API->>API: Validate email and password length) Tj
+/F3 7 Tf
+1 0 0 1 48.00 649.50 Tm
+(  API->>API: Hash password with crypto.scrypt and salt) Tj
+/F3 7 Tf
+1 0 0 1 48.00 640.05 Tm
+(  API->>Store: Create user record) Tj
+/F3 7 Tf
+1 0 0 1 48.00 630.60 Tm
+(  API->>Store: Create session token) Tj
+/F3 7 Tf
+1 0 0 1 48.00 621.15 Tm
+(  API-->>Browser: Return token and email) Tj
+/F3 7 Tf
+1 0 0 1 48.00 611.70 Tm
+(  Browser->>Browser: Store token in localStorage) Tj
+/F3 7 Tf
+1 0 0 1 48.00 602.25 Tm
+(  Browser->>API: GET /api/me with Authorization header) Tj
+/F3 7 Tf
+1 0 0 1 48.00 592.80 Tm
+(  API-->>Browser: Return user account metadata) Tj
+/F2 12 Tf
+1 0 0 1 48.00 573.35 Tm
+(2. Public Profile Publishing and Viewing) Tj
+/F3 7 Tf
+1 0 0 1 48.00 554.15 Tm
+(mermaid) Tj
+/F3 7 Tf
+1 0 0 1 48.00 544.70 Tm
+(sequenceDiagram) Tj
+/F3 7 Tf
+1 0 0 1 48.00 535.25 Tm
+(  actor Owner) Tj
+/F3 7 Tf
+1 0 0 1 48.00 525.80 Tm
+(  actor Visitor) Tj
+/F3 7 Tf
+1 0 0 1 48.00 516.35 Tm
+(  participant Browser) Tj
+/F3 7 Tf
+1 0 0 1 48.00 506.90 Tm
+(  participant API as Node API) Tj
+/F3 7 Tf
+1 0 0 1 48.00 497.45 Tm
+(  participant Store as Profile storage) Tj
+/F3 7 Tf
+1 0 0 1 48.00 488.00 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 478.55 Tm
+(  Owner->>Browser: Edit profile fields and click Publish profile) Tj
+/F3 7 Tf
+1 0 0 1 48.00 469.10 Tm
+(  Browser->>API: PUT /api/profiles/:handle with session token) Tj
+/F3 7 Tf
+1 0 0 1 48.00 459.65 Tm
+(  API->>Store: Check ownership or create owned profile) Tj
+/F3 7 Tf
+1 0 0 1 48.00 450.20 Tm
+(  API->>Store: Save profile JSON and profile URL fields) Tj
+/F3 7 Tf
+1 0 0 1 48.00 440.75 Tm
+(  API-->>Browser: Return /u/:handle and full URL) Tj
+/F3 7 Tf
+1 0 0 1 48.00 431.30 Tm
+(  Visitor->>Browser: Open /u/:handle) Tj
+/F3 7 Tf
+1 0 0 1 48.00 421.85 Tm
+(  Browser->>API: GET /api/profiles/:handle?view=1) Tj
+/F3 7 Tf
+1 0 0 1 48.00 412.40 Tm
+(  API->>Store: Increment profile view count) Tj
+/F3 7 Tf
+1 0 0 1 48.00 402.95 Tm
+(  API-->>Browser: Return public profile payload without owner/private fields) Tj
+/F2 12 Tf
+1 0 0 1 48.00 383.50 Tm
+(3. Upload Profile, Background, or Music Media) Tj
+/F3 7 Tf
+1 0 0 1 48.00 364.30 Tm
+(mermaid) Tj
+/F3 7 Tf
+1 0 0 1 48.00 354.85 Tm
+(sequenceDiagram) Tj
+/F3 7 Tf
+1 0 0 1 48.00 345.40 Tm
+(  actor Owner) Tj
+/F3 7 Tf
+1 0 0 1 48.00 335.95 Tm
+(  participant Browser) Tj
+/F3 7 Tf
+1 0 0 1 48.00 326.50 Tm
+(  participant API as Node API) Tj
+/F3 7 Tf
+1 0 0 1 48.00 317.05 Tm
+(  participant Storage as Local JSON or Supabase Storage) Tj
+/F3 7 Tf
+1 0 0 1 48.00 307.60 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 298.15 Tm
+(  Owner->>Browser: Select avatar, background, or music file) Tj
+/F3 7 Tf
+1 0 0 1 48.00 288.70 Tm
+(  Browser->>Browser: Convert file to data URL for preview) Tj
+/F3 7 Tf
+1 0 0 1 48.00 279.25 Tm
+(  Owner->>Browser: Publish profile) Tj
+/F3 7 Tf
+1 0 0 1 48.00 269.80 Tm
+(  Browser->>API: PUT /api/profiles/:handle with media data) Tj
+/F3 7 Tf
+1 0 0 1 48.00 260.35 Tm
+(  alt Supabase configured) Tj
+/F3 7 Tf
+1 0 0 1 48.00 250.90 Tm
+(    API->>Storage: Upload media to profile-media bucket) Tj
+/F3 7 Tf
+1 0 0 1 48.00 241.45 Tm
+(    API->>API: Replace data URL with storage path) Tj
+/F3 7 Tf
+1 0 0 1 48.00 232.00 Tm
+(  else Local mode) Tj
+/F3 7 Tf
+1 0 0 1 48.00 222.55 Tm
+(    API->>Storage: Persist data URL in profile JSON) Tj
+/F3 7 Tf
+1 0 0 1 48.00 213.10 Tm
+(  end) Tj
+/F3 7 Tf
+1 0 0 1 48.00 203.65 Tm
+(  API-->>Browser: Return saved profile link) Tj
+/F3 7 Tf
+1 0 0 1 48.00 194.20 Tm
+(  Browser->>API: GET /api/profiles/:handle/background or music) Tj
+/F3 7 Tf
+1 0 0 1 48.00 184.75 Tm
+(  API-->>Browser: Stream media response) Tj
+/F2 12 Tf
+1 0 0 1 48.00 165.30 Tm
+(4. Send and Accept Friend Request) Tj
+/F3 7 Tf
+1 0 0 1 48.00 146.10 Tm
+(mermaid) Tj
+/F3 7 Tf
+1 0 0 1 48.00 136.65 Tm
+(sequenceDiagram) Tj
+/F3 7 Tf
+1 0 0 1 48.00 127.20 Tm
+(  actor Sender) Tj
+/F3 7 Tf
+1 0 0 1 48.00 117.75 Tm
+(  actor Receiver) Tj
+/F3 7 Tf
+1 0 0 1 48.00 108.30 Tm
+(  participant Browser) Tj
+/F3 7 Tf
+1 0 0 1 48.00 98.85 Tm
+(  participant API as Node API) Tj
+/F3 7 Tf
+1 0 0 1 48.00 89.40 Tm
+(  participant Store as Profile storage) Tj
+/F3 7 Tf
+1 0 0 1 48.00 79.95 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 70.50 Tm
+(  Sender->>Browser: Enter friend's handle or profile link) Tj
+/F3 7 Tf
+1 0 0 1 48.00 61.05 Tm
+(  Browser->>API: POST /api/friend-requests) Tj
+ET
+endstream
+endobj
+13 0 obj
+<< /Type /Page /Parent 20 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 12 0 R >>
+endobj
+14 0 obj
+<< /Length 4972 >>
+stream
+BT
+/F3 7 Tf
+1 0 0 1 48.00 744.00 Tm
+(  API->>Store: Validate sender profile and target profile) Tj
+/F3 7 Tf
+1 0 0 1 48.00 734.55 Tm
+(  API->>Store: Append request to target profile) Tj
+/F3 7 Tf
+1 0 0 1 48.00 725.10 Tm
+(  API->>Store: Append sent request to sender profile) Tj
+/F3 7 Tf
+1 0 0 1 48.00 715.65 Tm
+(  API-->>Browser: Return sent status) Tj
+/F3 7 Tf
+1 0 0 1 48.00 706.20 Tm
+(  Receiver->>Browser: Opens notifications or friend requests) Tj
+/F3 7 Tf
+1 0 0 1 48.00 696.75 Tm
+(  Browser->>API: POST /api/friend-requests/:id/accept) Tj
+/F3 7 Tf
+1 0 0 1 48.00 687.30 Tm
+(  API->>Store: Add each user to the other's friends list) Tj
+/F3 7 Tf
+1 0 0 1 48.00 677.85 Tm
+(  API->>Store: Remove request and sent request) Tj
+/F3 7 Tf
+1 0 0 1 48.00 668.40 Tm
+(  API-->>Browser: Return updated friends and requests) Tj
+/F2 12 Tf
+1 0 0 1 48.00 648.95 Tm
+(5. Create Tribe and Invite Friends) Tj
+/F3 7 Tf
+1 0 0 1 48.00 629.75 Tm
+(mermaid) Tj
+/F3 7 Tf
+1 0 0 1 48.00 620.30 Tm
+(sequenceDiagram) Tj
+/F3 7 Tf
+1 0 0 1 48.00 610.85 Tm
+(  actor Owner) Tj
+/F3 7 Tf
+1 0 0 1 48.00 601.40 Tm
+(  actor Friend) Tj
+/F3 7 Tf
+1 0 0 1 48.00 591.95 Tm
+(  participant Browser) Tj
+/F3 7 Tf
+1 0 0 1 48.00 582.50 Tm
+(  participant API as Node API) Tj
+/F3 7 Tf
+1 0 0 1 48.00 573.05 Tm
+(  participant Store as Profile storage) Tj
+/F3 7 Tf
+1 0 0 1 48.00 563.60 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 554.15 Tm
+(  Owner->>Browser: Create tribe with name, color, and invited friends) Tj
+/F3 7 Tf
+1 0 0 1 48.00 544.70 Tm
+(  Browser->>API: POST /api/tribes) Tj
+/F3 7 Tf
+1 0 0 1 48.00 535.25 Tm
+(  API->>Store: Create tribe under owner profile) Tj
+/F3 7 Tf
+1 0 0 1 48.00 525.80 Tm
+(  API->>Store: Add owner to memberIds) Tj
+/F3 7 Tf
+1 0 0 1 48.00 516.35 Tm
+(  API->>Store: Add tribe invite records to invited friend profiles) Tj
+/F3 7 Tf
+1 0 0 1 48.00 506.90 Tm
+(  API-->>Browser: Return updated tribe state) Tj
+/F3 7 Tf
+1 0 0 1 48.00 497.45 Tm
+(  Friend->>Browser: Sees invite notification with Yes/No) Tj
+/F3 7 Tf
+1 0 0 1 48.00 488.00 Tm
+(  Browser->>API: POST /api/tribe-invites/:id/accept) Tj
+/F3 7 Tf
+1 0 0 1 48.00 478.55 Tm
+(  API->>Store: Add friend userId to tribe memberIds) Tj
+/F3 7 Tf
+1 0 0 1 48.00 469.10 Tm
+(  API->>Store: Remove pending invite) Tj
+/F3 7 Tf
+1 0 0 1 48.00 459.65 Tm
+(  API-->>Browser: Return updated tribe state) Tj
+/F2 12 Tf
+1 0 0 1 48.00 440.20 Tm
+(6. Request to Join Tribe and Owner Approval) Tj
+/F3 7 Tf
+1 0 0 1 48.00 421.00 Tm
+(mermaid) Tj
+/F3 7 Tf
+1 0 0 1 48.00 411.55 Tm
+(sequenceDiagram) Tj
+/F3 7 Tf
+1 0 0 1 48.00 402.10 Tm
+(  actor Requester) Tj
+/F3 7 Tf
+1 0 0 1 48.00 392.65 Tm
+(  actor Owner) Tj
+/F3 7 Tf
+1 0 0 1 48.00 383.20 Tm
+(  participant Browser) Tj
+/F3 7 Tf
+1 0 0 1 48.00 373.75 Tm
+(  participant API as Node API) Tj
+/F3 7 Tf
+1 0 0 1 48.00 364.30 Tm
+(  participant Store as Profile storage) Tj
+/F3 7 Tf
+1 0 0 1 48.00 354.85 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 345.40 Tm
+(  Requester->>Browser: Search tribe and click Join) Tj
+/F3 7 Tf
+1 0 0 1 48.00 335.95 Tm
+(  Browser->>API: POST /api/tribes/:tribeId/join) Tj
+/F3 7 Tf
+1 0 0 1 48.00 326.50 Tm
+(  API->>Store: Add requester to pendingJoinIds) Tj
+/F3 7 Tf
+1 0 0 1 48.00 317.05 Tm
+(  API->>Store: Add join request to owner profile) Tj
+/F3 7 Tf
+1 0 0 1 48.00 307.60 Tm
+(  API-->>Browser: Return requested status) Tj
+/F3 7 Tf
+1 0 0 1 48.00 298.15 Tm
+(  Owner->>Browser: Opens notifications or friend requests tab) Tj
+/F3 7 Tf
+1 0 0 1 48.00 288.70 Tm
+(  Browser->>API: POST /api/tribe-join-requests/:id/accept) Tj
+/F3 7 Tf
+1 0 0 1 48.00 279.25 Tm
+(  API->>Store: Add requester userId to tribe memberIds) Tj
+/F3 7 Tf
+1 0 0 1 48.00 269.80 Tm
+(  API->>Store: Remove pending join request) Tj
+/F3 7 Tf
+1 0 0 1 48.00 260.35 Tm
+(  API-->>Browser: Return updated tribe state) Tj
+/F2 12 Tf
+1 0 0 1 48.00 240.90 Tm
+(7. Open Tribe Chat and Send Message) Tj
+/F3 7 Tf
+1 0 0 1 48.00 221.70 Tm
+(mermaid) Tj
+/F3 7 Tf
+1 0 0 1 48.00 212.25 Tm
+(sequenceDiagram) Tj
+/F3 7 Tf
+1 0 0 1 48.00 202.80 Tm
+(  actor Member) Tj
+/F3 7 Tf
+1 0 0 1 48.00 193.35 Tm
+(  participant Browser) Tj
+/F3 7 Tf
+1 0 0 1 48.00 183.90 Tm
+(  participant API as Node API) Tj
+/F3 7 Tf
+1 0 0 1 48.00 174.45 Tm
+(  participant Store as Profile storage) Tj
+/F3 7 Tf
+1 0 0 1 48.00 165.00 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 155.55 Tm
+(  Member->>Browser: Open Your Tribe Chats and select tribe) Tj
+/F3 7 Tf
+1 0 0 1 48.00 146.10 Tm
+(  Browser->>API: GET /api/tribes/:tribeId/messages) Tj
+/F3 7 Tf
+1 0 0 1 48.00 136.65 Tm
+(  API->>Store: Confirm requester is owner or member) Tj
+/F3 7 Tf
+1 0 0 1 48.00 127.20 Tm
+(  API-->>Browser: Return messages for that tribe only) Tj
+/F3 7 Tf
+1 0 0 1 48.00 117.75 Tm
+(  Member->>Browser: Type message and send) Tj
+/F3 7 Tf
+1 0 0 1 48.00 108.30 Tm
+(  Browser->>API: POST /api/tribes/:tribeId/messages) Tj
+/F3 7 Tf
+1 0 0 1 48.00 98.85 Tm
+(  API->>Store: Sanitize text and append message) Tj
+/F3 7 Tf
+1 0 0 1 48.00 89.40 Tm
+(  API->>Store: Keep latest 300 messages) Tj
+/F3 7 Tf
+1 0 0 1 48.00 79.95 Tm
+(  API-->>Browser: Return updated message list) Tj
+ET
+endstream
+endobj
+15 0 obj
+<< /Type /Page /Parent 20 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 14 0 R >>
+endobj
+16 0 obj
+<< /Length 4424 >>
+stream
+BT
+/F2 12 Tf
+1 0 0 1 48.00 744.00 Tm
+(8. Save Game Score) Tj
+/F3 7 Tf
+1 0 0 1 48.00 724.80 Tm
+(mermaid) Tj
+/F3 7 Tf
+1 0 0 1 48.00 715.35 Tm
+(sequenceDiagram) Tj
+/F3 7 Tf
+1 0 0 1 48.00 705.90 Tm
+(  actor User) Tj
+/F3 7 Tf
+1 0 0 1 48.00 696.45 Tm
+(  participant Browser) Tj
+/F3 7 Tf
+1 0 0 1 48.00 687.00 Tm
+(  participant API as Node API) Tj
+/F3 7 Tf
+1 0 0 1 48.00 677.55 Tm
+(  participant Store as User storage) Tj
+/F3 7 Tf
+1 0 0 1 48.00 668.10 Tm
+() Tj
+/F3 7 Tf
+1 0 0 1 48.00 658.65 Tm
+(  User->>Browser: Play Snake) Tj
+/F3 7 Tf
+1 0 0 1 48.00 649.20 Tm
+(  Browser->>Browser: Calculate score and local best) Tj
+/F3 7 Tf
+1 0 0 1 48.00 639.75 Tm
+(  Browser->>API: PUT /api/games/snake-score) Tj
+/F3 7 Tf
+1 0 0 1 48.00 630.30 Tm
+(  API->>Store: Save max score for authenticated user) Tj
+/F3 7 Tf
+1 0 0 1 48.00 620.85 Tm
+(  API-->>Browser: Return highScore) Tj
+/F3 7 Tf
+1 0 0 1 48.00 611.40 Tm
+(  Browser->>Browser: Show new best score) Tj
+/F2 15 Tf
+1 0 0 1 48.00 588.95 Tm
+(E. Data Flow Summary) Tj
+/F1 10 Tf
+1 0 0 1 48.00 564.70 Tm
+(Authentication/session flow:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 548.20 Tm
+(- The browser submits credentials to `POST /api/signup` or `POST /api/login`.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 534.70 Tm
+(- The server validates inputs, hashes or verifies the password, creates a random session token, and) Tj
+/F1 10 Tf
+1 0 0 1 48.00 521.20 Tm
+(returns it.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 507.70 Tm
+(- The browser stores the token in localStorage and sends it in the `Authorization: Bearer` header.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 494.20 Tm
+(- The server resolves the token through local JSON or Supabase sessions.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 480.70 Tm
+(Profile update flow:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 464.20 Tm
+(- The profile editor collects display name, handle, bio, location, social links, theme, cursor,) Tj
+/F1 10 Tf
+1 0 0 1 48.00 450.70 Tm
+(sparkle, media, and toggle settings.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 437.20 Tm
+(- The browser sends the profile payload to `PUT /api/profiles/:handle`.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 423.70 Tm
+(- The server verifies the session and profile ownership before saving.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 410.20 Tm
+(- Public profile links are saved back onto the user record when possible.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 396.70 Tm
+(Media upload flow:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 380.20 Tm
+(- The frontend previews selected files as data URLs.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 366.70 Tm
+(- In Supabase mode, the server uploads media to `profile-media` and stores object paths.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 353.20 Tm
+(- In local JSON mode, media remains embedded in profile JSON.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 339.70 Tm
+(- Public profile media is served through `/api/profiles/:handle/avatar`, `/background`, and) Tj
+/F1 10 Tf
+1 0 0 1 48.00 326.20 Tm
+(`/music`.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 312.70 Tm
+(Friends/notifications flow:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 296.20 Tm
+(- Friend requests are stored on the target profile and sent request state is stored on the sender) Tj
+/F1 10 Tf
+1 0 0 1 48.00 282.70 Tm
+(profile.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 269.20 Tm
+(- Notifications are rendered from friend requests, tribe invites, and tribe join requests.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 255.70 Tm
+(- The frontend refreshes friend and notification state periodically.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 242.20 Tm
+(Tribes flow:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 225.70 Tm
+(- Tribes are owned by the creator and stored inside the owner's profile JSON.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 212.20 Tm
+(- Tribe summaries are built by scanning all profiles and normalizing their tribe arrays.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 198.70 Tm
+(- Owner-only actions are enforced by comparing the authenticated user ID with `tribe.ownerId`.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 185.20 Tm
+(Tribe chat flow:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 168.70 Tm
+(- Tribe messages are scoped by `tribeId`.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 155.20 Tm
+(- Messages are stored inside the tribe object and capped at the latest 300 messages.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 141.70 Tm
+(- Access is limited to the owner or member IDs.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 128.20 Tm
+(Games score flow:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 111.70 Tm
+(- Snake has server-backed high score storage.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 98.20 Tm
+(- Click Rush and Crossy Road use localStorage best scores in the frontend.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 84.70 Tm
+(- Wordle validates guesses against `words-5.txt` with a fallback word list.) Tj
+ET
+endstream
+endobj
+17 0 obj
+<< /Type /Page /Parent 20 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 16 0 R >>
+endobj
+18 0 obj
+<< /Length 3925 >>
+stream
+BT
+/F2 15 Tf
+1 0 0 1 48.00 744.00 Tm
+(F. Security & Permissions) Tj
+/F1 10 Tf
+1 0 0 1 48.00 719.75 Tm
+(Confirmed controls:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 703.25 Tm
+(- Passwords are hashed with Node `crypto.scrypt` and a random salt.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 689.75 Tm
+(- Session tokens are generated with `crypto.randomBytes`.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 676.25 Tm
+(- Private dashboard APIs require a valid bearer token.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 662.75 Tm
+(- Profile publishing requires authentication.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 649.25 Tm
+(- Existing profile ownership is enforced by `ownerUserId`.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 635.75 Tm
+(- Public profile reads return a public payload and remove owner/private fields.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 622.25 Tm
+(- Public profile view increments happen only when `?view=1` is used.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 608.75 Tm
+(- Tribe edit, delete, and member removal require tribe ownership.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 595.25 Tm
+(- Tribe chat access requires the requester to be the owner or a member.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 581.75 Tm
+(- The owner cannot remove themselves from their tribe through the member removal endpoint.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 568.25 Tm
+(- Supabase service role key is used only on the server.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 554.75 Tm
+(Assumptions and limitations:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 538.25 Tm
+(- Session expiration is not visible in the current implementation.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 524.75 Tm
+(- Password reset and email verification are not implemented.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 511.25 Tm
+(- Uploaded media validation is based on accepted frontend file types and server MIME handling;) Tj
+/F1 10 Tf
+1 0 0 1 48.00 497.75 Tm
+(deeper scanning is not implemented.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 484.25 Tm
+(- Rate limiting is not implemented.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 470.75 Tm
+(- Realtime authorization is not applicable because chat is currently request/response, not) Tj
+/F1 10 Tf
+1 0 0 1 48.00 457.25 Tm
+(WebSocket-based.) Tj
+/F2 15 Tf
+1 0 0 1 48.00 435.75 Tm
+(G. Scalability Recommendations) Tj
+/F1 10 Tf
+1 0 0 1 48.00 411.50 Tm
+(- Move production persistence fully to Supabase instead of local JSON.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 398.00 Tm
+(- Normalize high-volume entities into first-class tables: friendships, friend requests, tribes,) Tj
+/F1 10 Tf
+1 0 0 1 48.00 384.50 Tm
+(tribe members, tribe messages, notifications, and media assets.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 371.00 Tm
+(- Add database indexes for profile handle, owner user ID, tribe name search, tribe membership, and) Tj
+/F1 10 Tf
+1 0 0 1 48.00 357.50 Tm
+(message timestamps.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 344.00 Tm
+(- Add Supabase Row Level Security or equivalent API authorization policies if direct client access) Tj
+/F1 10 Tf
+1 0 0 1 48.00 330.50 Tm
+(is ever introduced.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 317.00 Tm
+(- Add session expiration, refresh, logout invalidation, and device/session management.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 303.50 Tm
+(- Add rate limiting for auth, profile publishing, media uploads, friend requests, tribe joins, and) Tj
+/F1 10 Tf
+1 0 0 1 48.00 290.00 Tm
+(chat messages.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 276.50 Tm
+(- Add file size limits, content-type verification, media compression, and lifecycle cleanup for) Tj
+/F1 10 Tf
+1 0 0 1 48.00 263.00 Tm
+(replaced media.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 249.50 Tm
+(- Move tribe chat to Supabase Realtime or WebSockets when live chat behavior is required.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 236.00 Tm
+(- Add audit logs for owner actions such as deleting tribes, removing members, and changing tribe) Tj
+/F1 10 Tf
+1 0 0 1 48.00 222.50 Tm
+(settings.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 209.00 Tm
+(- Add moderation workflows for public profiles, tribe names, chat messages, and uploaded media.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 195.50 Tm
+(- Add structured API route modules as the backend grows beyond the current single-file server.) Tj
+ET
+endstream
+endobj
+19 0 obj
+<< /Type /Page /Parent 20 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 18 0 R >>
+endobj
+20 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R 9 0 R 11 0 R 13 0 R 15 0 R 17 0 R 19 0 R] /Count 8 >>
+endobj
+21 0 obj
+<< /Type /Catalog /Pages 20 0 R >>
+endobj
+xref
+0 22
+0000000000 65535 f 
+0000000015 00000 n 
+0000000085 00000 n 
+0000000160 00000 n 
+0000000228 00000 n 
+0000005559 00000 n 
+0000005706 00000 n 
+0000010683 00000 n 
+0000010830 00000 n 
+0000015062 00000 n 
+0000015209 00000 n 
+0000019079 00000 n 
+0000019228 00000 n 
+0000024133 00000 n 
+0000024282 00000 n 
+0000029307 00000 n 
+0000029456 00000 n 
+0000033933 00000 n 
+0000034082 00000 n 
+0000038060 00000 n 
+0000038209 00000 n 
+0000038314 00000 n 
+trailer
+<< /Size 22 /Root 21 0 R >>
+startxref
+38365
+%%EOF

@@ -1,0 +1,1302 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+2 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+4 0 obj
+<< /Length 3579 >>
+stream
+BT
+/F2 20 Tf
+1 0 0 1 48.00 744.00 Tm
+(fun.lol Product Design Document) Tj
+/F1 10 Tf
+1 0 0 1 48.00 707.00 Tm
+(Generated: 2026-05-24) Tj
+/F1 10 Tf
+1 0 0 1 48.00 690.50 Tm
+(Source inspection scope: `index.html`, `script.js`, `styles.css`, `server.js`, `package.json`, and) Tj
+/F1 10 Tf
+1 0 0 1 48.00 677.00 Tm
+(`supabase-schema.sql`.) Tj
+/F2 15 Tf
+1 0 0 1 48.00 652.50 Tm
+(1. Executive Summary) Tj
+/F1 10 Tf
+1 0 0 1 48.00 628.25 Tm
+(fun.lol is a customizable public profile platform where users can create a public bio page, add) Tj
+/F1 10 Tf
+1 0 0 1 48.00 614.75 Tm
+(visual and audio media, connect with friends, join tribes, chat with tribe members, and play mini-) Tj
+/F1 10 Tf
+1 0 0 1 48.00 601.25 Tm
+(games from a private dashboard. The current product blends a personal identity page with) Tj
+/F1 10 Tf
+1 0 0 1 48.00 587.75 Tm
+(lightweight social and entertainment features.) Tj
+/F2 15 Tf
+1 0 0 1 48.00 563.25 Tm
+(2. Product Vision) Tj
+/F1 10 Tf
+1 0 0 1 48.00 539.00 Tm
+(The long-term vision is for fun.lol to become a highly personalized social identity hub. Users) Tj
+/F1 10 Tf
+1 0 0 1 48.00 525.50 Tm
+(should be able to express themselves through media-rich profiles, share one public link, keep up) Tj
+/F1 10 Tf
+1 0 0 1 48.00 512.00 Tm
+(with friends, create small communities, and enjoy interactive experiences without leaving the) Tj
+/F1 10 Tf
+1 0 0 1 48.00 498.50 Tm
+(platform.) Tj
+/F2 15 Tf
+1 0 0 1 48.00 474.00 Tm
+(3. Target Users) Tj
+/F1 10 Tf
+1 0 0 1 48.00 449.75 Tm
+(- Creators who want a personalized profile link.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 436.25 Tm
+(- Gamers who enjoy expressive profiles and mini-games.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 422.75 Tm
+(- Social users who want a lightweight friend graph.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 409.25 Tm
+(- Friend groups who want private-ish spaces around shared identity.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 395.75 Tm
+(- Community or tribe members who want a shared group and chat.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 382.25 Tm
+(- Public visitors who open a user's profile link.) Tj
+/F2 15 Tf
+1 0 0 1 48.00 360.75 Tm
+(4. Problem Statement) Tj
+/F1 10 Tf
+1 0 0 1 48.00 336.50 Tm
+(Many profile-link tools are static, generic, and disconnected from the user's actual social) Tj
+/F1 10 Tf
+1 0 0 1 48.00 323.00 Tm
+(experience. fun.lol solves this by combining profile customization, media, friend requests, tribe) Tj
+/F1 10 Tf
+1 0 0 1 48.00 309.50 Tm
+(communities, tribe chats, and mini-games in one lightweight web platform.) Tj
+/F2 15 Tf
+1 0 0 1 48.00 285.00 Tm
+(5. Product Goals) Tj
+/F1 10 Tf
+1 0 0 1 48.00 260.75 Tm
+(- Enable personal profile customization.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 247.25 Tm
+(- Support public profile sharing by handle.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 233.75 Tm
+(- Make social discovery and friend connection simple.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 220.25 Tm
+(- Provide tribe/community engagement.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 206.75 Tm
+(- Add mini-game entertainment inside the dashboard.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 193.25 Tm
+(- Preserve a strong dark, animated, profile-first brand feel.) Tj
+/F2 15 Tf
+1 0 0 1 48.00 171.75 Tm
+(6. Non-Goals) Tj
+/F1 10 Tf
+1 0 0 1 48.00 147.50 Tm
+(The current version does not include:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 131.00 Tm
+(- A full social media feed.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 117.50 Tm
+(- Payment or subscription systems.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 104.00 Tm
+(- Advanced moderation dashboard.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 90.50 Tm
+(- Native mobile app.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 77.00 Tm
+(- Enterprise admin portal.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 63.50 Tm
+(- End-to-end encrypted messaging.) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 22 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 4 0 R >>
+endobj
+6 0 obj
+<< /Length 3489 >>
+stream
+BT
+/F1 10 Tf
+1 0 0 1 48.00 744.00 Tm
+(- Realtime chat infrastructure.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 730.50 Tm
+(- Password reset or email verification.) Tj
+/F2 15 Tf
+1 0 0 1 48.00 709.00 Tm
+(7. Key Features) Tj
+/F2 12 Tf
+1 0 0 1 48.00 679.75 Tm
+(Account & Authentication) Tj
+/F1 10 Tf
+1 0 0 1 48.00 663.55 Tm
+(- Email and password sign up.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 650.05 Tm
+(- Login with saved browser session.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 636.55 Tm
+(- Auto-login for returning users.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 623.05 Tm
+(- Server-side password hashing.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 609.55 Tm
+(- Settings page with account and public profile details.) Tj
+/F2 12 Tf
+1 0 0 1 48.00 591.05 Tm
+(Dashboard) Tj
+/F1 10 Tf
+1 0 0 1 48.00 574.85 Tm
+(- Private logged-in home screen.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 561.35 Tm
+(- Sidebar navigation for Bio, Games, Tribes, and Settings.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 547.85 Tm
+(- Collapsible sidebar.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 534.35 Tm
+(- Friends and notifications widgets.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 520.85 Tm
+(- Dashboard theme selector.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 507.35 Tm
+(- Pointer style and color controls.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 493.85 Tm
+(- Mute Outside Bio control.) Tj
+/F2 12 Tf
+1 0 0 1 48.00 475.35 Tm
+(Bio/Profile Builder) Tj
+/F1 10 Tf
+1 0 0 1 48.00 459.15 Tm
+(- Editable display name, handle, bio, and location.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 445.65 Tm
+(- Public profile publishing.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 432.15 Tm
+(- Visitor preview.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 418.65 Tm
+(- Public link generation.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 405.15 Tm
+(- Profile view counter.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 391.65 Tm
+(- Profile card with avatar, UID, featured section, location, views, and social buttons.) Tj
+/F2 12 Tf
+1 0 0 1 48.00 373.15 Tm
+(Profile Customization) Tj
+/F1 10 Tf
+1 0 0 1 48.00 356.95 Tm
+(- Avatar upload.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 343.45 Tm
+(- Background image or video upload.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 329.95 Tm
+(- Background music upload.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 316.45 Tm
+(- Remove background and music files.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 302.95 Tm
+(- Theme selection.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 289.45 Tm
+(- Animated background, compact links, and dark video overlay toggles.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 275.95 Tm
+(- Dot cursor, cursor color, and sparkle effects.) Tj
+/F2 12 Tf
+1 0 0 1 48.00 257.45 Tm
+(Music & Entry Experience) Tj
+/F1 10 Tf
+1 0 0 1 48.00 241.25 Tm
+(- Public profile entry screen before the profile opens.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 227.75 Tm
+(- Music starts after user interaction.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 214.25 Tm
+(- Music controls on the owner's bio editor.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 200.75 Tm
+(- Public visitors do not see the full music information box.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 187.25 Tm
+(- Public video loop transition with audio fade behavior.) Tj
+/F2 12 Tf
+1 0 0 1 48.00 168.75 Tm
+(Social Links) Tj
+/F1 10 Tf
+1 0 0 1 48.00 152.55 Tm
+(- Discord, Instagram, TikTok, YouTube, X, and GitHub social fields.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 139.05 Tm
+(- Profile social output uses icons rather than plain text labels.) Tj
+/F2 12 Tf
+1 0 0 1 48.00 120.55 Tm
+(Friends & Notifications) Tj
+/F1 10 Tf
+1 0 0 1 48.00 104.35 Tm
+(- Add friends by name, handle, or profile link.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 90.85 Tm
+(- Send and accept friend requests.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 77.35 Tm
+(- Remove friends after confirmation.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 63.85 Tm
+(- View sent friend requests.) Tj
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 22 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 6 0 R >>
+endobj
+8 0 obj
+<< /Length 3783 >>
+stream
+BT
+/F1 10 Tf
+1 0 0 1 48.00 744.00 Tm
+(- Notifications widget and friend request tab.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 730.50 Tm
+(- Periodic refresh of friend and notification state.) Tj
+/F2 12 Tf
+1 0 0 1 48.00 712.00 Tm
+(Tribes) Tj
+/F1 10 Tf
+1 0 0 1 48.00 695.80 Tm
+(- Add Friends, Your Friends, Your Tribes, Join a Tribe, Your Tribe Chats, and Friend Requests tabs.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 682.30 Tm
+(- Create tribes with a name and color.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 668.80 Tm
+(- Invite friends to tribes.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 655.30 Tm
+(- Accept or decline tribe invites.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 641.80 Tm
+(- Search for tribes.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 628.30 Tm
+(- Request to join tribes.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 614.80 Tm
+(- Owner approval for join requests.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 601.30 Tm
+(- Owner-only rename, color change, delete, and member removal.) Tj
+/F2 12 Tf
+1 0 0 1 48.00 582.80 Tm
+(Tribe Chats) Tj
+/F1 10 Tf
+1 0 0 1 48.00 566.60 Tm
+(- Grid of chats for tribes the user can access.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 553.10 Tm
+(- Open a selected tribe chat.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 539.60 Tm
+(- Send messages scoped to that tribe.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 526.10 Tm
+(- Exit chat back to the grid.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 512.60 Tm
+(- Non-members are blocked by the backend.) Tj
+/F2 12 Tf
+1 0 0 1 48.00 494.10 Tm
+(Games) Tj
+/F1 10 Tf
+1 0 0 1 48.00 477.90 Tm
+(- Games dashboard with card grid and expanded game views.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 464.40 Tm
+(- Snake with server-backed high score.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 450.90 Tm
+(- Click Rush with local best score.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 437.40 Tm
+(- Wordle with English dictionary validation from `words-5.txt`.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 423.90 Tm
+(- Crossy Road-style game with increasing difficulty and obstacles.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 410.40 Tm
+(- Memory Match and Orbit Dodge placeholders.) Tj
+/F2 12 Tf
+1 0 0 1 48.00 391.90 Tm
+(Backend/Data) Tj
+/F1 10 Tf
+1 0 0 1 48.00 375.70 Tm
+(- Node.js backend using built-in `http`.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 362.20 Tm
+(- Local JSON fallback storage.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 348.70 Tm
+(- Optional Supabase database support.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 335.20 Tm
+(- Optional Supabase Storage media bucket.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 321.70 Tm
+(- API routes for auth, profiles, friends, tribes, tribe chats, media, games, sitemap, and robots.) Tj
+/F2 12 Tf
+1 0 0 1 48.00 303.20 Tm
+(Responsive UX) Tj
+/F1 10 Tf
+1 0 0 1 48.00 287.00 Tm
+(- Mobile layout adjustments.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 273.50 Tm
+(- Custom cursor disabled on coarse pointer/mobile devices.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 260.00 Tm
+(- Responsive dashboard/sidebar behavior.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 246.50 Tm
+(- Glassmorphism dark UI.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 233.00 Tm
+(- Animated star/void-style background.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 219.50 Tm
+(- Hover movement effects.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 206.00 Tm
+(- Loading, welcome, and entry transitions.) Tj
+/F2 15 Tf
+1 0 0 1 48.00 184.50 Tm
+(8. Functional Requirements) Tj
+/F2 12 Tf
+1 0 0 1 48.00 155.25 Tm
+(Authentication) Tj
+/F1 10 Tf
+1 0 0 1 48.00 139.05 Tm
+(1. The system shall allow a user to sign up with email and password.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 125.55 Tm
+(1. The system shall reject invalid emails and passwords shorter than the configured minimum.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 112.05 Tm
+(1. The system shall hash passwords before storing them.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 98.55 Tm
+(1. The system shall allow a user to log in with a valid email and password.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 85.05 Tm
+(1. The system shall return a session token after successful signup or login.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 71.55 Tm
+(1. The system shall load account metadata through `GET /api/me`.) Tj
+ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 22 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 8 0 R >>
+endobj
+10 0 obj
+<< /Length 4618 >>
+stream
+BT
+/F2 12 Tf
+1 0 0 1 48.00 744.00 Tm
+(Dashboard) Tj
+/F1 10 Tf
+1 0 0 1 48.00 727.80 Tm
+(1. The system shall show the authenticated dashboard only after login.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 714.30 Tm
+(1. The system shall provide Bio, Games, Tribes, and Settings navigation.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 700.80 Tm
+(1. The system shall allow the sidebar to collapse and expand.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 687.30 Tm
+(1. The system shall persist dashboard theme, cursor mode, cursor color, mute setting, and sidebar) Tj
+/F1 10 Tf
+1 0 0 1 48.00 673.80 Tm
+(state in localStorage.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 660.30 Tm
+(1. The system shall show friends and notifications widgets on the home screen.) Tj
+/F2 12 Tf
+1 0 0 1 48.00 641.80 Tm
+(Profile Builder) Tj
+/F1 10 Tf
+1 0 0 1 48.00 625.60 Tm
+(1. The system shall allow users to edit name, handle, bio, and location.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 612.10 Tm
+(1. The system shall normalize handles before publishing.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 598.60 Tm
+(1. The system shall prevent authenticated users from editing profiles owned by another user.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 585.10 Tm
+(1. The system shall generate `/u/:handle` public profile paths.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 571.60 Tm
+(1. The system shall increment public views when a profile is opened with `?view=1`.) Tj
+/F2 12 Tf
+1 0 0 1 48.00 553.10 Tm
+(Media) Tj
+/F1 10 Tf
+1 0 0 1 48.00 536.90 Tm
+(1. The system shall allow avatar, background, and music upload from the browser.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 523.40 Tm
+(1. The system shall preview selected media before publish.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 509.90 Tm
+(1. The system shall store media in Supabase Storage when Supabase is configured.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 496.40 Tm
+(1. The system shall serve media through profile media API endpoints.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 482.90 Tm
+(1. The system shall allow background and music files to be removed.) Tj
+/F2 12 Tf
+1 0 0 1 48.00 464.40 Tm
+(Friends and Notifications) Tj
+/F1 10 Tf
+1 0 0 1 48.00 448.20 Tm
+(1. The system shall send friend requests to valid published profile handles.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 434.70 Tm
+(1. The system shall prevent self friend requests.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 421.20 Tm
+(1. The system shall prevent duplicate friendships from being added.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 407.70 Tm
+(1. The system shall allow recipients to accept friend requests.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 394.20 Tm
+(1. The system shall remove accepted requests from pending lists.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 380.70 Tm
+(1. The system shall allow friends to be removed after confirmation.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 367.20 Tm
+(1. The system shall refresh friend and notification state periodically.) Tj
+/F2 12 Tf
+1 0 0 1 48.00 348.70 Tm
+(Tribes) Tj
+/F1 10 Tf
+1 0 0 1 48.00 332.50 Tm
+(1. The system shall allow authenticated profile owners to create tribes.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 319.00 Tm
+(1. The system shall allow tribe owners to invite existing friends.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 305.50 Tm
+(1. The system shall show tribe invites as notifications.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 292.00 Tm
+(1. The system shall allow invited users to accept or decline.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 278.50 Tm
+(1. The system shall allow users to search tribes by name.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 265.00 Tm
+(1. The system shall allow users to request to join a tribe.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 251.50 Tm
+(1. The system shall allow tribe owners to accept or decline join requests.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 238.00 Tm
+(1. The system shall allow owners to rename tribes and change tribe color.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 224.50 Tm
+(1. The system shall allow owners to delete tribes.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 211.00 Tm
+(1. The system shall allow owners to remove members except themselves.) Tj
+/F2 12 Tf
+1 0 0 1 48.00 192.50 Tm
+(Tribe Chats) Tj
+/F1 10 Tf
+1 0 0 1 48.00 176.30 Tm
+(1. The system shall show chat cards only for tribes the user owns or belongs to.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 162.80 Tm
+(1. The system shall load messages for the selected tribe only.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 149.30 Tm
+(1. The system shall reject chat access for non-members.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 135.80 Tm
+(1. The system shall reject empty chat messages.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 122.30 Tm
+(1. The system shall append sent messages to the selected tribe chat.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 108.80 Tm
+(1. The system shall keep chat state when exiting back to the chat grid.) Tj
+/F2 12 Tf
+1 0 0 1 48.00 90.30 Tm
+(Games) Tj
+/F1 10 Tf
+1 0 0 1 48.00 74.10 Tm
+(1. The system shall allow users to open games from a card grid.) Tj
+ET
+endstream
+endobj
+11 0 obj
+<< /Type /Page /Parent 22 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 10 0 R >>
+endobj
+12 0 obj
+<< /Length 4417 >>
+stream
+BT
+/F1 10 Tf
+1 0 0 1 48.00 744.00 Tm
+(1. The system shall expand the selected game and provide a return action.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 730.50 Tm
+(1. The system shall show how-to-play content for each playable game.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 717.00 Tm
+(1. The system shall save Snake high score through the backend.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 703.50 Tm
+(1. The system shall save Click Rush and Crossy Road best scores locally.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 690.00 Tm
+(1. The system shall validate Wordle guesses against a dictionary.) Tj
+/F2 15 Tf
+1 0 0 1 48.00 668.50 Tm
+(9. Non-Functional Requirements) Tj
+/F1 10 Tf
+1 0 0 1 48.00 644.25 Tm
+(Security:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 627.75 Tm
+(- Passwords must be hashed before storage.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 614.25 Tm
+(- Private APIs must require valid sessions.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 600.75 Tm
+(- Owner-only actions must be checked on the server.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 587.25 Tm
+(Performance:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 570.75 Tm
+(- Public profiles should minimize payload size by avoiding inline media in public view mode when) Tj
+/F1 10 Tf
+1 0 0 1 48.00 557.25 Tm
+(storage paths exist.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 543.75 Tm
+(- Background videos should load without blocking core profile text.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 530.25 Tm
+(Scalability:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 513.75 Tm
+(- Production should use Supabase or another managed database instead of local JSON.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 500.25 Tm
+(- High-volume data such as chat messages should move to dedicated tables.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 486.75 Tm
+(Availability:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 470.25 Tm
+(- The app can run locally with JSON storage and in hosted mode with Supabase.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 456.75 Tm
+(- Recommendation: add backups and monitoring for production.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 443.25 Tm
+(Responsiveness:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 426.75 Tm
+(- Dashboard and profile layouts should adapt to mobile and desktop.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 413.25 Tm
+(- Custom cursor effects should be disabled on coarse pointer devices.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 399.75 Tm
+(Accessibility:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 383.25 Tm
+(- Interactive controls should preserve labels or accessible names.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 369.75 Tm
+(- Recommendation: add keyboard and screen reader audits for games and dialogs.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 356.25 Tm
+(Maintainability:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 339.75 Tm
+(- Recommendation: split the growing `server.js` and `script.js` into modules as the product grows.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 326.25 Tm
+(Browser compatibility:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 309.75 Tm
+(- The app should work in modern Chromium, Edge, Safari, and Firefox browsers.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 296.25 Tm
+(- Recommendation: test media autoplay behavior across browsers because music requires user) Tj
+/F1 10 Tf
+1 0 0 1 48.00 282.75 Tm
+(interaction.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 269.25 Tm
+(Data privacy:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 252.75 Tm
+(- Public profile payloads should not include password hashes, session tokens, or private owner) Tj
+/F1 10 Tf
+1 0 0 1 48.00 239.25 Tm
+(fields.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 225.75 Tm
+(- Recommendation: avoid exposing Supabase service keys to the client.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 212.25 Tm
+(Error handling:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 195.75 Tm
+(- API errors should return clear messages.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 182.25 Tm
+(- UI should show toast or status messages for failed actions.) Tj
+/F2 15 Tf
+1 0 0 1 48.00 160.75 Tm
+(10. User Roles & Permissions) Tj
+/F1 8 Tf
+1 0 0 1 48.00 136.50 Tm
+(Role: Public visitor; Description: Not logged in, opens a public profile; Key permissions: View public profile and media) Tj
+/F1 8 Tf
+1 0 0 1 48.00 125.70 Tm
+(entry experience.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 112.90 Tm
+(Role: Logged-in user; Description: Authenticated account holder; Key permissions: Access dashboard, publish own profile, use) Tj
+/F1 8 Tf
+1 0 0 1 48.00 102.10 Tm
+(games, manage friends and tribes.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 89.30 Tm
+(Role: Friend; Description: User connected through accepted friend request; Key permissions: Appears in friends list and can) Tj
+/F1 8 Tf
+1 0 0 1 48.00 78.50 Tm
+(be invited to tribes.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 65.70 Tm
+(Role: Tribe member; Description: User included in a tribe member list; Key permissions: View tribe details and access tribe) Tj
+ET
+endstream
+endobj
+13 0 obj
+<< /Type /Page /Parent 22 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 12 0 R >>
+endobj
+14 0 obj
+<< /Length 5562 >>
+stream
+BT
+/F1 8 Tf
+1 0 0 1 48.00 744.00 Tm
+(chat.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 731.20 Tm
+(Role: Tribe owner; Description: Creator/owner of a tribe; Key permissions: Rename, recolor, delete tribe, approve joins,) Tj
+/F1 8 Tf
+1 0 0 1 48.00 720.40 Tm
+(remove members, access chat.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 707.60 Tm
+(Role: Invited user; Description: User who received a tribe invite; Key permissions: Accept or decline the invite.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 694.80 Tm
+(Role: Join requester; Description: User who requested tribe membership; Key permissions: Wait for owner approval; cannot) Tj
+/F1 8 Tf
+1 0 0 1 48.00 684.00 Tm
+(access chat until accepted.) Tj
+/F2 15 Tf
+1 0 0 1 48.00 659.20 Tm
+(11. UX/UI Principles) Tj
+/F1 10 Tf
+1 0 0 1 48.00 634.95 Tm
+(- Dark glassmorphism visual language.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 621.45 Tm
+(- Animated star/void background as a core brand element.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 607.95 Tm
+(- Compact dashboard layout with clear navigation.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 594.45 Tm
+(- Profile-first personalization with live preview behavior.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 580.95 Tm
+(- Smooth loading, welcome, and entry transitions.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 567.45 Tm
+(- Game-like interaction patterns for cards, hover motion, and cursor effects.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 553.95 Tm
+(- Mobile-friendly behavior with custom cursor effects disabled where inappropriate.) Tj
+/F2 15 Tf
+1 0 0 1 48.00 532.45 Tm
+(12. Data Model) Tj
+/F1 8 Tf
+1 0 0 1 48.00 508.20 Tm
+(Object: User; Key fields: id, email, passwordHash/password_hash, profileHandle, profilePath, profileUrl, snakeHighScore;) Tj
+/F1 8 Tf
+1 0 0 1 48.00 497.40 Tm
+(Current persistence: `users.json` or `app_users`.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 484.60 Tm
+(Object: Profile; Key fields: handle, ownerUserId, name, bio, location, theme, views, updatedAt; Current persistence:) Tj
+/F1 8 Tf
+1 0 0 1 48.00 473.80 Tm
+(`profiles.json` or `app_profiles.data`.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 461.00 Tm
+(Object: AccountSettings; Key fields: dashboardTheme, cursorMode, cursorColor, muteOutsideBio, sidebarCollapsed; Current) Tj
+/F1 8 Tf
+1 0 0 1 48.00 450.20 Tm
+(persistence: Browser localStorage.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 437.40 Tm
+(Object: SocialLink; Key fields: platform, value, normalizedUrl; Current persistence: Profile JSON.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 424.60 Tm
+(Object: FriendRequest; Key fields: id, fromName, fromHandle, fromLink, createdAt; Current persistence: Target profile JSON.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 411.80 Tm
+(Object: Friendship; Key fields: id, name, handle, link; Current persistence: Profile JSON.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 399.00 Tm
+(Object: Notification; Key fields: derived type, actor, target, createdAt; Current persistence: Derived from friend requests,) Tj
+/F1 8 Tf
+1 0 0 1 48.00 388.20 Tm
+(tribe invites, and join requests.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 375.40 Tm
+(Object: Tribe; Key fields: tribeId, name, ownerId, ownerDisplayName, ownerHandle, memberIds, pendingInviteIds,) Tj
+/F1 8 Tf
+1 0 0 1 48.00 364.60 Tm
+(pendingJoinIds, themeColor, messages, createdAt, updatedAt; Current persistence: Owner profile JSON.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 351.80 Tm
+(Object: TribeMember; Key fields: userId, displayName, handle, link; Current persistence: Derived from memberIds and profile) Tj
+/F1 8 Tf
+1 0 0 1 48.00 341.00 Tm
+(data.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 328.20 Tm
+(Object: TribeInvite; Key fields: id, tribeId, tribeName, ownerId, ownerDisplayName, ownerHandle, createdAt; Current) Tj
+/F1 8 Tf
+1 0 0 1 48.00 317.40 Tm
+(persistence: Invited user's profile JSON.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 304.60 Tm
+(Object: TribeJoinRequest; Key fields: id, tribeId, tribeName, requesterId, requesterDisplayName, requesterHandle, createdAt;) Tj
+/F1 8 Tf
+1 0 0 1 48.00 293.80 Tm
+(Current persistence: Owner profile JSON.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 281.00 Tm
+(Object: TribeMessage; Key fields: id, senderId, senderDisplayName, senderHandle, text, createdAt; Current persistence: Tribe) Tj
+/F1 8 Tf
+1 0 0 1 48.00 270.20 Tm
+(object in owner profile JSON.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 257.40 Tm
+(Object: GameScore; Key fields: userId, game, highScore; Current persistence: Snake in user storage; other best scores in) Tj
+/F1 8 Tf
+1 0 0 1 48.00 246.60 Tm
+(localStorage.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 233.80 Tm
+(Object: MediaAsset; Key fields: avatar/background/music data or path, name, type; Current persistence: Profile JSON plus) Tj
+/F1 8 Tf
+1 0 0 1 48.00 223.00 Tm
+(optional Supabase Storage object.) Tj
+/F2 15 Tf
+1 0 0 1 48.00 198.20 Tm
+(13. Key User Flows) Tj
+/F1 10 Tf
+1 0 0 1 48.00 173.95 Tm
+(- Sign up: User enters email/password, server creates account and session, dashboard loads.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 160.45 Tm
+(- Login: User enters credentials, server verifies password, session token is stored.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 146.95 Tm
+(- Edit bio profile: User changes profile fields, preview updates, user publishes.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 133.45 Tm
+(- Upload media: User selects avatar/background/music, preview updates, profile publish stores) Tj
+/F1 10 Tf
+1 0 0 1 48.00 119.95 Tm
+(media.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 106.45 Tm
+(- Publish public profile: Server saves profile and returns `/u/:handle`.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 92.95 Tm
+(- Visitor opens profile: Visitor enters profile page, view count increments, public profile loads.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 79.45 Tm
+(- Add friend: User enters a handle/link, server sends request to target profile.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 65.95 Tm
+(- Accept friend request: Recipient accepts, both friend lists update.) Tj
+ET
+endstream
+endobj
+15 0 obj
+<< /Type /Page /Parent 22 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 14 0 R >>
+endobj
+16 0 obj
+<< /Length 4681 >>
+stream
+BT
+/F1 10 Tf
+1 0 0 1 48.00 744.00 Tm
+(- Create tribe: Owner creates tribe, optionally invites friends.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 730.50 Tm
+(- Invite friend to tribe: Friend receives tribe invite notification and accepts/declines.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 717.00 Tm
+(- Join tribe: User searches tribe and sends join request.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 703.50 Tm
+(- Approve join request: Owner accepts requester into member list.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 690.00 Tm
+(- Open tribe chat: Member selects chat card and loads scoped messages.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 676.50 Tm
+(- Send tribe message: Member sends non-empty text, message is appended to tribe.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 663.00 Tm
+(- Play game: User opens game, plays, game-over state shows score.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 649.50 Tm
+(- Save score: Snake score saves through backend; selected other games use localStorage.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 636.00 Tm
+(- Change dashboard/theme/cursor settings: User changes controls and settings persist locally.) Tj
+/F2 15 Tf
+1 0 0 1 48.00 614.50 Tm
+(14. Edge Cases) Tj
+/F1 10 Tf
+1 0 0 1 48.00 590.25 Tm
+(- Duplicate handle: Server rejects editing a profile owned by another account.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 576.75 Tm
+(- Invalid profile link: Friend request route returns an error for invalid target handles.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 563.25 Tm
+(- Failed media upload: Server returns an error and profile publish should show a failure message.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 549.75 Tm
+(- Removed background/music file: UI clears local state and publish persists removal.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 536.25 Tm
+(- Empty bio fields: Defaults are applied for name, handle, bio, and location.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 522.75 Tm
+(- Friend already added: Existing friendship prevents duplicate request behavior.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 509.25 Tm
+(- Duplicate friend request: Existing pending request is reused.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 495.75 Tm
+(- Tribe already exists: Current implementation does not enforce unique tribe names. Recommendation:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 482.25 Tm
+(add duplicate-name handling per owner.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 468.75 Tm
+(- User already in tribe: Join route returns joined status.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 455.25 Tm
+(- User already invited: Duplicate invite records are avoided.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 441.75 Tm
+(- Non-member accessing tribe chat: Server returns a forbidden error.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 428.25 Tm
+(- Owner removing themselves: Server rejects removing the owner.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 414.75 Tm
+(- Tribe deleted while chat is open: Active chat is cleared when tribe state refresh removes access.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 401.25 Tm
+(- Empty chat message: Server rejects empty sanitized text.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 387.75 Tm
+(- Game score save failure: Snake falls back to local best-score behavior in the frontend.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 374.25 Tm
+(- Local JSON storage unavailable: Server file read/write would fail. Recommendation: add) Tj
+/F1 10 Tf
+1 0 0 1 48.00 360.75 Tm
+(operational monitoring and backups.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 347.25 Tm
+(- Supabase unavailable: API requests will fail in Supabase mode. Recommendation: add retry and) Tj
+/F1 10 Tf
+1 0 0 1 48.00 333.75 Tm
+(user-friendly status handling.) Tj
+/F2 15 Tf
+1 0 0 1 48.00 312.25 Tm
+(15. Acceptance Criteria) Tj
+/F1 10 Tf
+1 0 0 1 48.00 288.00 Tm
+(Authentication:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 271.50 Tm
+(- A new user can sign up and reaches the dashboard.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 258.00 Tm
+(- Existing users can log in without recreating accounts.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 244.50 Tm
+(- Invalid credentials produce a clear error.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 231.00 Tm
+(Dashboard:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 214.50 Tm
+(- Sidebar navigation changes active sections.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 201.00 Tm
+(- Sidebar collapse state persists.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 187.50 Tm
+(- Cursor, theme, and mute controls do not overlap and remain clickable.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 174.00 Tm
+(Profile:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 157.50 Tm
+(- A user can publish a profile and receive a public link.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 144.00 Tm
+(- Visitors can open `/u/:handle` without edit controls.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 130.50 Tm
+(- View count increases when a public profile is viewed.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 117.00 Tm
+(Media:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 100.50 Tm
+(- Avatar, background, and music can be selected, previewed, saved, and loaded again.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 87.00 Tm
+(- Remove buttons clear background and music.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 73.50 Tm
+(Friends:) Tj
+ET
+endstream
+endobj
+17 0 obj
+<< /Type /Page /Parent 22 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 16 0 R >>
+endobj
+18 0 obj
+<< /Length 4064 >>
+stream
+BT
+/F1 10 Tf
+1 0 0 1 48.00 744.00 Tm
+(- A user can send a friend request by handle or profile link.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 730.50 Tm
+(- Recipient can accept the request.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 717.00 Tm
+(- Friends appear without requiring a full page refresh after periodic refresh.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 703.50 Tm
+(- Removing a friend asks for confirmation.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 690.00 Tm
+(Tribes:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 673.50 Tm
+(- A user can create a tribe and invite friends.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 660.00 Tm
+(- Invited users receive Yes/No notifications.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 646.50 Tm
+(- Users can search and request to join tribes.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 633.00 Tm
+(- Owners can approve join requests.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 619.50 Tm
+(- Owners can rename, recolor, delete, and remove members.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 606.00 Tm
+(- Non-owners do not see or use owner controls.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 592.50 Tm
+(Tribe Chats:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 576.00 Tm
+(- Members see chat cards for their tribes.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 562.50 Tm
+(- Non-members cannot open a tribe chat.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 549.00 Tm
+(- Messages are scoped to the active tribe.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 535.50 Tm
+(- Exit Chat returns to the chat grid.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 522.00 Tm
+(Games:) Tj
+/F1 10 Tf
+1 0 0 1 48.00 505.50 Tm
+(- Playable games open from the grid.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 492.00 Tm
+(- Snake, Click Rush, Wordle, and Crossy Road show game-over states.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 478.50 Tm
+(- Wordle rejects guesses not found in the dictionary.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 465.00 Tm
+(- Snake high score is saved for the authenticated user.) Tj
+/F2 15 Tf
+1 0 0 1 48.00 443.50 Tm
+(16. Analytics & Success Metrics) Tj
+/F1 10 Tf
+1 0 0 1 48.00 419.25 Tm
+(- Signups.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 405.75 Tm
+(- Logins and returning users.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 392.25 Tm
+(- Published profiles.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 378.75 Tm
+(- Public profile views.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 365.25 Tm
+(- Media uploads.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 351.75 Tm
+(- Profile publish success rate.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 338.25 Tm
+(- Friend requests sent and accepted.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 324.75 Tm
+(- Active friendships.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 311.25 Tm
+(- Tribes created.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 297.75 Tm
+(- Tribe invites accepted/declined.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 284.25 Tm
+(- Tribe join requests accepted/declined.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 270.75 Tm
+(- Tribe chat messages sent.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 257.25 Tm
+(- Games opened.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 243.75 Tm
+(- Games completed.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 230.25 Tm
+(- Snake high score saves.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 216.75 Tm
+(- Theme/cursor customization usage.) Tj
+/F2 15 Tf
+1 0 0 1 48.00 195.25 Tm
+(17. Risks & Mitigations) Tj
+/F1 8 Tf
+1 0 0 1 48.00 171.00 Tm
+(Risk: Local JSON storage may not scale; Type: Technical; Mitigation: Move production data to Supabase tables and add) Tj
+/F1 8 Tf
+1 0 0 1 48.00 160.20 Tm
+(backups.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 147.40 Tm
+(Risk: Chat stored inside owner profile JSON can become large; Type: Technical; Mitigation: Move messages to a dedicated) Tj
+/F1 8 Tf
+1 0 0 1 48.00 136.60 Tm
+(messages table or realtime service.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 123.80 Tm
+(Risk: No session expiration visible; Type: Security; Mitigation: Add token expiry, refresh, and logout invalidation.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 111.00 Tm
+(Risk: Public media may be large; Type: Performance; Mitigation: Add upload limits, compression, and CDN-backed storage.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 98.20 Tm
+(Risk: User-generated content can be abusive; Type: Product/Safety; Mitigation: Add reporting, moderation, block lists, and) Tj
+/F1 8 Tf
+1 0 0 1 48.00 87.40 Tm
+(content rules.) Tj
+/F1 8 Tf
+1 0 0 1 48.00 74.60 Tm
+(Risk: Music/video autoplay varies by browser; Type: UX; Mitigation: Keep entry gate and test browser-specific media) Tj
+/F1 8 Tf
+1 0 0 1 48.00 63.80 Tm
+(behavior.) Tj
+ET
+endstream
+endobj
+19 0 obj
+<< /Type /Page /Parent 22 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 18 0 R >>
+endobj
+20 0 obj
+<< /Length 1186 >>
+stream
+BT
+/F1 8 Tf
+1 0 0 1 48.00 744.00 Tm
+(Risk: Large `script.js` and `server.js` reduce maintainability; Type: Engineering; Mitigation: Split by feature modules and) Tj
+/F1 8 Tf
+1 0 0 1 48.00 733.20 Tm
+(add automated tests.) Tj
+/F2 15 Tf
+1 0 0 1 48.00 708.40 Tm
+(18. Future Enhancements) Tj
+/F1 10 Tf
+1 0 0 1 48.00 684.15 Tm
+(- Realtime tribe chat.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 670.65 Tm
+(- Push notifications.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 657.15 Tm
+(- Image/audio attachments in chat.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 643.65 Tm
+(- Tribe privacy controls.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 630.15 Tm
+(- Moderation tools and report flows.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 616.65 Tm
+(- Profile templates.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 603.15 Tm
+(- More games.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 589.65 Tm
+(- Public tribe discovery.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 576.15 Tm
+(- Supabase-first production database with normalized social tables.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 562.65 Tm
+(- Mobile app.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 549.15 Tm
+(- Premium customization features.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 535.65 Tm
+(- Password reset and email verification.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 522.15 Tm
+(- Admin analytics dashboard.) Tj
+ET
+endstream
+endobj
+21 0 obj
+<< /Type /Page /Parent 22 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 20 0 R >>
+endobj
+22 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R 9 0 R 11 0 R 13 0 R 15 0 R 17 0 R 19 0 R 21 0 R] /Count 9 >>
+endobj
+23 0 obj
+<< /Type /Catalog /Pages 22 0 R >>
+endobj
+xref
+0 24
+0000000000 65535 f 
+0000000015 00000 n 
+0000000085 00000 n 
+0000000160 00000 n 
+0000000228 00000 n 
+0000003859 00000 n 
+0000004006 00000 n 
+0000007547 00000 n 
+0000007694 00000 n 
+0000011529 00000 n 
+0000011676 00000 n 
+0000016347 00000 n 
+0000016496 00000 n 
+0000020966 00000 n 
+0000021115 00000 n 
+0000026730 00000 n 
+0000026879 00000 n 
+0000031613 00000 n 
+0000031762 00000 n 
+0000035879 00000 n 
+0000036028 00000 n 
+0000037267 00000 n 
+0000037416 00000 n 
+0000037528 00000 n 
+trailer
+<< /Size 24 /Root 23 0 R >>
+startxref
+37579
+%%EOF

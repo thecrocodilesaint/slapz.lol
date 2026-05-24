@@ -1,0 +1,450 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+2 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+4 0 obj
+<< /Length 6240 >>
+stream
+BT
+/F2 20 Tf
+1 0 0 1 48.00 564.00 Tm
+(fun.lol Product Journey Map) Tj
+/F1 10 Tf
+1 0 0 1 48.00 527.00 Tm
+(Generated: 2026-05-24) Tj
+/F1 10 Tf
+1 0 0 1 48.00 510.50 Tm
+(Source inspection scope: `index.html`, `script.js`, `styles.css`, `server.js`, `package.json`, and `supabase-schema.sql`.) Tj
+/F2 15 Tf
+1 0 0 1 48.00 486.00 Tm
+(Journey 1: New User Onboarding) Tj
+/F1 8 Tf
+1 0 0 1 48.00 461.75 Tm
+(Stage: Discover fun.lol; User Goal: Understand what the platform does; User Action: Opens the site; System Response: Shows auth screen with profile creation message;) Tj
+/F1 8 Tf
+1 0 0 1 48.00 450.95 Tm
+(User Emotion: Curious; Pain Point: Value proposition may depend on seeing examples; Opportunity / Improvement: Add optional public demo profiles or sample preview;) Tj
+/F1 8 Tf
+1 0 0 1 48.00 440.15 Tm
+(Success Metric: Landing-to-signup conversion) Tj
+/F1 8 Tf
+1 0 0 1 48.00 427.35 Tm
+(Stage: Sign up; User Goal: Create an account; User Action: Enters email and password; System Response: Server creates user and session; User Emotion: Hopeful; Pain) Tj
+/F1 8 Tf
+1 0 0 1 48.00 416.55 Tm
+(Point: Password rules are basic; Opportunity / Improvement: Add inline password guidance; Success Metric: Signup completion rate) Tj
+/F1 8 Tf
+1 0 0 1 48.00 403.75 Tm
+(Stage: Login; User Goal: Access account; User Action: Enters credentials; System Response: Server verifies password and returns token; User Emotion: Relieved; Pain) Tj
+/F1 8 Tf
+1 0 0 1 48.00 392.95 Tm
+(Point: No password reset in current version; Opportunity / Improvement: Add reset flow and email verification; Success Metric: Login success rate) Tj
+/F1 8 Tf
+1 0 0 1 48.00 380.15 Tm
+(Stage: Land on dashboard; User Goal: Know where to start; User Action: Arrives at dashboard home; System Response: Shows welcome, friends widget, notifications widget,) Tj
+/F1 8 Tf
+1 0 0 1 48.00 369.35 Tm
+(controls; User Emotion: Oriented; Pain Point: New users may not know Bio is first step; Opportunity / Improvement: Add first-run checklist; Success Metric: Bio editor) Tj
+/F1 8 Tf
+1 0 0 1 48.00 358.55 Tm
+(open rate) Tj
+/F1 8 Tf
+1 0 0 1 48.00 345.75 Tm
+(Stage: Explore sidebar; User Goal: Navigate features; User Action: Clicks Bio, Games, Tribes, Settings; System Response: Dashboard switches panels; User Emotion:) Tj
+/F1 8 Tf
+1 0 0 1 48.00 334.95 Tm
+(Interested; Pain Point: Mobile navigation can feel dense; Opportunity / Improvement: Add onboarding hints and responsive polish; Success Metric: Sidebar engagement) Tj
+/F1 8 Tf
+1 0 0 1 48.00 322.15 Tm
+(Stage: Start editing bio; User Goal: Build identity; User Action: Opens Bio editor; System Response: Shows profile card and editing forms; User Emotion: Creative; Pain) Tj
+/F1 8 Tf
+1 0 0 1 48.00 311.35 Tm
+(Point: Long editor can feel complex; Opportunity / Improvement: Group fields and offer templates; Success Metric: First profile edit rate) Tj
+/F1 8 Tf
+1 0 0 1 48.00 298.55 Tm
+(Stage: Publish public profile; User Goal: Share identity; User Action: Clicks Publish profile; System Response: Server saves profile and returns public link; User) Tj
+/F1 8 Tf
+1 0 0 1 48.00 287.75 Tm
+(Emotion: Accomplished; Pain Point: Handle conflicts can block publish; Opportunity / Improvement: Add handle availability check; Success Metric: Published profiles) Tj
+/F2 15 Tf
+1 0 0 1 48.00 262.95 Tm
+(Journey 2: Profile Customization) Tj
+/F1 8 Tf
+1 0 0 1 48.00 238.70 Tm
+(Stage: Edit display name/handle; User Goal: Personalize identity; User Action: Types name and handle; System Response: Preview updates and publish payload changes;) Tj
+/F1 8 Tf
+1 0 0 1 48.00 227.90 Tm
+(User Emotion: In control; Pain Point: Duplicate handles are found on publish; Opportunity / Improvement: Add live handle validation; Success Metric: Successful handle) Tj
+/F1 8 Tf
+1 0 0 1 48.00 217.10 Tm
+(saves) Tj
+/F1 8 Tf
+1 0 0 1 48.00 204.30 Tm
+(Stage: Add bio/location; User Goal: Add context; User Action: Enters bio and location; System Response: Profile text updates; User Emotion: Expressive; Pain Point:) Tj
+/F1 8 Tf
+1 0 0 1 48.00 193.50 Tm
+(Empty states use defaults; Opportunity / Improvement: Add optional prompts; Success Metric: Bio completion rate) Tj
+/F1 8 Tf
+1 0 0 1 48.00 180.70 Tm
+(Stage: Upload avatar; User Goal: Show personality; User Action: Selects image; System Response: Avatar preview updates; User Emotion: Excited; Pain Point: Large image) Tj
+/F1 8 Tf
+1 0 0 1 48.00 169.90 Tm
+(may slow save; Opportunity / Improvement: Add image compression; Success Metric: Avatar upload count) Tj
+/F1 8 Tf
+1 0 0 1 48.00 157.10 Tm
+(Stage: Upload background image/video; User Goal: Make page immersive; User Action: Selects media file; System Response: Background preview updates; User Emotion:) Tj
+/F1 8 Tf
+1 0 0 1 48.00 146.30 Tm
+(Impressed; Pain Point: Large videos can load slowly; Opportunity / Improvement: Add file size guidance and compression; Success Metric: Background upload count) Tj
+/F1 8 Tf
+1 0 0 1 48.00 133.50 Tm
+(Stage: Upload music; User Goal: Add sound; User Action: Selects audio file; System Response: Music player becomes available; User Emotion: Playful; Pain Point: Browser) Tj
+/F1 8 Tf
+1 0 0 1 48.00 122.70 Tm
+(requires interaction before playback; Opportunity / Improvement: Keep entry gate and explain only when needed; Success Metric: Music upload count) Tj
+/F1 8 Tf
+1 0 0 1 48.00 109.90 Tm
+(Stage: Choose theme/cursor/sparkle effects; User Goal: Tune style; User Action: Selects theme, cursor, color, sparkle; System Response: UI updates immediately; User) Tj
+/F1 8 Tf
+1 0 0 1 48.00 99.10 Tm
+(Emotion: Creative; Pain Point: Many controls can crowd UI; Opportunity / Improvement: Keep separate control groups; Success Metric: Customization usage) Tj
+/F1 8 Tf
+1 0 0 1 48.00 86.30 Tm
+(Stage: Preview profile; User Goal: See visitor view; User Action: Clicks visitor preview; System Response: Edit controls hide for preview; User Emotion: Confident;) Tj
+/F1 8 Tf
+1 0 0 1 48.00 75.50 Tm
+(Pain Point: Preview can differ from public media behavior; Opportunity / Improvement: Add public-preview checklist; Success Metric: Preview usage) Tj
+/F1 8 Tf
+1 0 0 1 48.00 62.70 Tm
+(Stage: Share public profile link; User Goal: Bring visitors; User Action: Copies or opens `/u/:handle`; System Response: Public page loads and increments views; User) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 12 0 R /MediaBox [0 0 792 612] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 4 0 R >>
+endobj
+6 0 obj
+<< /Length 6810 >>
+stream
+BT
+/F1 8 Tf
+1 0 0 1 48.00 564.00 Tm
+(Emotion: Proud; Pain Point: Sharing depends on remembering link; Opportunity / Improvement: Add share buttons; Success Metric: Profile views) Tj
+/F2 15 Tf
+1 0 0 1 48.00 539.20 Tm
+(Journey 3: Friends & Notifications) Tj
+/F1 8 Tf
+1 0 0 1 48.00 514.95 Tm
+(Stage: Search for friend; User Goal: Find someone; User Action: Enters friend handle or profile link; System Response: Form validates target after submit; User) Tj
+/F1 8 Tf
+1 0 0 1 48.00 504.15 Tm
+(Emotion: Focused; Pain Point: No full people search yet; Opportunity / Improvement: Add user search and suggestions; Success Metric: Friend search attempts) Tj
+/F1 8 Tf
+1 0 0 1 48.00 491.35 Tm
+(Stage: Send request; User Goal: Connect; User Action: Submits friend request; System Response: Target profile receives request; sender sees sent state; User Emotion:) Tj
+/F1 8 Tf
+1 0 0 1 48.00 480.55 Tm
+(Hopeful; Pain Point: Invalid handle creates failure; Opportunity / Improvement: Add autocomplete; Success Metric: Requests sent) Tj
+/F1 8 Tf
+1 0 0 1 48.00 467.75 Tm
+(Stage: Friend receives notification; User Goal: Notice incoming request; User Action: Opens dashboard; System Response: Notification widget and request tab show) Tj
+/F1 8 Tf
+1 0 0 1 48.00 456.95 Tm
+(request; User Emotion: Aware; Pain Point: Notifications are pull-based; Opportunity / Improvement: Add realtime or push notifications; Success Metric: Request open) Tj
+/F1 8 Tf
+1 0 0 1 48.00 446.15 Tm
+(rate) Tj
+/F1 8 Tf
+1 0 0 1 48.00 433.35 Tm
+(Stage: Friend accepts; User Goal: Confirm connection; User Action: Clicks accept; System Response: Both friend lists update; User Emotion: Satisfied; Pain Point:) Tj
+/F1 8 Tf
+1 0 0 1 48.00 422.55 Tm
+(Decline flow is not as prominent as accept; Opportunity / Improvement: Add clearer action states; Success Metric: Acceptance rate) Tj
+/F1 8 Tf
+1 0 0 1 48.00 409.75 Tm
+(Stage: Friends list updates; User Goal: See current network; User Action: Waits or navigates; System Response: Frontend refreshes about every 10 seconds; User Emotion:) Tj
+/F1 8 Tf
+1 0 0 1 48.00 398.95 Tm
+(Reassured; Pain Point: Delay may feel slow; Opportunity / Improvement: Use realtime subscriptions later; Success Metric: Refresh success rate) Tj
+/F1 8 Tf
+1 0 0 1 48.00 386.15 Tm
+(Stage: Remove friend if needed; User Goal: Control network; User Action: Clicks remove; System Response: Confirmation dialog appears; friendship removed if confirmed;) Tj
+/F1 8 Tf
+1 0 0 1 48.00 375.35 Tm
+(User Emotion: Safe; Pain Point: Mistakes are possible; Opportunity / Improvement: Keep confirmation and add undo later; Success Metric: Friend removals) Tj
+/F2 15 Tf
+1 0 0 1 48.00 350.55 Tm
+(Journey 4: Tribes & Tribe Chats) Tj
+/F1 8 Tf
+1 0 0 1 48.00 326.30 Tm
+(Stage: Open Tribes section; User Goal: Manage community; User Action: Clicks Tribes; System Response: Shows top tabs for friends, tribes, join, chats, requests; User) Tj
+/F1 8 Tf
+1 0 0 1 48.00 315.50 Tm
+(Emotion: Curious; Pain Point: Many tabs can feel dense; Opportunity / Improvement: Add clearer grouping or icons; Success Metric: Tribes tab visits) Tj
+/F1 8 Tf
+1 0 0 1 48.00 302.70 Tm
+(Stage: View friends/tribes tabs; User Goal: Understand options; User Action: Switches tabs; System Response: Shows relevant list panels; User Emotion: Oriented; Pain) Tj
+/F1 8 Tf
+1 0 0 1 48.00 291.90 Tm
+(Point: Empty states need guidance; Opportunity / Improvement: Add next-action empty states; Success Metric: Tab engagement) Tj
+/F1 8 Tf
+1 0 0 1 48.00 279.10 Tm
+(Stage: Create tribe; User Goal: Start a group; User Action: Enters name, color, invited friends; System Response: Server creates tribe under owner profile; User) Tj
+/F1 8 Tf
+1 0 0 1 48.00 268.30 Tm
+(Emotion: Proud; Pain Point: Tribe names are not globally unique; Opportunity / Improvement: Add owner-level or global uniqueness rules; Success Metric: Tribes created) Tj
+/F1 8 Tf
+1 0 0 1 48.00 255.50 Tm
+(Stage: Invite friends; User Goal: Grow tribe; User Action: Selects friends during creation; System Response: Invited users receive tribe invite notification; User) Tj
+/F1 8 Tf
+1 0 0 1 48.00 244.70 Tm
+(Emotion: Social; Pain Point: Invites require existing friendship; Opportunity / Improvement: Add invite by profile handle later; Success Metric: Invites sent) Tj
+/F1 8 Tf
+1 0 0 1 48.00 231.90 Tm
+(Stage: Friend accepts tribe invite; User Goal: Join group; User Action: Clicks Yes; System Response: User is added to memberIds; User Emotion: Included; Pain Point:) Tj
+/F1 8 Tf
+1 0 0 1 48.00 221.10 Tm
+(Declined state is simply removed; Opportunity / Improvement: Add owner-facing invite status; Success Metric: Invite acceptance rate) Tj
+/F1 8 Tf
+1 0 0 1 48.00 208.30 Tm
+(Stage: Search/join tribe; User Goal: Discover groups; User Action: Searches and clicks Join; System Response: Owner receives join request; User Emotion: Interested;) Tj
+/F1 8 Tf
+1 0 0 1 48.00 197.50 Tm
+(Pain Point: No public tribe categories; Opportunity / Improvement: Add discovery filters; Success Metric: Join requests) Tj
+/F1 8 Tf
+1 0 0 1 48.00 184.70 Tm
+(Stage: Owner approves join request; User Goal: Manage access; User Action: Clicks accept; System Response: Requester becomes member; User Emotion: Responsible; Pain) Tj
+/F1 8 Tf
+1 0 0 1 48.00 173.90 Tm
+(Point: Owner must check notifications manually; Opportunity / Improvement: Add notification badge improvements; Success Metric: Join approval rate) Tj
+/F1 8 Tf
+1 0 0 1 48.00 161.10 Tm
+(Stage: Open Your Tribe Chats; User Goal: Chat with group; User Action: Clicks chat tab; System Response: Shows accessible tribe chat cards; User Emotion: Connected;) Tj
+/F1 8 Tf
+1 0 0 1 48.00 150.30 Tm
+(Pain Point: No realtime updates; Opportunity / Improvement: Add realtime chat; Success Metric: Chat opens) Tj
+/F1 8 Tf
+1 0 0 1 48.00 137.50 Tm
+(Stage: Select tribe chat grid card; User Goal: Focus conversation; User Action: Clicks tribe card; System Response: Loads only that tribe messages; User Emotion:) Tj
+/F1 8 Tf
+1 0 0 1 48.00 126.70 Tm
+(Engaged; Pain Point: Messages are capped but not searchable; Opportunity / Improvement: Add search later; Success Metric: Messages loaded) Tj
+/F1 8 Tf
+1 0 0 1 48.00 113.90 Tm
+(Stage: Send message; User Goal: Participate; User Action: Enters text and sends; System Response: Message appends to active tribe chat; User Emotion: Social; Pain) Tj
+/F1 8 Tf
+1 0 0 1 48.00 103.10 Tm
+(Point: Text-only messages; Opportunity / Improvement: Add attachments and reactions; Success Metric: Messages sent) Tj
+/F1 8 Tf
+1 0 0 1 48.00 90.30 Tm
+(Stage: Exit chat; User Goal: Return to overview; User Action: Clicks Exit Chat; System Response: Returns to chat grid without deleting messages; User Emotion: In) Tj
+/F1 8 Tf
+1 0 0 1 48.00 79.50 Tm
+(control; Pain Point: State may become stale; Opportunity / Improvement: Refresh active chat periodically; Success Metric: Exit success) Tj
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 12 0 R /MediaBox [0 0 792 612] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 6 0 R >>
+endobj
+8 0 obj
+<< /Length 4431 >>
+stream
+BT
+/F2 15 Tf
+1 0 0 1 48.00 564.00 Tm
+(Journey 5: Games) Tj
+/F1 8 Tf
+1 0 0 1 48.00 539.75 Tm
+(Stage: Open Games dashboard; User Goal: Find entertainment; User Action: Clicks Games; System Response: Shows scrollable game grid; User Emotion: Playful; Pain Point:) Tj
+/F1 8 Tf
+1 0 0 1 48.00 528.95 Tm
+(Coming-soon games may disappoint; Opportunity / Improvement: Clearly label playable vs coming soon; Success Metric: Games tab visits) Tj
+/F1 8 Tf
+1 0 0 1 48.00 516.15 Tm
+(Stage: Browse game cards; User Goal: Choose game; User Action: Scans cards; System Response: Cards show names and previews; User Emotion: Curious; Pain Point: Game) Tj
+/F1 8 Tf
+1 0 0 1 48.00 505.35 Tm
+(previews could be more descriptive; Opportunity / Improvement: Add short metadata on hover; Success Metric: Game card clicks) Tj
+/F1 8 Tf
+1 0 0 1 48.00 492.55 Tm
+(Stage: Expand game; User Goal: Start focused play; User Action: Clicks game card; System Response: Selected game expands with controls; User Emotion: Excited; Pain) Tj
+/F1 8 Tf
+1 0 0 1 48.00 481.75 Tm
+(Point: Large cards need responsive sizing; Opportunity / Improvement: Continue mobile tuning; Success Metric: Game opens) Tj
+/F1 8 Tf
+1 0 0 1 48.00 468.95 Tm
+(Stage: Read how-to-play; User Goal: Learn rules; User Action: Reads side help; System Response: Each game shows individual instructions; User Emotion: Prepared; Pain) Tj
+/F1 8 Tf
+1 0 0 1 48.00 458.15 Tm
+(Point: Instructions may be missed; Opportunity / Improvement: Keep help close to game area; Success Metric: Help visibility) Tj
+/F1 8 Tf
+1 0 0 1 48.00 445.35 Tm
+(Stage: Play game; User Goal: Have fun; User Action: Uses mouse/keyboard; System Response: Game updates score and state; User Emotion: Focused; Pain Point: Keyboard) Tj
+/F1 8 Tf
+1 0 0 1 48.00 434.55 Tm
+(controls vary by device; Opportunity / Improvement: Add touch controls for mobile; Success Metric: Game starts) Tj
+/F1 8 Tf
+1 0 0 1 48.00 421.75 Tm
+(Stage: Save/view score; User Goal: Track progress; User Action: Finishes game; System Response: Snake saves to backend; other games use local best; User Emotion:) Tj
+/F1 8 Tf
+1 0 0 1 48.00 410.95 Tm
+(Competitive; Pain Point: Not all scores are server-backed; Opportunity / Improvement: Add unified game score model; Success Metric: Score saves) Tj
+/F1 8 Tf
+1 0 0 1 48.00 398.15 Tm
+(Stage: Return to dashboard; User Goal: Continue exploring; User Action: Clicks Back to games or sidebar; System Response: Returns to grid or dashboard; User Emotion:) Tj
+/F1 8 Tf
+1 0 0 1 48.00 387.35 Tm
+(Satisfied; Pain Point: None major; Opportunity / Improvement: Add recent games widget later; Success Metric: Repeat play rate) Tj
+/F2 15 Tf
+1 0 0 1 48.00 362.55 Tm
+(Mermaid User Journey Diagram) Tj
+/F3 7 Tf
+1 0 0 1 48.00 335.30 Tm
+(mermaid) Tj
+/F3 7 Tf
+1 0 0 1 48.00 325.85 Tm
+(journey) Tj
+/F3 7 Tf
+1 0 0 1 48.00 316.40 Tm
+(  title fun.lol User Journey) Tj
+/F3 7 Tf
+1 0 0 1 48.00 306.95 Tm
+(  section Onboarding) Tj
+/F3 7 Tf
+1 0 0 1 48.00 297.50 Tm
+(    Discover fun.lol: 3: Visitor) Tj
+/F3 7 Tf
+1 0 0 1 48.00 288.05 Tm
+(    Sign up: 4: New user) Tj
+/F3 7 Tf
+1 0 0 1 48.00 278.60 Tm
+(    Land on dashboard: 4: New user) Tj
+/F3 7 Tf
+1 0 0 1 48.00 269.15 Tm
+(    Publish public profile: 5: New user) Tj
+/F3 7 Tf
+1 0 0 1 48.00 259.70 Tm
+(  section Customization) Tj
+/F3 7 Tf
+1 0 0 1 48.00 250.25 Tm
+(    Edit profile identity: 5: User) Tj
+/F3 7 Tf
+1 0 0 1 48.00 240.80 Tm
+(    Upload media: 4: User) Tj
+/F3 7 Tf
+1 0 0 1 48.00 231.35 Tm
+(    Choose effects: 5: User) Tj
+/F3 7 Tf
+1 0 0 1 48.00 221.90 Tm
+(    Share link: 5: User) Tj
+/F3 7 Tf
+1 0 0 1 48.00 212.45 Tm
+(  section Friends) Tj
+/F3 7 Tf
+1 0 0 1 48.00 203.00 Tm
+(    Send friend request: 4: User) Tj
+/F3 7 Tf
+1 0 0 1 48.00 193.55 Tm
+(    Accept request: 5: Friend) Tj
+/F3 7 Tf
+1 0 0 1 48.00 184.10 Tm
+(    Friends list updates: 4: User) Tj
+/F3 7 Tf
+1 0 0 1 48.00 174.65 Tm
+(  section Tribes) Tj
+/F3 7 Tf
+1 0 0 1 48.00 165.20 Tm
+(    Create tribe: 5: Owner) Tj
+/F3 7 Tf
+1 0 0 1 48.00 155.75 Tm
+(    Invite friends: 4: Owner) Tj
+/F3 7 Tf
+1 0 0 1 48.00 146.30 Tm
+(    Join tribe: 4: Member) Tj
+/F3 7 Tf
+1 0 0 1 48.00 136.85 Tm
+(    Send tribe chat message: 5: Member) Tj
+/F3 7 Tf
+1 0 0 1 48.00 127.40 Tm
+(  section Games) Tj
+/F3 7 Tf
+1 0 0 1 48.00 117.95 Tm
+(    Browse games: 4: User) Tj
+/F3 7 Tf
+1 0 0 1 48.00 108.50 Tm
+(    Play game: 5: User) Tj
+/F3 7 Tf
+1 0 0 1 48.00 99.05 Tm
+(    View score: 4: User) Tj
+/F2 15 Tf
+1 0 0 1 48.00 76.60 Tm
+(Cross-Journey Recommendations) Tj
+ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 12 0 R /MediaBox [0 0 792 612] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 8 0 R >>
+endobj
+10 0 obj
+<< /Length 615 >>
+stream
+BT
+/F1 10 Tf
+1 0 0 1 48.00 564.00 Tm
+(- Add first-run onboarding to guide new users toward publishing their first profile.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 550.50 Tm
+(- Add live handle availability checks before publish.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 537.00 Tm
+(- Add media size guidance before upload.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 523.50 Tm
+(- Add realtime or near-realtime notifications for friend and tribe events.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 510.00 Tm
+(- Add a unified server-backed score model for all games.) Tj
+/F1 10 Tf
+1 0 0 1 48.00 496.50 Tm
+(- Add moderation and reporting before scaling public discovery.) Tj
+ET
+endstream
+endobj
+11 0 obj
+<< /Type /Page /Parent 12 0 R /MediaBox [0 0 792 612] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 10 0 R >>
+endobj
+12 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R 9 0 R 11 0 R] /Count 4 >>
+endobj
+13 0 obj
+<< /Type /Catalog /Pages 12 0 R >>
+endobj
+xref
+0 14
+0000000000 65535 f 
+0000000015 00000 n 
+0000000085 00000 n 
+0000000160 00000 n 
+0000000228 00000 n 
+0000006520 00000 n 
+0000006667 00000 n 
+0000013529 00000 n 
+0000013676 00000 n 
+0000018159 00000 n 
+0000018306 00000 n 
+0000018973 00000 n 
+0000019122 00000 n 
+0000019199 00000 n 
+trailer
+<< /Size 14 /Root 13 0 R >>
+startxref
+19250
+%%EOF
