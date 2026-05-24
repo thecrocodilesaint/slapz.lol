@@ -43,6 +43,9 @@ const auth = {
   accountLogoutButton: $("#accountLogoutButton"),
 };
 
+const landingAuthButtons = document.querySelectorAll("[data-landing-auth]");
+const landingRevealItems = document.querySelectorAll("[data-reveal]");
+
 const settings = {
   email: $("#settingsEmail"),
   displayName: $("#settingsDisplayName"),
@@ -698,6 +701,22 @@ const setDashboardSection = (section) => {
 
 setDashboardSection(isPublicProfilePage ? "bio" : "home");
 syncSidebarCollapsedState();
+
+if ("IntersectionObserver" in window) {
+  const revealObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("revealed");
+        revealObserver.unobserve(entry.target);
+      });
+    },
+    { threshold: 0.16 }
+  );
+  landingRevealItems.forEach((item) => revealObserver.observe(item));
+} else {
+  landingRevealItems.forEach((item) => item.classList.add("revealed"));
+}
 
 const cleanHandle = (value) =>
   value
@@ -1563,15 +1582,31 @@ const finishLoadingIntoEditor = async () => {
 const showEditor = () => {
   clearInterval(loadingTimer);
   hideEntryGate();
-  document.body.classList.remove("auth-required", "loading", "welcoming", "welcome-leaving", "owner-entering");
+  document.body.classList.remove("landing-page", "auth-required", "loading", "welcoming", "welcome-leaving", "owner-entering");
 };
 
-const showAuth = () => {
+const showLanding = () => {
+  if (isPublicProfilePage) return;
+  clearInterval(loadingTimer);
+  hideEntryGate();
+  exitPreview();
+  document.title = "fun.lol | Custom Bio Pages, Friends, Tribes & Games";
+  document.body.classList.remove("auth-required", "loading", "welcoming", "welcome-leaving", "owner-entering");
+  document.body.classList.add("landing-page");
+};
+
+const showAuth = (mode = "signup") => {
   if (!isPublicProfilePage) {
-    document.body.classList.remove("loading");
+    document.body.classList.remove("landing-page", "loading");
     hideEntryGate();
     exitPreview();
     document.body.classList.add("auth-required");
+    setAuthMessage(
+      mode === "login"
+        ? "Log in to continue editing your fun.lol profile."
+        : "Create an account to start editing your public profile."
+    );
+    auth.email.focus();
   }
 };
 
@@ -2741,6 +2776,14 @@ auth.form.addEventListener("submit", (event) => {
 
 auth.loginButton.addEventListener("click", () => submitAuth("login"));
 
+landingAuthButtons.forEach((button) => {
+  button.addEventListener("click", () => showAuth(button.dataset.landingAuth || "signup"));
+});
+
+$(".landing-brand")?.addEventListener("click", () => {
+  window.scrollTo({ top: 0, behavior: "smooth" });
+});
+
 const logoutUser = () => {
   stopFriendRefreshLoop();
   sessionToken = "";
@@ -2763,7 +2806,7 @@ const logoutUser = () => {
   tribeChatMessages = {};
   updateSettingsDetails();
   setDashboardSection("home");
-  showAuth();
+  showLanding();
   setAuthMessage("Logged out. Sign in again to edit your profile.");
 };
 
@@ -3804,7 +3847,7 @@ async function bootApp() {
   }
 
   if (!sessionToken) {
-    showAuth();
+    showLanding();
     return;
   }
 
@@ -3824,7 +3867,7 @@ async function bootApp() {
     sessionToken = "";
     localStorage.removeItem(sessionKey);
     document.body.classList.remove("loading");
-    showAuth();
+    showLanding();
   }
 }
 
