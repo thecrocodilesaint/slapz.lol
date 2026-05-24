@@ -1583,6 +1583,16 @@ body.sidebar-collapsed .sidebar-brand-mark {
   font-size: clamp(3rem, 10vw, 6.25rem);
 }
 
+.settings-control-stack {
+  display: grid;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.settings-control-stack .dashboard-control-bar {
+  min-height: 3.45rem;
+}
+
 .settings-details {
   display: grid;
   overflow: hidden;
