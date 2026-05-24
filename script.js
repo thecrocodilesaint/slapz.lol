@@ -622,6 +622,7 @@ const publicHandleFromPath = () => {
 const isPublicProfilePage = Boolean(publicHandleFromPath());
 
 if (isPublicProfilePage) {
+  document.body.classList.remove("landing-page");
   document.body.classList.add("public-profile", "previewing");
   $("#previewToolbar").hidden = true;
 }
@@ -1560,7 +1561,7 @@ const playOwnerWelcome = async () => {
   if (isPublicProfilePage) return;
 
   hideEntryGate();
-  document.body.classList.remove("auth-required", "previewing", "welcome-leaving", "owner-entering");
+  document.body.classList.remove("landing-page", "auth-required", "previewing", "welcome-leaving", "owner-entering");
   document.body.classList.add("welcoming");
   await nextFrame();
   document.body.classList.remove("loading");
@@ -3846,29 +3847,7 @@ async function bootApp() {
     return;
   }
 
-  if (!sessionToken) {
-    showLanding();
-    return;
-  }
-
-  try {
-    startLoading("Loading your profile...");
-    const response = await fetch("/api/me", { headers: authHeaders() });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Not signed in");
-    auth.email.value = data.email;
-    updateAccountState(data);
-    setAuthMessage(`Signed in as ${data.email}`);
-    await loadMyProfile();
-    await finishLoadingIntoEditor();
-    startFriendRefreshLoop();
-  } catch {
-    stopFriendRefreshLoop();
-    sessionToken = "";
-    localStorage.removeItem(sessionKey);
-    document.body.classList.remove("loading");
-    showLanding();
-  }
+  showLanding();
 }
 
 bootApp();
