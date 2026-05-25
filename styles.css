@@ -16,11 +16,16 @@
   box-sizing: border-box;
 }
 
+html {
+  overflow-x: hidden;
+}
+
 [hidden] {
   display: none !important;
 }
 
 body {
+  width: 100%;
   min-height: 100vh;
   margin: 0;
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -30,6 +35,27 @@ body {
     radial-gradient(circle at 80% 70%, rgba(143, 149, 168, 0.16), transparent 28rem),
     linear-gradient(135deg, #010102, #08080d 48%, #000);
   overflow-x: hidden;
+}
+
+img,
+video,
+canvas {
+  max-width: 100%;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 3px;
 }
 
 body::before {
@@ -4067,5 +4093,526 @@ textarea:focus {
 
   .snake-controls {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1024px) {
+  .shell {
+    grid-template-columns: clamp(11rem, 22vw, 14rem) minmax(0, 1fr);
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  body.sidebar-collapsed:not(.public-profile):not(.previewing) .shell {
+    grid-template-columns: 4.45rem minmax(0, 1fr);
+  }
+
+  .dashboard-bio {
+    max-width: 100%;
+    grid-template-columns: minmax(20rem, 1fr) minmax(20rem, 0.9fr);
+    gap: 1rem;
+  }
+
+  .settings-shell,
+  .communities-shell {
+    width: 100%;
+  }
+
+  .game-card.expanded {
+    width: 100%;
+  }
+}
+
+@media (max-width: 820px) {
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  body::before {
+    background-size: 56px 56px;
+  }
+
+  .shell {
+    width: 100%;
+    padding:
+      max(0.75rem, env(safe-area-inset-top))
+      max(0.75rem, env(safe-area-inset-right))
+      max(0.75rem, env(safe-area-inset-bottom))
+      max(0.75rem, env(safe-area-inset-left));
+  }
+
+  .account-sidebar {
+    width: 100%;
+    max-height: calc(100svh - 1rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .sidebar-head,
+  body.sidebar-collapsed .sidebar-head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .account-nav {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.45rem;
+  }
+
+  .account-nav-button,
+  body.sidebar-collapsed .account-nav-button {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 0.35rem;
+    min-height: 3.45rem;
+    padding: 0.48rem 0.3rem;
+    text-align: center;
+  }
+
+  .account-nav-button .sidebar-label {
+    width: 100%;
+    overflow: hidden;
+    font-size: 0.72rem;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sidebar-brand,
+  body.sidebar-collapsed .sidebar-brand {
+    grid-template-columns: 1.9rem minmax(0, 1fr);
+    justify-items: start;
+  }
+
+  .sidebar-logout,
+  body.sidebar-collapsed .sidebar-logout {
+    grid-template-columns: 1.9rem minmax(0, 1fr);
+    min-height: 2.8rem;
+  }
+
+  .dashboard-panel,
+  .dashboard-home,
+  .dashboard-games,
+  .dashboard-communities,
+  .dashboard-settings {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dashboard-home h1 {
+    max-width: 10ch;
+    margin: 1.5rem auto 1rem;
+    text-wrap: balance;
+  }
+
+  .home-widgets {
+    gap: 0.75rem;
+  }
+
+  .friends-widget,
+  .notifications-widget,
+  .friend-manager,
+  .friends-panel,
+  .communities-panel,
+  .settings-details,
+  .profile-card,
+  .editor {
+    min-width: 0;
+  }
+
+  .friends-list.mini,
+  .notifications-list {
+    max-height: 16rem;
+  }
+
+  .landing-page {
+    width: 100%;
+  }
+
+  .landing-main,
+  .landing-nav {
+    width: 100%;
+  }
+
+  .landing-nav {
+    position: sticky;
+    top: 0.5rem;
+    min-height: 3.4rem;
+  }
+
+  .landing-hero-copy,
+  .landing-section-head,
+  .landing-intro {
+    width: 100%;
+  }
+
+  .landing-hero h1,
+  .landing-final-cta h2,
+  .dashboard-home h1,
+  .settings-heading h1,
+  .friend-manager-heading h1 {
+    overflow-wrap: anywhere;
+  }
+
+  .auth-screen {
+    width: min(calc(100vw - 1.5rem), 28rem);
+    margin: 0.75rem auto;
+  }
+
+  .auth-form input,
+  .auth-form button {
+    min-height: 3rem;
+  }
+
+  .dashboard-bio,
+  body.public-profile .dashboard-bio,
+  body.previewing .dashboard-bio {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  body.public-profile .shell,
+  body.previewing .shell {
+    padding: 0.75rem;
+  }
+
+  body.public-profile .profile-card,
+  body.previewing .profile-card {
+    width: 100%;
+    padding: 0.95rem;
+  }
+
+  #name,
+  .bio,
+  .handle,
+  .uid,
+  .meta-row,
+  .hover-card,
+  .track-info,
+  .public-link {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .meta-row,
+  .landing-preview-meta {
+    justify-content: center;
+  }
+
+  .music-player {
+    gap: 0.65rem;
+  }
+
+  .music-player .media-button,
+  .music-player input[type="range"],
+  .socials a,
+  .preview-toolbar button,
+  .music-gate {
+    min-height: 2.75rem;
+  }
+
+  .settings-shell {
+    align-content: start;
+  }
+
+  .settings-control-stack .dashboard-control-bar {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.7rem;
+    justify-items: stretch;
+    padding: 0.75rem;
+  }
+
+  .dashboard-cursor-mode,
+  .dashboard-cursor-colors,
+  .dashboard-theme-picker {
+    justify-content: flex-start;
+  }
+
+  .dashboard-cursor-button,
+  .dashboard-mute-button {
+    min-height: 2.75rem;
+  }
+
+  .dashboard-cursor-color,
+  .dashboard-swatch {
+    width: 2.35rem;
+    height: 2.35rem;
+  }
+
+  .communities-shell {
+    padding: 0;
+  }
+
+  .communities-tabs {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .communities-tab {
+    flex: 0 0 auto;
+    min-height: 2.75rem;
+    scroll-snap-align: start;
+  }
+
+  .friends-panel-heading,
+  .tribe-title-row,
+  .notifications-heading {
+    flex-wrap: wrap;
+  }
+
+  .friend-card,
+  .friend-request-card,
+  .notification-card,
+  .tribe-notification-card,
+  .tribe-member-card {
+    grid-template-columns: 2.45rem minmax(0, 1fr);
+  }
+
+  .friend-copy strong,
+  .friend-copy a,
+  .tribe-card strong {
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
+  .friend-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .friend-actions button,
+  .friend-remove,
+  .friend-accept,
+  .request-status,
+  .tribe-chat-link {
+    min-height: 2.65rem;
+  }
+
+  .tribe-scroll-box,
+  .tribe-scroll-box.compact,
+  .tribe-member-list {
+    max-height: min(19rem, 52svh);
+  }
+
+  .tribe-detail-panel {
+    min-width: 0;
+  }
+
+  .tribe-chat-active {
+    min-height: min(42rem, calc(100svh - 11rem));
+  }
+
+  .tribe-chat-messages {
+    min-height: 42svh;
+    max-height: 50svh;
+  }
+
+  .tribe-chat-form {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    padding-top: 0.2rem;
+    background: color-mix(in srgb, var(--bg) 76%, transparent);
+    backdrop-filter: blur(10px);
+  }
+
+  .tribe-chat-form input,
+  .tribe-chat-form .save-button {
+    min-height: 3rem;
+  }
+
+  .dashboard-games {
+    overflow-x: hidden;
+  }
+
+  .games-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .game-card-box {
+    min-height: 9rem;
+  }
+
+  .game-expanded:not(.coming-soon-game) {
+    gap: 0.85rem;
+  }
+
+  .snake-game,
+  .click-rush-game,
+  .wordle-game,
+  .crossy-game {
+    width: 100%;
+  }
+
+  .snake-board,
+  .crossy-board,
+  .click-rush-board {
+    width: min(100%, calc(100svw - 2rem));
+    touch-action: none;
+  }
+
+  .wordle-board {
+    width: min(100%, 20rem);
+  }
+
+  .wordle-row {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .wordle-entry,
+  .snake-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .wordle-entry button,
+  .snake-controls button,
+  .game-back-button {
+    min-height: 2.85rem;
+  }
+
+  .preview-toolbar {
+    inset: auto 0.75rem 0.75rem;
+    left: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    transform: none;
+  }
+
+  .toast {
+    width: min(calc(100vw - 1.5rem), 28rem);
+    text-align: center;
+  }
+}
+
+@media (min-width: 560px) and (max-width: 820px) {
+  .games-grid,
+  .tribe-chat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-brand {
+    min-width: 0;
+  }
+
+  .landing-actions {
+    width: 100%;
+  }
+
+  .landing-login,
+  .landing-signup {
+    min-height: 2.75rem;
+  }
+
+  .account-nav {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .account-nav-button .sidebar-label {
+    font-size: 0.66rem;
+  }
+
+  .sidebar-icon,
+  .sidebar-brand-mark,
+  body.sidebar-collapsed .sidebar-icon,
+  body.sidebar-collapsed .sidebar-brand-mark {
+    width: 1.65rem;
+    height: 1.65rem;
+  }
+
+  .dashboard-home h1 {
+    font-size: clamp(2.45rem, 17vw, 4rem);
+  }
+
+  .friends-widget,
+  .notifications-widget,
+  .friend-manager,
+  .friends-panel,
+  .communities-panel,
+  .settings-details,
+  .profile-card,
+  .editor,
+  .tribe-detail-panel,
+  .tribe-create-form,
+  .tribe-manage-form {
+    padding: 0.75rem;
+  }
+
+  .settings-row {
+    padding: 0.85rem;
+  }
+
+  .sparkle-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .theme-grid {
+    flex-wrap: wrap;
+  }
+
+  .socials,
+  body.compact .socials {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wordle-board {
+    width: 100%;
+  }
+
+  .wordle-tile {
+    font-size: 1rem;
+  }
+
+  .coming-soon-game {
+    min-height: 18rem;
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .shell,
+  body.public-profile .shell,
+  body.previewing .shell,
+  .landing-page {
+    padding-inline: 0.55rem;
+  }
+
+  .account-nav-button .sidebar-label {
+    font-size: 0.6rem;
+  }
+
+  .dashboard-control-label,
+  .friends-widget-heading p,
+  .friends-panel-heading p,
+  .friend-manager-heading p,
+  .notifications-heading p {
+    font-size: 0.7rem;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .game-card-preview:hover .game-card-box,
+  .socials a:hover,
+  .landing-card:hover,
+  .landing-step:hover,
+  .landing-highlight:hover,
+  .tribe-card:hover {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
   }
 }

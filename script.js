@@ -919,7 +919,7 @@ const resetSnake = () => {
   snake.gameOverScreen.hidden = true;
   updateSnakeScore(0);
   placeSnakeApple();
-  snake.status.textContent = "Use arrow keys or WASD.";
+  snake.status.textContent = "Use arrow keys, WASD, or swipe.";
   drawSnake();
 };
 
@@ -1324,7 +1324,7 @@ const resetCrossy = () => {
   crossy.gameOver = false;
   crossy.gameOverScreen.hidden = true;
   updateCrossyLevel(1);
-  crossy.status.textContent = "Use arrow keys or WASD to cross.";
+  crossy.status.textContent = "Use arrow keys, WASD, or swipe to cross.";
   updateCrossyScore(0);
   createCrossyObstacles();
   createCrossyCars();
@@ -1519,6 +1519,51 @@ document.addEventListener("keydown", (event) => {
   if (isCrossyActive) {
     moveCrossyPlayer(direction[0], direction[1]);
   }
+});
+
+const directionFromSwipe = (start, end) => {
+  const deltaX = end.x - start.x;
+  const deltaY = end.y - start.y;
+  const distance = Math.max(Math.abs(deltaX), Math.abs(deltaY));
+  if (distance < 24) return null;
+  return Math.abs(deltaX) > Math.abs(deltaY)
+    ? [deltaX > 0 ? 1 : -1, 0]
+    : [0, deltaY > 0 ? 1 : -1];
+};
+
+const addSwipeGameControls = (target, onDirection) => {
+  if (!target) return;
+  let swipeStart = null;
+
+  target.addEventListener("pointerdown", (event) => {
+    if (event.pointerType === "mouse") return;
+    swipeStart = { x: event.clientX, y: event.clientY };
+    target.setPointerCapture?.(event.pointerId);
+  });
+
+  target.addEventListener("pointerup", (event) => {
+    if (!swipeStart || event.pointerType === "mouse") return;
+    const direction = directionFromSwipe(swipeStart, { x: event.clientX, y: event.clientY });
+    swipeStart = null;
+    if (!direction) return;
+    event.preventDefault();
+    onDirection(direction);
+  });
+
+  target.addEventListener("pointercancel", () => {
+    swipeStart = null;
+  });
+};
+
+addSwipeGameControls(snake.canvas, ([x, y]) => {
+  if (document.body.dataset.accountSection !== "games" || activeGame !== "snake" || snake.gameOver) return;
+  setSnakeDirection(x, y);
+  if (!snake.running) startSnake();
+});
+
+addSwipeGameControls(crossy.canvas, ([x, y]) => {
+  if (document.body.dataset.accountSection !== "games" || activeGame !== "crossy") return;
+  moveCrossyPlayer(x, y);
 });
 
 resetSnake();
