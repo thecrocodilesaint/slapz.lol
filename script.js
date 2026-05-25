@@ -33,11 +33,24 @@ const friendInputs = {
 
 const auth = {
   screen: $("#authScreen"),
+  title: $("#authTitle"),
   form: $("#authForm"),
+  forgotForm: $("#forgotPasswordForm"),
+  resetForm: $("#resetPasswordForm"),
   email: $("#authEmail"),
   password: $("#authPassword"),
+  forgotEmail: $("#forgotPasswordEmail"),
+  forgotMessage: $("#forgotPasswordMessage"),
+  resetNewPassword: $("#resetNewPassword"),
+  resetConfirmPassword: $("#resetConfirmPassword"),
+  resetMessage: $("#resetPasswordMessage"),
   signupButton: $("#signupButton"),
   loginButton: $("#loginButton"),
+  forgotButton: $("#forgotPasswordButton"),
+  sendResetButton: $("#sendResetLinkButton"),
+  forgotBackButton: $("#backToLoginFromForgot"),
+  resetButton: $("#resetPasswordButton"),
+  resetBackButton: $("#backToLoginFromReset"),
   message: $("#authMessage"),
   logoutButton: $("#logoutButton"),
   accountLogoutButton: $("#accountLogoutButton"),
@@ -70,6 +83,7 @@ const dashboardCursorModeKey = "funlol-dashboard-cursor-mode";
 const cursorColorKey = "funlol-cursor-color";
 const finePointerQuery = window.matchMedia ? window.matchMedia("(hover: hover) and (pointer: fine)") : null;
 const canUsePointerEffects = () => (finePointerQuery ? finePointerQuery.matches : true);
+const resetPasswordToken = new URLSearchParams(window.location.search).get("token") || "";
 let sessionToken = localStorage.getItem(sessionKey) || "";
 let loadingTimer = null;
 let loadingPercent = 8;
@@ -620,6 +634,7 @@ const publicHandleFromPath = () => {
 };
 
 const isPublicProfilePage = Boolean(publicHandleFromPath());
+const isResetPasswordPage = location.pathname === "/reset-password";
 
 if (isPublicProfilePage) {
   document.body.classList.remove("landing-active");
@@ -1575,6 +1590,57 @@ const setAuthMessage = (message) => {
   auth.message.textContent = message;
 };
 
+const setForgotPasswordMessage = (message) => {
+  auth.forgotMessage.textContent = message;
+};
+
+const setResetPasswordMessage = (message) => {
+  auth.resetMessage.textContent = message;
+};
+
+const setAuthScreenMode = (mode = "signup") => {
+  const isForgot = mode === "forgot";
+  const isReset = mode === "reset";
+  auth.form.hidden = isForgot || isReset;
+  auth.forgotForm.hidden = !isForgot;
+  auth.resetForm.hidden = !isReset;
+
+  const titles = {
+    login: "Welcome back",
+    signup: "Make your profile",
+    forgot: "Reset access",
+    reset: "New password",
+  };
+  auth.title.textContent = titles[mode] || titles.signup;
+};
+
+const showAuthShell = () => {
+  document.body.classList.remove("landing-active", "loading");
+  hideEntryGate();
+  exitPreview();
+  document.body.classList.add("auth-required");
+};
+
+const showForgotPassword = () => {
+  if (isPublicProfilePage) return;
+  showAuthShell();
+  setAuthScreenMode("forgot");
+  auth.forgotEmail.value = auth.email.value.trim();
+  setForgotPasswordMessage("Enter your email and we will send a secure reset link if the account exists.");
+  auth.forgotEmail.focus();
+};
+
+const showResetPassword = () => {
+  if (isPublicProfilePage) return;
+  showAuthShell();
+  setAuthScreenMode("reset");
+  document.title = "Reset Password | fun.lol";
+  setResetPasswordMessage(
+    resetPasswordToken ? "Enter a new password for your fun.lol account." : "This reset link is missing a token."
+  );
+  auth.resetNewPassword.focus();
+};
+
 const setLoading = (percent, message) => {
   loadingPercent = Math.max(0, Math.min(100, percent));
   $("#loadingProgress").style.setProperty("--progress", `${loadingPercent}%`);
@@ -1643,10 +1709,9 @@ const showLanding = () => {
 
 const showAuth = (mode = "signup") => {
   if (!isPublicProfilePage) {
-    document.body.classList.remove("landing-active", "loading");
-    hideEntryGate();
-    exitPreview();
-    document.body.classList.add("auth-required");
+    if (location.pathname === "/reset-password" && history.replaceState) history.replaceState(null, "", "/");
+    showAuthShell();
+    setAuthScreenMode(mode === "login" ? "login" : "signup");
     setAuthMessage(
       mode === "login"
         ? "Log in to continue editing your fun.lol profile."
@@ -1697,6 +1762,72 @@ const submitAuth = async (mode) => {
   } catch (error) {
     document.body.classList.remove("loading");
     setAuthMessage(error.message);
+  }
+};
+
+const submitForgotPassword = async () => {
+  const email = auth.forgotEmail.value.trim();
+  auth.sendResetButton.disabled = true;
+  setForgotPasswordMessage("Sending reset link...");
+
+  try {
+    const response = await fetch("/api/forgot-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const data = await response.json();
+    setForgotPasswordMessage(
+      data.message || "If an account exists for this email, a password reset link has been sent."
+    );
+  } catch {
+    setForgotPasswordMessage("If an account exists for this email, a password reset link has been sent.");
+  } finally {
+    auth.sendResetButton.disabled = false;
+  }
+};
+
+const submitResetPassword = async () => {
+  const newPassword = auth.resetNewPassword.value;
+  const confirmPassword = auth.resetConfirmPassword.value;
+
+  if (!resetPasswordToken) {
+    setResetPasswordMessage("This reset link is missing a token. Request a new reset link.");
+    return;
+  }
+
+  if (newPassword.length < 6) {
+    setResetPasswordMessage("Password must be at least 6 characters.");
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    setResetPasswordMessage("Passwords do not match.");
+    return;
+  }
+
+  auth.resetButton.disabled = true;
+  setResetPasswordMessage("Resetting password...");
+
+  try {
+    const response = await fetch("/api/reset-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: resetPasswordToken, newPassword }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Could not reset password.");
+
+    sessionToken = "";
+    localStorage.removeItem(sessionKey);
+    auth.resetNewPassword.value = "";
+    auth.resetConfirmPassword.value = "";
+    setResetPasswordMessage(data.message || "Password reset. You can log in with your new password.");
+    if (history.replaceState) history.replaceState(null, "", "/");
+  } catch (error) {
+    setResetPasswordMessage(error.message);
+  } finally {
+    auth.resetButton.disabled = false;
   }
 };
 
@@ -2821,6 +2952,19 @@ auth.form.addEventListener("submit", (event) => {
 });
 
 auth.loginButton.addEventListener("click", () => submitAuth("login"));
+auth.forgotButton.addEventListener("click", showForgotPassword);
+auth.forgotBackButton.addEventListener("click", () => showAuth("login"));
+auth.resetBackButton.addEventListener("click", () => showAuth("login"));
+
+auth.forgotForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  submitForgotPassword();
+});
+
+auth.resetForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  submitResetPassword();
+});
 
 landingAuthButtons.forEach((button) => {
   button.addEventListener("click", () => showAuth(button.dataset.landingAuth || "signup"));
@@ -3889,6 +4033,11 @@ async function bootApp() {
     startLoading("Loading public profile...");
     await loadPublicProfile();
     await finishLoading();
+    return;
+  }
+
+  if (isResetPasswordPage) {
+    showResetPassword();
     return;
   }
 

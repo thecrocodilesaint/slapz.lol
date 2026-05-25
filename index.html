@@ -207,7 +207,7 @@
     <section class="auth-screen glass" id="authScreen" aria-label="Sign up or log in">
       <div class="auth-copy">
         <p>fun.lol</p>
-        <h1>Make your profile</h1>
+        <h1 id="authTitle">Make your profile</h1>
       </div>
 
       <form class="auth-form" id="authForm">
@@ -219,9 +219,36 @@
           Password
           <input id="authPassword" type="password" autocomplete="current-password" minlength="6" required />
         </label>
+        <button class="auth-link-button" id="forgotPasswordButton" type="button">Forgot password?</button>
         <button class="preview-button" id="signupButton" type="submit">Sign up</button>
         <button class="save-button" id="loginButton" type="button">Log in</button>
         <p class="auth-message" id="authMessage">Create an account to start editing your public profile.</p>
+      </form>
+
+      <form class="auth-form" id="forgotPasswordForm" hidden>
+        <label>
+          Email address
+          <input id="forgotPasswordEmail" type="email" autocomplete="email" required />
+        </label>
+        <button class="preview-button" id="sendResetLinkButton" type="submit">Send Reset Link</button>
+        <button class="auth-link-button" id="backToLoginFromForgot" type="button">Back to login</button>
+        <p class="auth-message" id="forgotPasswordMessage">
+          Enter your email and we will send a secure reset link if the account exists.
+        </p>
+      </form>
+
+      <form class="auth-form" id="resetPasswordForm" hidden>
+        <label>
+          New password
+          <input id="resetNewPassword" type="password" autocomplete="new-password" minlength="6" required />
+        </label>
+        <label>
+          Confirm password
+          <input id="resetConfirmPassword" type="password" autocomplete="new-password" minlength="6" required />
+        </label>
+        <button class="preview-button" id="resetPasswordButton" type="submit">Reset password</button>
+        <button class="auth-link-button" id="backToLoginFromReset" type="button">Back to login</button>
+        <p class="auth-message" id="resetPasswordMessage">Enter a new password for your fun.lol account.</p>
       </form>
     </section>
 

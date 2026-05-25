@@ -2826,6 +2826,27 @@ body[data-account-section="settings"]:not(.public-profile) .background-video {
   gap: 0.75rem;
 }
 
+.auth-link-button {
+  justify-self: center;
+  min-height: 2.55rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+  color: var(--accent-2);
+  background: transparent;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 900;
+  cursor: pointer;
+  text-shadow: 0 0 0.85rem color-mix(in srgb, var(--accent-2) 58%, transparent);
+}
+
+.auth-link-button:hover,
+.auth-link-button:focus-visible {
+  border-color: color-mix(in srgb, var(--accent-2) 42%, rgba(255, 255, 255, 0.14));
+  background: rgba(255, 255, 255, 0.055);
+}
+
 .auth-message {
   color: var(--muted);
   font-size: 0.9rem;
@@ -3265,6 +3286,13 @@ body.compact .socials {
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
   text-shadow: 0 0 0.75rem rgba(255, 255, 255, 0.55);
   cursor: pointer;
+}
+
+.preview-button:disabled,
+.logout-button:disabled,
+.save-button:disabled {
+  cursor: wait;
+  opacity: 0.66;
 }
 
 .logout-button {

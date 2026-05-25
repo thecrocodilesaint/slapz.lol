@@ -21,6 +21,15 @@ create table if not exists public.app_sessions (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.app_password_resets (
+  id text primary key,
+  user_id text not null references public.app_users(id) on delete cascade,
+  token_hash text unique not null,
+  expires_at timestamptz not null,
+  used_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists public.app_profiles (
   handle text primary key,
   owner_user_id text references public.app_users(id) on delete set null,
@@ -31,6 +40,8 @@ create table if not exists public.app_profiles (
 
 create index if not exists app_users_email_idx on public.app_users(email);
 create index if not exists app_sessions_user_id_idx on public.app_sessions(user_id);
+create index if not exists app_password_resets_token_hash_idx on public.app_password_resets(token_hash);
+create index if not exists app_password_resets_user_id_idx on public.app_password_resets(user_id);
 create index if not exists app_profiles_owner_user_id_idx on public.app_profiles(owner_user_id);
 
 create or replace view public.app_user_profiles as

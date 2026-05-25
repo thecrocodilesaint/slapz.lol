@@ -13,6 +13,10 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const hasSupabase = Boolean(supabaseUrl && supabaseServiceKey);
 const mediaBucket = "profile-media";
 let mediaBucketReady = false;
+const passwordResetTtlMs = 30 * 60 * 1000;
+const forgotPasswordCooldownMs = 60 * 1000;
+const forgotPasswordAttempts = new Map();
+const resetPasswordSuccessMessage = "If an account exists for this email, a password reset link has been sent.";
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -48,6 +52,7 @@ function readUsersFile() {
   const store = JSON.parse(fs.readFileSync(usersPath, "utf8"));
   store.users = store.users || {};
   store.sessions = store.sessions || {};
+  store.passwordResets = store.passwordResets || {};
   return store;
 }
 
@@ -599,7 +604,19 @@ async function findUserByEmail(email) {
       query: `?email=eq.${encodeURIComponent(email)}&select=*&limit=1`,
     });
     const user = rows[0];
-    return user ? [user.id, { email: user.email, passwordHash: user.password_hash }] : null;
+    return user
+      ? [
+          user.id,
+          {
+            email: user.email,
+            passwordHash: user.password_hash,
+            createdAt: user.created_at,
+            profileHandle: user.profile_handle,
+            profilePath: user.profile_path,
+            profileUrl: user.profile_url,
+          },
+        ]
+      : null;
   }
 
   return Object.entries(readUsersFile().users).find(([, user]) => user.email === email) || null;
@@ -650,6 +667,165 @@ async function createSession(userId) {
   store.sessions[token] = { userId, createdAt };
   writeUsersFile(store);
   return token;
+}
+
+function hashResetToken(token) {
+  return crypto.createHash("sha256").update(String(token || "")).digest("hex");
+}
+
+function getRequestIp(req) {
+  return String(req.headers["x-forwarded-for"] || req.socket.remoteAddress || "")
+    .split(",")[0]
+    .trim();
+}
+
+function shouldThrottleForgotPassword(req, email) {
+  const key = `${getRequestIp(req)}:${email || "unknown"}`;
+  const now = Date.now();
+  const lastAttempt = forgotPasswordAttempts.get(key) || 0;
+  forgotPasswordAttempts.set(key, now);
+  return now - lastAttempt < forgotPasswordCooldownMs;
+}
+
+function cleanupForgotPasswordAttempts() {
+  const cutoff = Date.now() - 5 * forgotPasswordCooldownMs;
+  for (const [key, timestamp] of forgotPasswordAttempts) {
+    if (timestamp < cutoff) forgotPasswordAttempts.delete(key);
+  }
+}
+
+async function createPasswordResetToken(userId) {
+  const token = crypto.randomBytes(32).toString("base64url");
+  const tokenHash = hashResetToken(token);
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + passwordResetTtlMs).toISOString();
+  const createdAt = now.toISOString();
+
+  if (hasSupabase) {
+    try {
+      await supabaseRequest("app_password_resets", {
+        method: "PATCH",
+        query: `?user_id=eq.${encodeURIComponent(userId)}&used_at=is.null`,
+        body: { used_at: createdAt },
+        prefer: "return=minimal",
+      });
+      await supabaseRequest("app_password_resets", {
+        method: "POST",
+        body: {
+          id: crypto.randomUUID(),
+          user_id: userId,
+          token_hash: tokenHash,
+          expires_at: expiresAt,
+          created_at: createdAt,
+        },
+        prefer: "return=minimal",
+      });
+    } catch (error) {
+      console.warn("Could not create Supabase reset token. Run the latest supabase-schema.sql.", error.message);
+      throw new Error("Password reset is not configured yet.");
+    }
+    return token;
+  }
+
+  const store = readUsersFile();
+  for (const reset of Object.values(store.passwordResets)) {
+    if (reset.userId === userId && !reset.usedAt) reset.usedAt = createdAt;
+  }
+  store.passwordResets[tokenHash] = {
+    userId,
+    tokenHash,
+    createdAt,
+    expiresAt,
+    usedAt: "",
+  };
+  writeUsersFile(store);
+  return token;
+}
+
+async function findPasswordResetByToken(token) {
+  const tokenHash = hashResetToken(token);
+  const now = Date.now();
+
+  if (hasSupabase) {
+    const rows = await supabaseRequest("app_password_resets", {
+      query: `?token_hash=eq.${encodeURIComponent(tokenHash)}&select=*&limit=1`,
+    });
+    const reset = rows[0];
+    if (!reset || reset.used_at || new Date(reset.expires_at).getTime() <= now) return null;
+    return {
+      id: reset.id,
+      tokenHash,
+      userId: reset.user_id,
+    };
+  }
+
+  const reset = readUsersFile().passwordResets[tokenHash];
+  if (!reset || reset.usedAt || new Date(reset.expiresAt).getTime() <= now) return null;
+  return reset;
+}
+
+async function markPasswordResetUsed(reset) {
+  const usedAt = new Date().toISOString();
+  if (hasSupabase) {
+    await supabaseRequest("app_password_resets", {
+      method: "PATCH",
+      query: `?id=eq.${encodeURIComponent(reset.id)}`,
+      body: { used_at: usedAt },
+      prefer: "return=minimal",
+    });
+    return;
+  }
+
+  const store = readUsersFile();
+  if (store.passwordResets[reset.tokenHash]) {
+    store.passwordResets[reset.tokenHash].usedAt = usedAt;
+    writeUsersFile(store);
+  }
+}
+
+async function updateUserPassword(userId, passwordHash) {
+  if (hasSupabase) {
+    await supabaseRequest("app_users", {
+      method: "PATCH",
+      query: `?id=eq.${encodeURIComponent(userId)}`,
+      body: { password_hash: passwordHash },
+      prefer: "return=minimal",
+    });
+    return;
+  }
+
+  const store = readUsersFile();
+  if (!store.users[userId]) throw new Error("User not found");
+  store.users[userId].passwordHash = passwordHash;
+  writeUsersFile(store);
+}
+
+async function invalidateUserSessions(userId) {
+  if (hasSupabase) {
+    await supabaseRequest("app_sessions", {
+      method: "DELETE",
+      query: `?user_id=eq.${encodeURIComponent(userId)}`,
+      prefer: "return=minimal",
+    });
+    return;
+  }
+
+  const store = readUsersFile();
+  for (const [token, session] of Object.entries(store.sessions)) {
+    if (session.userId === userId) delete store.sessions[token];
+  }
+  writeUsersFile(store);
+}
+
+// Production should plug in an email provider here. Without one, reset links are only
+// logged in local development so tokens are never exposed through API responses.
+async function sendPasswordResetLink(email, resetLink) {
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`[dev password reset] ${email}: ${resetLink}`);
+    return;
+  }
+
+  console.warn("Password reset requested, but no production email provider is configured.");
 }
 
 async function getAuthedUser(req) {
@@ -855,6 +1031,55 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, 200, { token, email });
     } catch (error) {
       sendJson(res, 400, { error: error.message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/forgot-password") {
+    try {
+      cleanupForgotPasswordAttempts();
+      const body = JSON.parse((await readBody(req)) || "{}");
+      const email = cleanEmail(body.email);
+      if (email && !shouldThrottleForgotPassword(req, email)) {
+        const entry = email.includes("@") ? await findUserByEmail(email) : null;
+        if (entry) {
+          const token = await createPasswordResetToken(entry[0]);
+          const resetLink = `${siteOrigin(req)}/reset-password?token=${encodeURIComponent(token)}`;
+          await sendPasswordResetLink(entry[1].email, resetLink);
+        }
+      }
+      sendJson(res, 200, { message: resetPasswordSuccessMessage });
+    } catch (error) {
+      console.warn("Forgot password request failed:", error.message);
+      sendJson(res, 200, { message: resetPasswordSuccessMessage });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/reset-password") {
+    try {
+      const body = JSON.parse((await readBody(req)) || "{}");
+      const token = String(body.token || "").trim();
+      const newPassword = String(body.newPassword || "");
+
+      if (!token || newPassword.length < 6) {
+        sendJson(res, 400, { error: "Use a valid reset link and a password with at least 6 characters." });
+        return;
+      }
+
+      const reset = await findPasswordResetByToken(token);
+      if (!reset) {
+        sendJson(res, 400, { error: "This reset link is invalid or expired. Request a new one." });
+        return;
+      }
+
+      await updateUserPassword(reset.userId, hashPassword(newPassword));
+      await invalidateUserSessions(reset.userId);
+      await markPasswordResetUsed(reset);
+      sendJson(res, 200, { message: "Password reset. You can log in with your new password." });
+    } catch (error) {
+      console.warn("Reset password request failed:", error.message);
+      sendJson(res, 400, { error: "Could not reset password. Request a new reset link and try again." });
     }
     return;
   }
@@ -1702,7 +1927,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  if (req.method === "GET" && url.pathname.startsWith("/u/")) {
+  if (req.method === "GET" && (url.pathname.startsWith("/u/") || url.pathname === "/reset-password")) {
     sendFile(res, path.join(root, "index.html"));
     return;
   }
