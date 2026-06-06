@@ -17,6 +17,9 @@ const passwordResetTtlMs = 30 * 60 * 1000;
 const forgotPasswordCooldownMs = 60 * 1000;
 const forgotPasswordAttempts = new Map();
 const resetPasswordSuccessMessage = "If an account exists for this email, a password reset link has been sent.";
+const resendApiKey = process.env.RESEND_API_KEY;
+const sendgridApiKey = process.env.SENDGRID_API_KEY;
+const passwordResetEmailFrom = process.env.PASSWORD_RESET_FROM || process.env.EMAIL_FROM || "";
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -694,6 +697,96 @@ function cleanupForgotPasswordAttempts() {
   }
 }
 
+function maskEmail(email) {
+  const [name = "", domain = ""] = String(email || "").split("@");
+  if (!domain) return "invalid-email";
+  const visibleName = name.length <= 2 ? `${name.slice(0, 1)}*` : `${name.slice(0, 2)}***`;
+  return `${visibleName}@${domain}`;
+}
+
+function isLocalResetLink(resetLink) {
+  try {
+    const { hostname } = new URL(resetLink);
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+  } catch {
+    return false;
+  }
+}
+
+function passwordResetEmailContent(resetLink) {
+  return {
+    subject: "Reset your fun.lol password",
+    text: [
+      "Reset your fun.lol password",
+      "",
+      "Use this link to choose a new password. It expires in 30 minutes and can only be used once:",
+      resetLink,
+      "",
+      "If you did not request this, you can ignore this email.",
+    ].join("\n"),
+    html: `
+      <div style="font-family:Inter,Arial,sans-serif;background:#050508;color:#f5f7fb;padding:24px;border-radius:8px">
+        <h1 style="margin:0 0 12px;font-size:28px">Reset your fun.lol password</h1>
+        <p style="color:#b8bbc8;line-height:1.5">Use this link to choose a new password. It expires in 30 minutes and can only be used once.</p>
+        <p><a href="${resetLink}" style="display:inline-block;padding:12px 16px;border-radius:8px;background:#f5f7fb;color:#050508;font-weight:800;text-decoration:none">Reset password</a></p>
+        <p style="color:#8f95a8;font-size:13px;line-height:1.5">If you did not request this, you can ignore this email.</p>
+      </div>
+    `,
+  };
+}
+
+function emailAddressFrom(value) {
+  const text = String(value || "").trim();
+  const match = text.match(/<([^>]+)>/);
+  return match ? match[1].trim() : text;
+}
+
+async function sendWithResend(email, content) {
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${resendApiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: passwordResetEmailFrom,
+      to: email,
+      subject: content.subject,
+      html: content.html,
+      text: content.text,
+    }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Resend failed with ${response.status}`);
+  }
+}
+
+async function sendWithSendGrid(email, content) {
+  const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${sendgridApiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      personalizations: [{ to: [{ email }] }],
+      from: { email: emailAddressFrom(passwordResetEmailFrom) },
+      subject: content.subject,
+      content: [
+        { type: "text/plain", value: content.text },
+        { type: "text/html", value: content.html },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `SendGrid failed with ${response.status}`);
+  }
+}
+
 async function createPasswordResetToken(userId) {
   const token = crypto.randomBytes(32).toString("base64url");
   const tokenHash = hashResetToken(token);
@@ -817,15 +910,38 @@ async function invalidateUserSessions(userId) {
   writeUsersFile(store);
 }
 
-// Production should plug in an email provider here. Without one, reset links are only
-// logged in local development so tokens are never exposed through API responses.
+// Password reset delivery:
+// - Uses RESEND_API_KEY or SENDGRID_API_KEY plus PASSWORD_RESET_FROM/EMAIL_FROM when configured.
+// - Logs the one-time reset link only for localhost development fallback.
+// - Never returns reset tokens from API responses, especially in production.
 async function sendPasswordResetLink(email, resetLink) {
-  if (process.env.NODE_ENV !== "production") {
-    console.log(`[dev password reset] ${email}: ${resetLink}`);
-    return;
+  const content = passwordResetEmailContent(resetLink);
+
+  if (resendApiKey && passwordResetEmailFrom) {
+    await sendWithResend(email, content);
+    console.info(`[password reset] email sent with Resend to ${maskEmail(email)}`);
+    return true;
   }
 
-  console.warn("Password reset requested, but no production email provider is configured.");
+  if (sendgridApiKey && passwordResetEmailFrom) {
+    await sendWithSendGrid(email, content);
+    console.info(`[password reset] email sent with SendGrid to ${maskEmail(email)}`);
+    return true;
+  }
+
+  if ((resendApiKey || sendgridApiKey) && !passwordResetEmailFrom) {
+    console.warn("[password reset] email provider key exists, but PASSWORD_RESET_FROM or EMAIL_FROM is missing.");
+  }
+
+  if (isLocalResetLink(resetLink)) {
+    console.log(`[dev password reset] ${email}: ${resetLink}`);
+    return true;
+  }
+
+  console.warn(
+    "[password reset] email provider missing. Configure RESEND_API_KEY or SENDGRID_API_KEY plus PASSWORD_RESET_FROM/EMAIL_FROM."
+  );
+  return false;
 }
 
 async function getAuthedUser(req) {
@@ -1040,12 +1156,23 @@ const server = http.createServer(async (req, res) => {
       cleanupForgotPasswordAttempts();
       const body = JSON.parse((await readBody(req)) || "{}");
       const email = cleanEmail(body.email);
-      if (email && !shouldThrottleForgotPassword(req, email)) {
-        const entry = email.includes("@") ? await findUserByEmail(email) : null;
+      const maskedEmail = maskEmail(email);
+      const isValidEmail = email.includes("@");
+
+      if (!email || !isValidEmail) {
+        console.info(`[password reset] ignored invalid email request: ${maskedEmail}`);
+      } else if (shouldThrottleForgotPassword(req, email)) {
+        console.info(`[password reset] cooldown active for ${maskedEmail}`);
+      } else {
+        const entry = await findUserByEmail(email);
         if (entry) {
+          console.info(`[password reset] account found for ${maskedEmail}; generating reset token`);
           const token = await createPasswordResetToken(entry[0]);
           const resetLink = `${siteOrigin(req)}/reset-password?token=${encodeURIComponent(token)}`;
+          console.info(`[password reset] reset token stored for ${maskedEmail}; sending reset link`);
           await sendPasswordResetLink(entry[1].email, resetLink);
+        } else {
+          console.info(`[password reset] no account found for ${maskedEmail}; generic response returned`);
         }
       }
       sendJson(res, 200, { message: resetPasswordSuccessMessage });
