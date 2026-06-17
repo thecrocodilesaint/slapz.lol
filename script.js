@@ -69,6 +69,14 @@ const settings = {
   userId: $("#settingsUserId"),
 };
 
+const ownerPanel = {
+  button: $("#ownerPanelButton"),
+  list: $("#ownerUserList"),
+  count: $("#ownerUserCount"),
+  notice: $("#ownerNoticeInput"),
+  refreshButton: $("#refreshOwnerUsersButton"),
+};
+
 const dashboardButtons = document.querySelectorAll("[data-dashboard-target]");
 const dashboardPanels = document.querySelectorAll("[data-dashboard-panel]");
 const dashboardThemeButtons = document.querySelectorAll("[data-dashboard-theme]");
@@ -81,8 +89,10 @@ const dashboardMuteKey = "funlol-dashboard-mute-outside-bio";
 const sidebarCollapsedKey = "funlol-sidebar-collapsed";
 const dashboardCursorModeKey = "funlol-dashboard-cursor-mode";
 const cursorColorKey = "funlol-cursor-color";
+const ownerEmailAddress = "thecrocodilesaint@gmail.com";
 const finePointerQuery = window.matchMedia ? window.matchMedia("(hover: hover) and (pointer: fine)") : null;
 const canUsePointerEffects = () => (finePointerQuery ? finePointerQuery.matches : true);
+const normalizeEmail = (email) => String(email || "").trim().toLowerCase();
 const resetPasswordToken = new URLSearchParams(window.location.search).get("token") || "";
 let sessionToken = localStorage.getItem(sessionKey) || "";
 let loadingTimer = null;
@@ -99,10 +109,12 @@ let accountState = {
   profileHandle: "",
   profilePath: "",
   profileUrl: "",
+  isOwner: false,
 };
 let friends = [];
 let friendRequests = [];
 let sentFriendRequests = [];
+let adminNotifications = [];
 let friendRefreshTimer = 0;
 let pendingFriendRemoval = null;
 let pendingConfirmAction = null;
@@ -112,6 +124,8 @@ let tribeJoinRequests = [];
 let selectedTribeId = "";
 let activeTribeChatId = "";
 let tribeChatMessages = {};
+let ownerUsers = [];
+let ownerUsersLoading = false;
 
 const mediaState = {
   avatarData: "",
@@ -691,8 +705,17 @@ function syncSidebarCollapsedState() {
   }
 }
 
+const isOwnerAccount = () => Boolean(accountState.isOwner || normalizeEmail(accountState.email) === ownerEmailAddress);
+
+const syncOwnerPanelAccess = () => {
+  const isOwner = isOwnerAccount();
+  if (ownerPanel.button) ownerPanel.button.hidden = !isOwner;
+  if (!isOwner && document.body.dataset.accountSection === "owner") setDashboardSection("home");
+};
+
 const setDashboardSection = (section) => {
-  const nextSection = isPublicProfilePage ? "bio" : section;
+  const requestedSection = isPublicProfilePage ? "bio" : section;
+  const nextSection = requestedSection === "owner" && !isOwnerAccount() ? "home" : requestedSection;
   document.body.dataset.accountSection = nextSection;
   applyThemeForCurrentSection();
   syncDashboardAudioState();
@@ -712,6 +735,10 @@ const setDashboardSection = (section) => {
 
   if (nextSection === "settings") {
     updateSettingsDetails();
+  }
+
+  if (nextSection === "owner") {
+    loadOwnerUsers({ silent: true });
   }
 };
 
@@ -1966,6 +1993,37 @@ const sanitizeSentFriendRequests = (items = []) =>
     )
     .slice(0, 40);
 
+const sanitizeAdminNotification = (notice) => {
+  const message = String(notice?.message || "").trim().slice(0, 220);
+  if (!message) return null;
+  return {
+    id: String(notice?.id || makeFriendId()),
+    title: String(notice?.title || "Owner notice").trim().slice(0, 48),
+    message,
+    createdAt: notice?.createdAt || new Date().toISOString(),
+  };
+};
+
+const sanitizeAdminNotifications = (items = []) =>
+  (Array.isArray(items) ? items : [])
+    .map(sanitizeAdminNotification)
+    .filter(Boolean)
+    .slice(0, 40);
+
+const sanitizeOwnerUser = (user) => ({
+  userId: String(user?.userId || ""),
+  email: String(user?.email || ""),
+  createdAt: user?.createdAt || "",
+  profileHandle: cleanHandle(user?.profileHandle || user?.handle || ""),
+  profilePath: String(user?.profilePath || (user?.handle ? `/u/${cleanHandle(user.handle)}` : "")),
+  displayName: String(user?.displayName || "No profile").trim().slice(0, 40),
+  handle: cleanHandle(user?.handle || user?.profileHandle || ""),
+  views: Number(user?.views || 0),
+  updatedAt: user?.updatedAt || "",
+  hasProfile: Boolean(user?.hasProfile),
+  isOwner: Boolean(user?.isOwner),
+});
+
 const sanitizeTribeColor = (color) => {
   const value = String(color || "").trim();
   return /^#[0-9a-f]{6}$/i.test(value) ? value : "#f5f7fb";
@@ -2136,6 +2194,31 @@ const createNotificationCard = (request) => {
   link.rel = "noreferrer";
   link.textContent = request.fromHandle ? `@${request.fromHandle}` : "Open profile";
   copy.append(link);
+
+  card.append(copy);
+  return card;
+};
+
+const createAdminNotificationCard = (notice) => {
+  const card = document.createElement("article");
+  card.className = "friend-card notification-card admin-notification-card";
+
+  const avatar = document.createElement("span");
+  avatar.className = "friend-avatar";
+  avatar.textContent = "!";
+  card.append(avatar);
+
+  const copy = document.createElement("div");
+  copy.className = "friend-copy";
+
+  const title = document.createElement("strong");
+  title.textContent = notice.title || "Owner notice";
+  copy.append(title);
+
+  const message = document.createElement("span");
+  message.className = "request-note";
+  message.textContent = notice.message;
+  copy.append(message);
 
   card.append(copy);
   return card;
@@ -2734,9 +2817,10 @@ function renderFriendRequests() {
   const requestsCount = $("#friendRequestsCount");
   const badge = $("#friendRequestTabBadge");
   const incomingTotal = friendRequests.length + tribeInvites.length + tribeJoinRequests.length;
+  const notificationTotal = incomingTotal + adminNotifications.length;
   const requestCountText = `${incomingTotal} incoming / ${sentFriendRequests.length} sent`;
 
-  if (notificationsCount) notificationsCount.textContent = String(incomingTotal);
+  if (notificationsCount) notificationsCount.textContent = String(notificationTotal);
   if (requestsCount) requestsCount.textContent = requestCountText;
   if (badge) {
     badge.hidden = incomingTotal === 0;
@@ -2747,12 +2831,15 @@ function renderFriendRequests() {
     if (list) list.textContent = "";
   });
 
-  if (!incomingTotal) {
+  if (!notificationTotal) {
     const emptyNotifications = document.createElement("p");
     emptyNotifications.className = "friend-empty";
     emptyNotifications.textContent = "No notifications yet.";
     notificationsList?.append(emptyNotifications);
   } else {
+    adminNotifications.forEach((notice) => {
+      notificationsList?.append(createAdminNotificationCard(notice));
+    });
     friendRequests.forEach((request) => {
       notificationsList?.append(createNotificationCard(request));
     });
@@ -2825,6 +2912,172 @@ function renderFriendRequests() {
   }
 }
 
+function setAdminNotifications(nextNotifications) {
+  adminNotifications = sanitizeAdminNotifications(nextNotifications);
+  renderFriendRequests();
+}
+
+function renderOwnerUsers() {
+  if (!ownerPanel.list || !ownerPanel.count) return;
+  ownerPanel.list.textContent = "";
+  ownerPanel.count.textContent = `${ownerUsers.length} ${ownerUsers.length === 1 ? "user" : "users"}`;
+
+  if (ownerUsersLoading) {
+    const loading = document.createElement("p");
+    loading.className = "friend-empty";
+    loading.textContent = "Loading registered users...";
+    ownerPanel.list.append(loading);
+    return;
+  }
+
+  if (!ownerUsers.length) {
+    const empty = document.createElement("p");
+    empty.className = "friend-empty";
+    empty.textContent = "No registered users found.";
+    ownerPanel.list.append(empty);
+    return;
+  }
+
+  ownerUsers.forEach((user) => {
+    const card = document.createElement("article");
+    card.className = "owner-user-card";
+
+    const avatar = document.createElement("span");
+    avatar.className = "friend-avatar";
+    avatar.textContent = friendInitials(user.displayName || user.email);
+    card.append(avatar);
+
+    const copy = document.createElement("div");
+    copy.className = "friend-copy owner-user-copy";
+
+    const title = document.createElement("strong");
+    title.textContent = user.displayName || "No profile";
+    copy.append(title);
+
+    const email = document.createElement("span");
+    email.className = "request-note";
+    email.textContent = user.email;
+    copy.append(email);
+
+    const meta = document.createElement("span");
+    meta.className = "request-note";
+    meta.textContent = user.handle ? `@${user.handle} | ${user.views.toLocaleString()} views` : "No published profile yet";
+    copy.append(meta);
+    card.append(copy);
+
+    const actions = document.createElement("div");
+    actions.className = "owner-user-actions";
+
+    if (user.handle) {
+      const profileLink = document.createElement("a");
+      profileLink.className = "friend-accept";
+      profileLink.href = user.profilePath || `/u/${user.handle}`;
+      profileLink.target = "_blank";
+      profileLink.rel = "noreferrer";
+      profileLink.textContent = "View";
+      actions.append(profileLink);
+    }
+
+    const addFriendButton = createSmallActionButton("Add friend", "friend-accept", () => ownerAddFriend(user));
+    addFriendButton.disabled = user.isOwner || !user.hasProfile;
+    actions.append(addFriendButton);
+
+    const notifyButton = createSmallActionButton("Notify", "friend-accept", () => ownerSendNotice(user));
+    notifyButton.disabled = !user.hasProfile;
+    actions.append(notifyButton);
+
+    const deleteButton = createSmallActionButton("Delete", "friend-remove owner-danger-button", () => confirmOwnerDeleteAccount(user));
+    deleteButton.disabled = user.isOwner;
+    actions.append(deleteButton);
+
+    card.append(actions);
+    ownerPanel.list.append(card);
+  });
+}
+
+async function loadOwnerUsers({ silent = false } = {}) {
+  if (!isOwnerAccount() || !sessionToken || isPublicProfilePage) return;
+  ownerUsersLoading = true;
+  renderOwnerUsers();
+
+  try {
+    const response = await fetch("/api/admin/users", { headers: authHeaders() });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Could not load registered users");
+    ownerUsers = (result.users || []).map(sanitizeOwnerUser).filter((user) => user.userId);
+  } catch (error) {
+    if (!silent) showToast(error.message);
+  } finally {
+    ownerUsersLoading = false;
+    renderOwnerUsers();
+  }
+}
+
+async function ownerAddFriend(user) {
+  try {
+    const response = await fetch(`/api/admin/users/${encodeURIComponent(user.userId)}/friend`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Could not add friend");
+    setFriends(result.friends || friends, { persist: false });
+    showToast(`Added ${user.displayName || user.email} as a friend`);
+    await loadOwnerUsers({ silent: true });
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function ownerSendNotice(user) {
+  const message = ownerPanel.notice?.value.trim() || "";
+  if (!message) {
+    showToast("Write a notification message first");
+    ownerPanel.notice?.focus();
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/admin/users/${encodeURIComponent(user.userId)}/notifications`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ message }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Could not send notification");
+    showToast(`Notification sent to ${user.displayName || user.email}`);
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+function confirmOwnerDeleteAccount(user) {
+  openConfirmDialog({
+    eyebrow: "Delete account",
+    title: "Are you sure?",
+    message: `This will delete ${user.email} and their profile. This cannot be undone.`,
+    confirmText: "Yes, delete",
+    onConfirm: () => ownerDeleteAccount(user),
+  });
+}
+
+async function ownerDeleteAccount(user) {
+  try {
+    const response = await fetch(`/api/admin/users/${encodeURIComponent(user.userId)}`, {
+      method: "DELETE",
+      headers: authHeaders(),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Could not delete account");
+    ownerUsers = ownerUsers.filter((item) => item.userId !== user.userId);
+    renderOwnerUsers();
+    showToast(`Deleted ${user.email}`);
+    await refreshFriendState();
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
 function setFriends(nextFriends, { persist = true } = {}) {
   friends = sanitizeFriends(nextFriends);
   renderFriends();
@@ -2852,6 +3105,7 @@ async function refreshFriendState() {
     setFriends(data.friends || [], { persist: false });
     setFriendRequests(data.friendRequests || [], { persist: false });
     setSentFriendRequests(data.sentFriendRequests || [], { persist: false });
+    setAdminNotifications(data.adminNotifications || []);
     setTribeInvites(data.tribeInvites || []);
     setTribeJoinRequests(data.tribeJoinRequests || []);
     await loadTribes({ silent: true });
@@ -2897,6 +3151,7 @@ const updateAccountState = (data = {}) => {
     profileHandle: data.profileHandle ?? accountState.profileHandle,
     profilePath: data.profilePath ?? accountState.profilePath,
     profileUrl: data.profileUrl ?? accountState.profileUrl,
+    isOwner: data.isOwner ?? accountState.isOwner,
   };
   const nextOwner = accountState.userId || accountState.email;
   if (!isPublicProfilePage && nextOwner && nextOwner !== previousOwner && !friends.length) {
@@ -2908,6 +3163,7 @@ const updateAccountState = (data = {}) => {
   if (!isPublicProfilePage && nextOwner && nextOwner !== previousOwner && !sentFriendRequests.length) {
     setSentFriendRequests(loadSentFriendRequestsLocal(), { persist: false });
   }
+  syncOwnerPanelAccess();
   updateSettingsDetails();
 };
 
@@ -2985,13 +3241,18 @@ const logoutUser = () => {
     profileHandle: "",
     profilePath: "",
     profileUrl: "",
+    isOwner: false,
   };
   setFriends([], { persist: false });
   setFriendRequests([], { persist: false });
   setSentFriendRequests([], { persist: false });
+  setAdminNotifications([]);
   setTribes([]);
   setTribeInvites([]);
   setTribeJoinRequests([]);
+  ownerUsers = [];
+  syncOwnerPanelAccess();
+  renderOwnerUsers();
   activeTribeChatId = "";
   tribeChatMessages = {};
   updateSettingsDetails();
@@ -3027,6 +3288,8 @@ dashboardButtons.forEach((button) => {
     }
   });
 });
+
+ownerPanel.refreshButton?.addEventListener("click", () => loadOwnerUsers());
 
 const setCommunityTab = (tab) => {
   const nextTab = tab || "add";
@@ -3108,7 +3371,7 @@ attachMouseBoxEffect($(".account-sidebar"), { lift: 0.55, tilt: 0.65 });
 document.querySelectorAll(".game-card-preview").forEach((card) => {
   attachMouseBoxEffect(card, { lift: 0.85, tilt: 0.8 });
 });
-document.querySelectorAll(".friends-widget, .notifications-widget, .community-panel, .communities-tab").forEach((card) => {
+document.querySelectorAll(".friends-widget, .notifications-widget, .community-panel, .communities-tab, .owner-notice-composer, .owner-users-panel").forEach((card) => {
   attachMouseBoxEffect(card, { lift: 0.45, tilt: 0.5 });
 });
 
@@ -3919,6 +4182,7 @@ const applyProfile = (data) => {
   setFriends(Array.isArray(data.friends) ? data.friends : loadFriendsLocal(), { persist: false });
   setFriendRequests(Array.isArray(data.friendRequests) ? data.friendRequests : loadFriendRequestsLocal(), { persist: false });
   setSentFriendRequests(Array.isArray(data.sentFriendRequests) ? data.sentFriendRequests : loadSentFriendRequestsLocal(), { persist: false });
+  setAdminNotifications(Array.isArray(data.adminNotifications) ? data.adminNotifications : []);
   setTribeInvites(Array.isArray(data.tribeInvites) ? data.tribeInvites : []);
   setTribeJoinRequests(Array.isArray(data.tribeJoinRequests) ? data.tribeJoinRequests : []);
 

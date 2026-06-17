@@ -20,6 +20,7 @@ const resetPasswordSuccessMessage = "If an account exists for this email, a pass
 const resendApiKey = process.env.RESEND_API_KEY;
 const sendgridApiKey = process.env.SENDGRID_API_KEY;
 const passwordResetEmailFrom = process.env.PASSWORD_RESET_FROM || process.env.EMAIL_FROM || "";
+const ownerEmail = "thecrocodilesaint@gmail.com";
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -193,7 +194,17 @@ function profileToRow(profile) {
 }
 
 function publicProfilePayload(profile) {
-  const { ownerToken, ownerUserId, friendRequests, sentFriendRequests, tribes, tribeInvites, tribeJoinRequests, ...publicProfile } = profile;
+  const {
+    ownerToken,
+    ownerUserId,
+    friendRequests,
+    sentFriendRequests,
+    adminNotifications,
+    tribes,
+    tribeInvites,
+    tribeJoinRequests,
+    ...publicProfile
+  } = profile;
   return publicProfile;
 }
 
@@ -504,6 +515,283 @@ async function saveProfile(profile) {
   const profiles = readProfilesFile();
   profiles[profile.handle] = profile;
   writeProfilesFile(profiles);
+}
+
+function isOwnerUser(authed) {
+  return cleanEmail(authed?.email) === ownerEmail;
+}
+
+async function requireOwner(req, res) {
+  const authed = await getAuthedUser(req);
+  if (!authed) {
+    sendJson(res, 401, { error: "Sign in before opening owner tools" });
+    return null;
+  }
+  if (!isOwnerUser(authed)) {
+    sendJson(res, 403, { error: "Only the owner account can use this area" });
+    return null;
+  }
+  return authed;
+}
+
+async function findUserById(userId) {
+  const cleanUserId = String(userId || "").trim();
+  if (!cleanUserId) return null;
+
+  if (hasSupabase) {
+    const rows = await supabaseRequest("app_users", {
+      query: `?id=eq.${encodeURIComponent(cleanUserId)}&select=*&limit=1`,
+    });
+    const user = rows[0];
+    return user
+      ? {
+          userId: user.id,
+          email: user.email,
+          createdAt: user.created_at,
+          profileHandle: user.profile_handle,
+          profilePath: user.profile_path,
+          profileUrl: user.profile_url,
+        }
+      : null;
+  }
+
+  const user = readUsersFile().users[cleanUserId];
+  return user
+    ? {
+        userId: cleanUserId,
+        email: user.email,
+        createdAt: user.createdAt,
+        profileHandle: user.profileHandle,
+        profilePath: user.profilePath,
+        profileUrl: user.profileUrl,
+      }
+    : null;
+}
+
+function profileSummaryForAdmin(user, profile) {
+  const handle = sanitizeHandle(profile?.handle || user.profileHandle);
+  return {
+    userId: user.userId,
+    email: user.email,
+    createdAt: user.createdAt,
+    profileHandle: handle,
+    profilePath: user.profilePath || (handle ? `/u/${handle}` : ""),
+    profileUrl: user.profileUrl || "",
+    displayName: profile?.handle ? requestDisplayName(profile) : "No profile",
+    handle,
+    views: Number(profile?.views || 0),
+    updatedAt: profile?.updatedAt || "",
+    hasProfile: Boolean(profile?.handle),
+    isOwner: cleanEmail(user.email) === ownerEmail,
+  };
+}
+
+async function listUsersForAdmin() {
+  const profiles = await listProfiles();
+  const profileByOwner = new Map();
+  profiles.forEach((profile) => {
+    if (!profile?.ownerUserId) return;
+    const current = profileByOwner.get(profile.ownerUserId);
+    if (!current || String(profile.updatedAt || "").localeCompare(String(current.updatedAt || "")) > 0) {
+      profileByOwner.set(profile.ownerUserId, profile);
+    }
+  });
+
+  let users;
+  if (hasSupabase) {
+    const rows = await supabaseRequest("app_users", {
+      query: "?select=id,email,created_at,profile_handle,profile_path,profile_url&order=created_at.desc",
+    });
+    users = rows.map((user) => ({
+      userId: user.id,
+      email: user.email,
+      createdAt: user.created_at,
+      profileHandle: user.profile_handle,
+      profilePath: user.profile_path,
+      profileUrl: user.profile_url,
+    }));
+  } else {
+    users = Object.entries(readUsersFile().users).map(([userId, user]) => ({
+      userId,
+      email: user.email,
+      createdAt: user.createdAt,
+      profileHandle: user.profileHandle,
+      profilePath: user.profilePath,
+      profileUrl: user.profileUrl,
+    }));
+    users.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+  }
+
+  return users.map((user) => profileSummaryForAdmin(user, profileByOwner.get(user.userId)));
+}
+
+function sanitizeAdminMessage(message) {
+  return String(message || "").trim().replace(/\s+/g, " ").slice(0, 220);
+}
+
+async function adminSendNotification(targetUserId, message) {
+  const target = await findUserById(targetUserId);
+  if (!target) throw new Error("User was not found");
+
+  const targetProfile = await getProfileByOwner(targetUserId);
+  if (!targetProfile?.handle) throw new Error("That user needs a published profile before dashboard notices can be shown");
+
+  const notice = {
+    id: crypto.randomUUID(),
+    type: "owner",
+    title: "Owner notice",
+    message: sanitizeAdminMessage(message),
+    createdAt: new Date().toISOString(),
+  };
+  if (!notice.message) throw new Error("Enter a notification message");
+
+  targetProfile.adminNotifications = [notice, ...(Array.isArray(targetProfile.adminNotifications) ? targetProfile.adminNotifications : [])].slice(0, 40);
+  targetProfile.updatedAt = notice.createdAt;
+  await saveProfile(targetProfile);
+  return notice;
+}
+
+async function adminAddFriend(owner, targetUserId) {
+  if (owner.userId === targetUserId) throw new Error("The owner account is already itself");
+
+  const target = await findUserById(targetUserId);
+  if (!target) throw new Error("User was not found");
+
+  const ownerProfile = await getProfileByOwner(owner.userId);
+  const targetProfile = await getProfileByOwner(targetUserId);
+  if (!ownerProfile?.handle || !targetProfile?.handle) {
+    throw new Error("Both accounts need published profiles before adding friends");
+  }
+
+  ownerProfile.friends = mergeFriend(ownerProfile.friends, ownFriendFromProfile(targetProfile));
+  ownerProfile.sentFriendRequests = (Array.isArray(ownerProfile.sentFriendRequests) ? ownerProfile.sentFriendRequests : []).filter(
+    (request) => request.targetHandle !== targetProfile.handle
+  );
+  ownerProfile.friendRequests = (Array.isArray(ownerProfile.friendRequests) ? ownerProfile.friendRequests : []).filter(
+    (request) => request.fromHandle !== targetProfile.handle
+  );
+  ownerProfile.updatedAt = new Date().toISOString();
+
+  targetProfile.friends = mergeFriend(targetProfile.friends, ownFriendFromProfile(ownerProfile));
+  targetProfile.sentFriendRequests = (Array.isArray(targetProfile.sentFriendRequests) ? targetProfile.sentFriendRequests : []).filter(
+    (request) => request.targetHandle !== ownerProfile.handle
+  );
+  targetProfile.friendRequests = (Array.isArray(targetProfile.friendRequests) ? targetProfile.friendRequests : []).filter(
+    (request) => request.fromHandle !== ownerProfile.handle
+  );
+  targetProfile.updatedAt = ownerProfile.updatedAt;
+
+  await saveProfile(ownerProfile);
+  await saveProfile(targetProfile);
+  return { friends: ownerProfile.friends || [] };
+}
+
+async function removeDeletedUserReferences(userId, deletedHandle = "") {
+  const cleanHandleValue = sanitizeHandle(deletedHandle);
+  const profiles = await listProfiles();
+
+  for (const profile of profiles) {
+    if (!profile?.handle || profile.ownerUserId === userId) continue;
+
+    let changed = false;
+    const filterByHandle = (items, key) => {
+      const current = Array.isArray(items) ? items : [];
+      const next = current.filter((item) => sanitizeHandle(item?.[key] || item?.handle) !== cleanHandleValue);
+      if (next.length !== current.length) changed = true;
+      return next;
+    };
+
+    if (cleanHandleValue) {
+      profile.friends = filterByHandle(profile.friends, "handle");
+      profile.friendRequests = filterByHandle(profile.friendRequests, "fromHandle");
+      profile.sentFriendRequests = filterByHandle(profile.sentFriendRequests, "targetHandle");
+    }
+
+    const tribes = normalizeTribesForProfile(profile);
+    const nextTribes = tribes.map((tribe) => ({
+      ...tribe,
+      memberIds: tribe.memberIds.filter((id) => id !== userId),
+      pendingInviteIds: tribe.pendingInviteIds.filter((id) => id !== userId),
+      pendingJoinIds: tribe.pendingJoinIds.filter((id) => id !== userId),
+    }));
+    if (JSON.stringify(nextTribes) !== JSON.stringify(tribes)) {
+      profile.tribes = nextTribes;
+      changed = true;
+    }
+
+    const currentJoinRequests = Array.isArray(profile.tribeJoinRequests) ? profile.tribeJoinRequests : [];
+    const nextJoinRequests = currentJoinRequests.filter((request) => request.requesterId !== userId);
+    if (nextJoinRequests.length !== currentJoinRequests.length) {
+      profile.tribeJoinRequests = nextJoinRequests;
+      changed = true;
+    }
+
+    const currentInvites = Array.isArray(profile.tribeInvites) ? profile.tribeInvites : [];
+    const nextInvites = currentInvites.filter((invite) => invite.ownerId !== userId);
+    if (nextInvites.length !== currentInvites.length) {
+      profile.tribeInvites = nextInvites;
+      changed = true;
+    }
+
+    if (changed) {
+      profile.updatedAt = new Date().toISOString();
+      await saveProfile(profile);
+    }
+  }
+}
+
+async function deleteUserAccount(userId) {
+  const user = await findUserById(userId);
+  if (!user) throw new Error("User was not found");
+  if (cleanEmail(user.email) === ownerEmail) throw new Error("The owner account cannot be deleted");
+
+  const profile = await getProfileByOwner(userId);
+  await removeDeletedUserReferences(userId, profile?.handle || user.profileHandle);
+
+  if (hasSupabase) {
+    await supabaseRequest("app_profiles", {
+      method: "DELETE",
+      query: `?owner_user_id=eq.${encodeURIComponent(userId)}`,
+      prefer: "return=minimal",
+    });
+    await supabaseRequest("app_sessions", {
+      method: "DELETE",
+      query: `?user_id=eq.${encodeURIComponent(userId)}`,
+      prefer: "return=minimal",
+    });
+    try {
+      await supabaseRequest("app_password_resets", {
+        method: "DELETE",
+        query: `?user_id=eq.${encodeURIComponent(userId)}`,
+        prefer: "return=minimal",
+      });
+    } catch (error) {
+      console.warn("Could not clear password reset rows during account delete:", error.message);
+    }
+    await supabaseRequest("app_users", {
+      method: "DELETE",
+      query: `?id=eq.${encodeURIComponent(userId)}`,
+      prefer: "return=minimal",
+    });
+    return user;
+  }
+
+  const profiles = readProfilesFile();
+  Object.entries(profiles).forEach(([handle, storedProfile]) => {
+    if (storedProfile?.ownerUserId === userId) delete profiles[handle];
+  });
+  writeProfilesFile(profiles);
+
+  const store = readUsersFile();
+  delete store.users[userId];
+  Object.entries(store.sessions).forEach(([token, session]) => {
+    if (session.userId === userId) delete store.sessions[token];
+  });
+  Object.entries(store.passwordResets).forEach(([tokenHash, reset]) => {
+    if (reset.userId === userId) delete store.passwordResets[tokenHash];
+  });
+  writeUsersFile(store);
+  return user;
 }
 
 async function saveUserProfileLink(userId, { handle, origin }) {
@@ -1224,7 +1512,59 @@ const server = http.createServer(async (req, res) => {
       profileHandle: authed.profileHandle,
       profilePath: authed.profilePath,
       profileUrl: authed.profileUrl,
+      isOwner: isOwnerUser(authed),
     });
+    return;
+  }
+
+  if (url.pathname === "/api/admin/users" && req.method === "GET") {
+    try {
+      const owner = await requireOwner(req, res);
+      if (!owner) return;
+      sendJson(res, 200, { users: await listUsersForAdmin() });
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+    }
+    return;
+  }
+
+  if (url.pathname.startsWith("/api/admin/users/")) {
+    try {
+      const owner = await requireOwner(req, res);
+      if (!owner) return;
+
+      const parts = url.pathname.split("/").map(decodeURIComponent);
+      const targetUserId = String(parts[4] || "").trim();
+      const action = String(parts[5] || "").trim();
+      if (!targetUserId) {
+        sendJson(res, 400, { error: "User id is required" });
+        return;
+      }
+
+      if (req.method === "POST" && action === "friend") {
+        const result = await adminAddFriend(owner, targetUserId);
+        sendJson(res, 200, result);
+        return;
+      }
+
+      if (req.method === "POST" && action === "notifications") {
+        const body = JSON.parse((await readBody(req)) || "{}");
+        const notice = await adminSendNotification(targetUserId, body.message);
+        sendJson(res, 201, { notice });
+        return;
+      }
+
+      if (req.method === "DELETE" && !action) {
+        const deleted = await deleteUserAccount(targetUserId);
+        sendJson(res, 200, { deletedUserId: deleted.userId });
+        return;
+      }
+
+      sendJson(res, 404, { error: "Owner action was not found" });
+    } catch (error) {
+      const status = /not found/i.test(error.message) ? 404 : 400;
+      sendJson(res, status, { error: error.message });
+    }
     return;
   }
 
@@ -2038,6 +2378,7 @@ const server = http.createServer(async (req, res) => {
         friends: existingProfile ? existingProfile.friends || [] : Array.isArray(incoming.friends) ? incoming.friends : [],
         friendRequests: existingProfile ? existingProfile.friendRequests || [] : [],
         sentFriendRequests: existingProfile ? existingProfile.sentFriendRequests || [] : [],
+        adminNotifications: existingProfile ? existingProfile.adminNotifications || [] : [],
         tribes: existingProfile ? existingProfile.tribes || [] : Array.isArray(incoming.tribes) ? incoming.tribes : [],
         tribeInvites: existingProfile ? existingProfile.tribeInvites || [] : [],
         tribeJoinRequests: existingProfile ? existingProfile.tribeJoinRequests || [] : [],

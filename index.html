@@ -37,6 +37,10 @@
         <circle cx="18" cy="12" r="2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
         <circle cx="11" cy="18" r="2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
       </symbol>
+      <symbol id="sidebar-icon-shield" viewBox="0 0 24 24">
+        <path d="M12 3 19 6v5c0 5-3 8-7 10-4-2-7-5-7-10V6l7-3Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M9 12l2 2 4-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
       <symbol id="sidebar-icon-log-out" viewBox="0 0 24 24">
         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
       </symbol>
@@ -287,6 +291,12 @@
               <svg viewBox="0 0 24 24"><use href="#sidebar-icon-sliders"></use></svg>
             </span>
             <span class="sidebar-label">Settings</span>
+          </button>
+          <button class="account-nav-button owner-nav-button" id="ownerPanelButton" type="button" data-dashboard-target="owner" hidden>
+            <span class="sidebar-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><use href="#sidebar-icon-shield"></use></svg>
+            </span>
+            <span class="sidebar-label">Owner</span>
           </button>
         </nav>
         <button class="sidebar-logout" id="accountLogoutButton" type="button">
@@ -737,6 +747,34 @@
           </div>
 
           <p class="settings-note">Password details stay private and are never shown here.</p>
+        </div>
+      </section>
+
+      <section class="dashboard-panel dashboard-owner" data-dashboard-panel="owner" aria-label="Owner tools" hidden>
+        <div class="owner-shell">
+          <div class="owner-heading">
+            <div>
+              <p>Owner tools</p>
+              <h1>Owner panel</h1>
+            </div>
+            <button class="friend-jump-button" id="refreshOwnerUsersButton" type="button">Refresh users</button>
+          </div>
+
+          <section class="owner-notice-composer glass" aria-label="Owner notification composer">
+            <label>
+              Notification message
+              <textarea id="ownerNoticeInput" maxlength="220">You have been muted or banned for 2 days.</textarea>
+            </label>
+            <p>Write a message, then press Notify on a registered user.</p>
+          </section>
+
+          <section class="owner-users-panel glass" aria-label="Registered users">
+            <div class="friends-panel-heading">
+              <p>Registered users</p>
+              <span id="ownerUserCount">0 users</span>
+            </div>
+            <div class="owner-user-list" id="ownerUserList" aria-live="polite"></div>
+          </section>
         </div>
       </section>
 
