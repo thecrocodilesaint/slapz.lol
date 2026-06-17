@@ -122,6 +122,7 @@ let tribes = [];
 let tribeInvites = [];
 let tribeJoinRequests = [];
 let selectedTribeId = "";
+let addMembersTribeId = "";
 let activeTribeChatId = "";
 let tribeChatMessages = {};
 let ownerUsers = [];
@@ -2456,6 +2457,65 @@ const renderTribeInviteFriendOptions = () => {
   });
 };
 
+const friendsAvailableForTribe = (tribe) => {
+  if (!tribe?.isOwner) return [];
+  const memberHandles = new Set((tribe.members || []).map((member) => cleanHandle(member.handle)).filter(Boolean));
+  return friends
+    .filter((friend) => friend.handle)
+    .filter((friend) => friend.handle !== tribe.ownerHandle)
+    .filter((friend) => !memberHandles.has(friend.handle));
+};
+
+function renderTribeAddMembersPanel(tribe) {
+  const form = $("#tribeAddMembersForm");
+  const list = $("#tribeAddMemberList");
+  const submitButton = $("#submitTribeAddMembersButton");
+  if (!form || !list || !submitButton) return;
+
+  const isOpen = Boolean(tribe?.isOwner && addMembersTribeId === tribe.tribeId);
+  form.hidden = !isOpen;
+  list.textContent = "";
+  submitButton.disabled = true;
+  if (!isOpen) return;
+
+  const availableFriends = friendsAvailableForTribe(tribe);
+  if (!availableFriends.length) {
+    const empty = document.createElement("p");
+    empty.className = "friend-empty";
+    empty.textContent = "No friends available to add.";
+    list.append(empty);
+    return;
+  }
+
+  submitButton.disabled = false;
+  availableFriends.forEach((friend) => {
+    const label = document.createElement("label");
+    label.className = "tribe-invite-option";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.value = friend.handle;
+    label.append(checkbox);
+
+    const copy = document.createElement("span");
+    copy.textContent = `${friend.name} (@${friend.handle})`;
+    label.append(copy);
+    list.append(label);
+  });
+}
+
+function openTribeAddMembers(tribeId) {
+  selectedTribeId = tribeId;
+  addMembersTribeId = tribeId;
+  renderTribes();
+  $("#tribeAddMemberList input")?.focus();
+}
+
+function closeTribeAddMembers() {
+  addMembersTribeId = "";
+  renderSelectedTribe();
+}
+
 const createTribeCard = (tribe, { selectable = false, joinable = false, compact = false } = {}) => {
   const card = document.createElement("article");
   card.className = `tribe-card${selectedTribeId === tribe.tribeId ? " active" : ""}${compact ? " compact" : ""}`;
@@ -2521,6 +2581,18 @@ const createTribeCard = (tribe, { selectable = false, joinable = false, compact 
   meta.textContent = `${memberCount} ${memberCount === 1 ? "member" : "members"}`;
   card.append(meta);
 
+  if (selectable && tribe.isOwner) {
+    const addButton = document.createElement("button");
+    addButton.className = "friend-accept tribe-card-action";
+    addButton.type = "button";
+    addButton.textContent = "Add Members";
+    addButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      openTribeAddMembers(tribe.tribeId);
+    });
+    card.append(addButton);
+  }
+
   if (joinable) {
     const button = document.createElement("button");
     button.className = tribe.isOwner || tribe.isMember || tribe.hasPendingJoin ? "friend-remove" : "friend-accept";
@@ -2549,9 +2621,11 @@ const renderSelectedTribe = () => {
 
   if (!tribe) {
     selectedTribeId = "";
+    addMembersTribeId = "";
     name.textContent = "Select a tribe";
     role.textContent = "No tribe selected";
     form.hidden = true;
+    renderTribeAddMembersPanel(null);
     const empty = document.createElement("p");
     empty.className = "friend-empty";
     empty.textContent = "Create or join a tribe to see members.";
@@ -2565,6 +2639,8 @@ const renderSelectedTribe = () => {
   form.hidden = !tribe.isOwner;
   $("#tribeEditNameInput").value = tribe.name;
   $("#tribeEditThemeInput").value = tribe.themeColor;
+  if (!tribe.isOwner) addMembersTribeId = "";
+  renderTribeAddMembersPanel(tribe);
 
   const members = tribe.members.length ? tribe.members : tribe.memberIds.map((memberId) => ({ userId: memberId, displayName: "Member", handle: "" }));
   members.forEach((member) => {
@@ -2761,6 +2837,7 @@ function renderTribeChats() {
 function setTribes(nextTribes) {
   tribes = (Array.isArray(nextTribes) ? nextTribes : []).map(sanitizeTribe).filter((tribe) => tribe.tribeId);
   if (selectedTribeId && !myTribes().some((tribe) => tribe.tribeId === selectedTribeId)) selectedTribeId = "";
+  if (addMembersTribeId && !myTribes().some((tribe) => tribe.tribeId === addMembersTribeId && tribe.isOwner)) addMembersTribeId = "";
   if (activeTribeChatId && !myTribes().some((tribe) => tribe.tribeId === activeTribeChatId)) activeTribeChatId = "";
   renderTribes();
 }
@@ -3253,6 +3330,7 @@ const logoutUser = () => {
   ownerUsers = [];
   syncOwnerPanelAccess();
   renderOwnerUsers();
+  addMembersTribeId = "";
   activeTribeChatId = "";
   tribeChatMessages = {};
   updateSettingsDetails();
@@ -3677,6 +3755,35 @@ async function removeTribeMember(tribe, member) {
   }
 }
 
+async function addSelectedTribeMembers(event) {
+  event.preventDefault();
+  const tribe = selectedTribe();
+  if (!tribe?.isOwner) {
+    showToast("Only the tribe owner can add members");
+    return;
+  }
+
+  const friendHandles = [...document.querySelectorAll("#tribeAddMemberList input:checked")].map((input) => input.value);
+  if (!friendHandles.length) {
+    showToast("Select at least one friend to add");
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/tribes/${encodeURIComponent(tribe.tribeId)}/members`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ friendHandles }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Could not add members");
+    applyTribePayload(result);
+    showToast(result.addedCount ? `${result.addedCount} member${result.addedCount === 1 ? "" : "s"} added` : "No new members added");
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
 async function requestJoinTribe(tribeId) {
   try {
     if (!sessionToken) throw new Error("Sign in before joining tribes");
@@ -3731,6 +3838,12 @@ $("#showCreateTribeButton")?.addEventListener("click", () => {
 
 $("#tribeCreateForm")?.addEventListener("submit", createTribe);
 $("#tribeManageForm")?.addEventListener("submit", saveSelectedTribe);
+$("#tribeAddMembersForm")?.addEventListener("submit", addSelectedTribeMembers);
+$("#showAddTribeMembersButton")?.addEventListener("click", () => {
+  const tribe = selectedTribe();
+  if (tribe?.isOwner) openTribeAddMembers(tribe.tribeId);
+});
+$("#closeTribeAddMembersButton")?.addEventListener("click", closeTribeAddMembers);
 $("#deleteTribeButton")?.addEventListener("click", confirmDeleteSelectedTribe);
 $("#tribeSearchInput")?.addEventListener("input", renderTribes);
 $("#tribeChatForm")?.addEventListener("submit", sendTribeChatMessage);

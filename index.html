@@ -613,8 +613,18 @@
                   </label>
                   <div class="tribe-action-row">
                     <button class="save-button" type="submit">Save changes</button>
+                    <button class="friend-accept" id="showAddTribeMembersButton" type="button">Add Members</button>
                     <button class="friend-remove" id="deleteTribeButton" type="button">Delete tribe</button>
                   </div>
+                </form>
+
+                <form class="tribe-add-members-form" id="tribeAddMembersForm" hidden>
+                  <div class="friends-panel-heading">
+                    <p>Add members</p>
+                    <button class="friend-remove" id="closeTribeAddMembersButton" type="button">Close</button>
+                  </div>
+                  <div class="tribe-invite-list" id="tribeAddMemberList" aria-live="polite"></div>
+                  <button class="save-button" id="submitTribeAddMembersButton" type="submit">Add selected</button>
                 </form>
 
                 <div class="tribe-member-list" id="tribeMemberList" aria-live="polite"></div>

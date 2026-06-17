@@ -1591,7 +1591,8 @@ body.sidebar-collapsed .sidebar-brand-mark {
 .tribe-column,
 .tribe-detail-panel,
 .tribe-create-form,
-.tribe-manage-form {
+.tribe-manage-form,
+.tribe-add-members-form {
   display: grid;
   min-width: 0;
   gap: 0.85rem;
@@ -1607,7 +1608,8 @@ body.sidebar-collapsed .sidebar-brand-mark {
 }
 
 .tribe-create-form,
-.tribe-manage-form {
+.tribe-manage-form,
+.tribe-add-members-form {
   border: 1px solid color-mix(in srgb, var(--accent-2) 38%, rgba(255, 255, 255, 0.14));
   border-radius: 8px;
   padding: 0.85rem;
@@ -1763,7 +1765,7 @@ body.sidebar-collapsed .sidebar-brand-mark {
 
 .tribe-action-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr));
   gap: 0.65rem;
   align-items: center;
 }
@@ -1772,7 +1774,8 @@ body.sidebar-collapsed .sidebar-brand-mark {
   grid-template-columns: 2.45rem minmax(0, 1fr) auto;
 }
 
-.tribe-chat-link {
+.tribe-chat-link,
+.tribe-card-action {
   width: fit-content;
 }
 
@@ -4542,7 +4545,8 @@ textarea:focus {
   .friend-remove,
   .friend-accept,
   .request-status,
-  .tribe-chat-link {
+  .tribe-chat-link,
+  .tribe-card-action {
     min-height: 2.65rem;
   }
 
@@ -4693,7 +4697,8 @@ textarea:focus {
   .editor,
   .tribe-detail-panel,
   .tribe-create-form,
-  .tribe-manage-form {
+  .tribe-manage-form,
+  .tribe-add-members-form {
     padding: 0.75rem;
   }
 

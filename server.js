@@ -2085,6 +2085,91 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (req.method === "POST" && url.pathname.startsWith("/api/tribes/") && url.pathname.endsWith("/members")) {
+    try {
+      const authed = await getAuthedUser(req);
+      if (!authed) {
+        sendJson(res, 401, { error: "Sign in before adding tribe members" });
+        return;
+      }
+
+      const tribeId = decodeURIComponent(url.pathname.split("/")[3] || "");
+      const body = JSON.parse((await readBody(req)) || "{}");
+      const requestedIds = cleanIdList(body.memberIds || body.userIds);
+      const requestedHandles = [
+        ...new Set(cleanIdList(body.friendHandles || body.handles).map(sanitizeHandle).filter(Boolean)),
+      ];
+      if (!requestedIds.length && !requestedHandles.length) {
+        sendJson(res, 400, { error: "Select at least one friend to add" });
+        return;
+      }
+
+      const found = await findTribeById(tribeId);
+      if (!found) {
+        sendJson(res, 404, { error: "Tribe was not found" });
+        return;
+      }
+
+      const { ownerProfile, tribe, tribeIndex, tribes } = found;
+      if (tribe.ownerId !== authed.userId || ownerProfile.ownerUserId !== authed.userId) {
+        sendJson(res, 403, { error: "Only the tribe owner can add members directly" });
+        return;
+      }
+
+      const friendHandles = profileFriendHandles(ownerProfile);
+      const profiles = await listProfiles();
+      const profilesById = new Map(profiles.map((profile) => [String(profile.ownerUserId || ""), profile]));
+      const profilesByHandle = new Map(profiles.map((profile) => [sanitizeHandle(profile.handle), profile]));
+      const addedIds = [];
+
+      const tryAddProfile = (profile) => {
+        const memberId = String(profile?.ownerUserId || "");
+        const handle = sanitizeHandle(profile?.handle);
+        if (!memberId || memberId === authed.userId || !handle || !friendHandles.has(handle)) return;
+        if (tribe.memberIds.includes(memberId) || addedIds.includes(memberId)) return;
+        addedIds.push(memberId);
+      };
+
+      requestedHandles.forEach((handle) => tryAddProfile(profilesByHandle.get(handle)));
+      requestedIds.forEach((memberId) => tryAddProfile(profilesById.get(String(memberId))));
+
+      if (addedIds.length) {
+        const now = new Date().toISOString();
+        tribe.memberIds = cleanIdList([...tribe.memberIds, ...addedIds]);
+        tribe.pendingInviteIds = tribe.pendingInviteIds.filter((id) => !addedIds.includes(id));
+        tribe.pendingJoinIds = tribe.pendingJoinIds.filter((id) => !addedIds.includes(id));
+        tribe.updatedAt = now;
+        tribes[tribeIndex] = tribe;
+        ownerProfile.tribes = tribes;
+        ownerProfile.tribeJoinRequests = (Array.isArray(ownerProfile.tribeJoinRequests) ? ownerProfile.tribeJoinRequests : []).filter(
+          (request) => request.tribeId !== tribe.tribeId || !addedIds.includes(request.requesterId)
+        );
+        ownerProfile.updatedAt = now;
+        await saveProfile(ownerProfile);
+
+        for (const memberId of addedIds) {
+          const targetProfile = profilesById.get(memberId);
+          if (!targetProfile) continue;
+          const invites = Array.isArray(targetProfile.tribeInvites) ? targetProfile.tribeInvites : [];
+          const nextInvites = invites.filter((invite) => invite.tribeId !== tribe.tribeId);
+          if (nextInvites.length !== invites.length) {
+            targetProfile.tribeInvites = nextInvites;
+            targetProfile.updatedAt = now;
+            await saveProfile(targetProfile);
+          }
+        }
+      }
+
+      sendJson(res, 200, {
+        ...(await tribeStateFor(ownerProfile)),
+        addedCount: addedIds.length,
+      });
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+    }
+    return;
+  }
+
   if (req.method === "POST" && url.pathname.startsWith("/api/tribe-join-requests/")) {
     try {
       const authed = await getAuthedUser(req);
