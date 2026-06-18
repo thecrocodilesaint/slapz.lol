@@ -150,6 +150,7 @@ body.cursor-effect * {
 
 body.landing-active .shell,
 body.landing-active .auth-screen,
+body.landing-active .onboarding-screen,
 body.landing-active .preview-toolbar,
 body.landing-active .music-gate {
   display: none;
@@ -161,6 +162,7 @@ body.landing-active .landing-page {
 
 body.loading .shell,
 body.loading .auth-screen,
+body.loading .onboarding-screen,
 body.loading .landing-page,
 body.loading .preview-toolbar,
 body.loading .welcome-screen,
@@ -173,6 +175,10 @@ body.loading .loading-screen {
 }
 
 body.auth-required .shell {
+  display: none;
+}
+
+body.auth-required .onboarding-screen {
   display: none;
 }
 
@@ -189,6 +195,7 @@ body.auth-required .preview-toolbar {
 }
 
 body.welcoming .auth-screen,
+body.welcoming .onboarding-screen,
 body.welcoming .preview-toolbar,
 body.welcoming .music-gate {
   display: none;
@@ -236,6 +243,7 @@ body.owner-entering .shell {
 }
 
 body.public-profile .auth-screen,
+body.public-profile .onboarding-screen,
 body.public-profile .landing-page,
 body.public-profile .account-sidebar,
 body.public-profile .dashboard-home,
@@ -260,8 +268,27 @@ body.public-profile .dashboard-bio {
 }
 
 body.loading.auth-required .auth-screen,
+body.loading.auth-required .onboarding-screen,
 body.loading.auth-required .shell {
   display: none;
+}
+
+body.onboarding-active .landing-page,
+body.onboarding-active .auth-screen,
+body.onboarding-active .loading-screen,
+body.onboarding-active .welcome-screen,
+body.onboarding-active .preview-toolbar,
+body.onboarding-active .music-gate {
+  display: none;
+}
+
+body.onboarding-active .shell {
+  pointer-events: none;
+  filter: blur(2px);
+}
+
+body.onboarding-active .onboarding-screen {
+  display: grid;
 }
 
 body.loading.auth-required .loading-screen {
@@ -1852,6 +1879,25 @@ body.sidebar-collapsed .sidebar-brand-mark {
   text-transform: uppercase;
 }
 
+.tribe-message-meta {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.tribe-message time {
+  color: color-mix(in srgb, var(--muted) 72%, transparent);
+  font-size: 0.68rem;
+  font-weight: 850;
+}
+
+.tribe-message time::before {
+  content: "•";
+  margin-right: 0.45rem;
+  color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
 .tribe-message p {
   margin: 0;
   overflow-wrap: anywhere;
@@ -2963,6 +3009,148 @@ body[data-account-section="settings"]:not(.public-profile) .background-video {
   font-size: 0.9rem;
   line-height: 1.45;
   text-align: center;
+}
+
+.onboarding-screen {
+  position: fixed;
+  z-index: 10;
+  inset: 0;
+  display: none;
+  place-items: center;
+  padding: clamp(0.85rem, 3vw, 1.5rem);
+  background:
+    radial-gradient(circle at 50% 20%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 24rem),
+    rgba(2, 2, 4, 0.76);
+  backdrop-filter: blur(10px);
+}
+
+.onboarding-card {
+  position: relative;
+  display: grid;
+  width: min(100%, 42rem);
+  max-height: min(90svh, 46rem);
+  gap: 1rem;
+  overflow-y: auto;
+  border-radius: 8px;
+  padding: clamp(1rem, 4vw, 1.45rem);
+  animation: onboardingIn 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.onboarding-skip {
+  justify-self: end;
+  min-height: 2.45rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.055);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.onboarding-progress {
+  display: flex;
+  gap: 0.42rem;
+  align-items: center;
+}
+
+.onboarding-progress span {
+  flex: 1;
+  height: 0.32rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.onboarding-progress span.active {
+  background: linear-gradient(90deg, var(--accent-2), var(--accent));
+  box-shadow: 0 0 1rem color-mix(in srgb, var(--accent) 44%, transparent);
+}
+
+.onboarding-step {
+  color: var(--accent-2);
+  font-size: 0.78rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  text-shadow: 0 0 1rem color-mix(in srgb, var(--accent-2) 70%, transparent);
+}
+
+.onboarding-copy {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.onboarding-copy h1 {
+  font-size: clamp(2.35rem, 9vw, 4.9rem);
+  line-height: 0.94;
+  text-shadow:
+    0 0 0.7rem rgba(255, 255, 255, 0.72),
+    0 0 1.6rem color-mix(in srgb, var(--accent) 52%, transparent);
+}
+
+.onboarding-copy p,
+.onboarding-publish-fields p {
+  color: var(--muted);
+  font-weight: 800;
+  line-height: 1.55;
+}
+
+.onboarding-copy ul {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.onboarding-copy li {
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, rgba(255, 255, 255, 0.14));
+  border-radius: 8px;
+  padding: 0.7rem 0.8rem;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.045);
+  font-weight: 850;
+}
+
+.onboarding-publish-fields {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.onboarding-publish-fields[hidden] {
+  display: none;
+}
+
+.onboarding-publish-fields label {
+  margin: 0;
+}
+
+.onboarding-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 0.55fr) minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+.onboarding-actions .save-button,
+.onboarding-actions .preview-button {
+  margin: 0;
+}
+
+.onboarding-actions #onboardingPublishButton {
+  grid-column: 1 / -1;
+}
+
+@keyframes onboardingIn {
+  from {
+    opacity: 0;
+    transform: translateY(1rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .glass {
@@ -4415,6 +4603,10 @@ textarea:focus {
   .auth-screen {
     width: min(calc(100vw - 1.5rem), 28rem);
     margin: 0.75rem auto;
+  }
+
+  .onboarding-actions {
+    grid-template-columns: 1fr;
   }
 
   .auth-form input,

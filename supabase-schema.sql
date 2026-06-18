@@ -6,6 +6,9 @@ create table if not exists public.app_users (
   profile_path text,
   profile_url text,
   snake_high_score integer not null default 0,
+  onboarding_completed boolean not null default false,
+  onboarding_skipped boolean not null default false,
+  onboarding_updated_at timestamptz,
   created_at timestamptz not null default now()
 );
 
@@ -13,7 +16,10 @@ alter table public.app_users
   add column if not exists profile_handle text,
   add column if not exists profile_path text,
   add column if not exists profile_url text,
-  add column if not exists snake_high_score integer not null default 0;
+  add column if not exists snake_high_score integer not null default 0,
+  add column if not exists onboarding_completed boolean not null default false,
+  add column if not exists onboarding_skipped boolean not null default false,
+  add column if not exists onboarding_updated_at timestamptz;
 
 create table if not exists public.app_sessions (
   token text primary key,
@@ -50,6 +56,9 @@ select
   u.email,
   u.created_at,
   u.snake_high_score,
+  u.onboarding_completed,
+  u.onboarding_skipped,
+  u.onboarding_updated_at,
   coalesce(u.profile_handle, p.handle) as profile_handle,
   coalesce(u.profile_path, p.data ->> 'profilePath', case when p.handle is not null then '/u/' || p.handle end) as profile_path,
   coalesce(u.profile_url, p.data ->> 'profileUrl') as profile_url,

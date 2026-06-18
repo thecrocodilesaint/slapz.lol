@@ -59,6 +59,22 @@ const auth = {
 const landingAuthButtons = document.querySelectorAll("[data-landing-auth]");
 const landingRevealItems = document.querySelectorAll("[data-reveal]");
 
+const onboarding = {
+  screen: $("#onboardingScreen"),
+  progress: $("#onboardingProgress"),
+  stepText: $("#onboardingStepText"),
+  title: $("#onboardingTitle"),
+  body: $("#onboardingBody"),
+  list: $("#onboardingList"),
+  fields: $("#onboardingPublishFields"),
+  nameInput: $("#onboardingNameInput"),
+  handleInput: $("#onboardingHandleInput"),
+  backButton: $("#onboardingBackButton"),
+  nextButton: $("#onboardingNextButton"),
+  publishButton: $("#onboardingPublishButton"),
+  skipButton: $("#onboardingSkipButton"),
+};
+
 const settings = {
   email: $("#settingsEmail"),
   displayName: $("#settingsDisplayName"),
@@ -110,6 +126,9 @@ let accountState = {
   profilePath: "",
   profileUrl: "",
   isOwner: false,
+  onboardingCompleted: false,
+  onboardingSkipped: false,
+  needsOnboarding: false,
 };
 let friends = [];
 let friendRequests = [];
@@ -127,6 +146,42 @@ let activeTribeChatId = "";
 let tribeChatMessages = {};
 let ownerUsers = [];
 let ownerUsersLoading = false;
+let onboardingStep = 0;
+let onboardingPublishPrompted = false;
+
+const onboardingSteps = [
+  {
+    title: "Welcome to fun.lol",
+    body: "fun.lol is your private dashboard for building a public bio page with music, media, friends, tribes, chats, and games.",
+    items: ["Customize your profile", "Share one public link", "Keep your dashboard private"],
+  },
+  {
+    title: "Create your public profile",
+    body: "Your Bio is where your official public fun.lol profile is made. Publish from Bio when you are ready for people to see it.",
+    items: ["Choose a display name", "Pick a clean handle", "Add your bio, location, and social icons"],
+  },
+  {
+    title: "Make it feel like you",
+    body: "Use avatar, background image or video, music, themes, cursor style, and sparkle effects to build your vibe.",
+    items: ["Upload media", "Add background music", "Pick themes, cursor, and effects"],
+  },
+  {
+    title: "Connect with people",
+    body: "Friends and notifications help you manage requests, see updates, and keep your circle close from the dashboard.",
+    items: ["Send friend requests", "Accept notifications", "View friends from Home and Tribes"],
+  },
+  {
+    title: "Join tribes and chats",
+    body: "Tribes are small groups where members can join, owners can manage people, and tribe chats stay scoped to each tribe.",
+    items: ["Create or join tribes", "Approve join requests", "Chat with tribe members"],
+  },
+  {
+    title: "Publish and share",
+    body: "To create your official public fun.lol profile, you need to publish your profile in Bio.",
+    items: ["Play mini-games from the dashboard", "Share your /u/handle link", "Publish your Bio to finish onboarding"],
+    publish: true,
+  },
+];
 
 const mediaState = {
   avatarData: "",
@@ -1711,12 +1766,16 @@ const playOwnerWelcome = async () => {
   document.body.classList.remove("welcome-leaving", "owner-entering");
 };
 
-const finishLoadingIntoEditor = async () => {
+const finishLoadingIntoEditor = async ({ showWelcome = true } = {}) => {
   clearInterval(loadingTimer);
   setLoading(100, "Ready");
   await wait(260);
   setDashboardSection("home");
-  await playOwnerWelcome();
+  if (showWelcome) {
+    await playOwnerWelcome();
+  } else {
+    document.body.classList.remove("loading");
+  }
 };
 
 const showEditor = () => {
@@ -1728,6 +1787,7 @@ const showEditor = () => {
 const showLanding = () => {
   if (isPublicProfilePage) return;
   clearInterval(loadingTimer);
+  hideOnboarding();
   hideEntryGate();
   exitPreview();
   document.title = "fun.lol | Custom Bio Pages, Friends, Tribes & Games";
@@ -1737,6 +1797,7 @@ const showLanding = () => {
 
 const showAuth = (mode = "signup") => {
   if (!isPublicProfilePage) {
+    hideOnboarding();
     if (location.pathname === "/reset-password" && history.replaceState) history.replaceState(null, "", "/");
     showAuthShell();
     setAuthScreenMode(mode === "login" ? "login" : "signup");
@@ -1750,6 +1811,94 @@ const showAuth = (mode = "signup") => {
 };
 
 const authHeaders = () => (sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {});
+
+const shouldShowOnboarding = () =>
+  Boolean(!isPublicProfilePage && sessionToken && accountState.needsOnboarding && !accountState.onboardingCompleted && !accountState.onboardingSkipped);
+
+function renderOnboarding() {
+  if (!onboarding.screen) return;
+  const step = onboardingSteps[onboardingStep] || onboardingSteps[0];
+  onboarding.stepText.textContent = `Step ${onboardingStep + 1} of ${onboardingSteps.length}`;
+  onboarding.title.textContent = step.title;
+  onboarding.body.textContent = step.body;
+  onboarding.list.textContent = "";
+  step.items.forEach((item) => {
+    const li = document.createElement("li");
+    li.textContent = item;
+    onboarding.list.append(li);
+  });
+
+  onboarding.fields.hidden = !step.publish;
+  onboarding.backButton.disabled = onboardingStep === 0;
+  onboarding.nextButton.hidden = Boolean(step.publish);
+  onboarding.publishButton.hidden = !step.publish;
+  onboarding.progress.textContent = "";
+  onboardingSteps.forEach((_, index) => {
+    const dot = document.createElement("span");
+    dot.className = index === onboardingStep ? "active" : "";
+    onboarding.progress.append(dot);
+  });
+}
+
+function showOnboarding() {
+  if (!onboarding.screen) return;
+  onboardingStep = 0;
+  onboarding.nameInput.value = inputs.name.value.trim();
+  onboarding.handleInput.value = cleanHandle(inputs.handle.value || accountState.profileHandle);
+  document.body.classList.add("onboarding-active");
+  onboarding.screen.hidden = false;
+  renderOnboarding();
+}
+
+function hideOnboarding() {
+  document.body.classList.remove("onboarding-active");
+  if (onboarding.screen) onboarding.screen.hidden = true;
+}
+
+async function saveOnboardingStatus(action) {
+  const response = await fetch("/api/me/onboarding", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ action }),
+  });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || "Could not save onboarding");
+  updateAccountState(result);
+  return result;
+}
+
+async function skipOnboarding() {
+  try {
+    await saveOnboardingStatus("skip");
+    hideOnboarding();
+    showToast("Onboarding skipped");
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+function goToOnboardingPublish() {
+  const displayName = onboarding.nameInput.value.trim();
+  const handle = cleanHandle(onboarding.handleInput.value);
+  if (!displayName) {
+    showToast("Add a display name first");
+    onboarding.nameInput.focus();
+    return;
+  }
+  if (!handle) {
+    showToast("Add a handle first");
+    onboarding.handleInput.focus();
+    return;
+  }
+
+  inputs.name.value = displayName;
+  inputs.handle.value = handle;
+  syncProfile();
+  onboardingPublishPrompted = true;
+  hideOnboarding();
+  setDashboardSection("bio");
+  showToast("Review your Bio, then press Publish profile to finish onboarding");
+}
 
 const submitAuth = async (mode) => {
   const email = auth.email.value.trim();
@@ -1785,8 +1934,10 @@ const submitAuth = async (mode) => {
     }
     startLoading("Loading your profile...");
     await loadMyProfile();
-    await finishLoadingIntoEditor();
+    const showOnboardingAfterLoad = shouldShowOnboarding();
+    await finishLoadingIntoEditor({ showWelcome: !showOnboardingAfterLoad });
     startFriendRefreshLoop();
+    if (showOnboardingAfterLoad) showOnboarding();
   } catch (error) {
     document.body.classList.remove("loading");
     setAuthMessage(error.message);
@@ -2083,6 +2234,14 @@ const sanitizeTribeMessage = (message) => ({
   text: String(message?.text || "").trim().slice(0, 500),
   createdAt: message?.createdAt || new Date().toISOString(),
 });
+
+const tribeMessageTime = (message) => {
+  const time = new Date(message?.createdAt || "");
+  return Number.isNaN(time.getTime()) ? 0 : time.getTime();
+};
+
+const sortTribeMessages = (messages = []) =>
+  [...messages].sort((a, b) => tribeMessageTime(a) - tribeMessageTime(b));
 
 const saveFriendsLocal = () => {
   if (isPublicProfilePage) return;
@@ -2772,7 +2931,7 @@ function renderTribeMessages() {
   if (!messagesList) return;
   messagesList.textContent = "";
 
-  const messages = tribeChatMessages[activeTribeChatId] || [];
+  const messages = sortTribeMessages(tribeChatMessages[activeTribeChatId] || []);
   if (!messages.length) {
     const empty = document.createElement("p");
     empty.className = "friend-empty";
@@ -2786,7 +2945,15 @@ function renderTribeMessages() {
     bubble.className = `tribe-message${message.senderId === accountState.userId ? " own" : ""}`;
 
     const meta = document.createElement("span");
-    meta.textContent = message.senderHandle ? `${message.senderDisplayName} (@${message.senderHandle})` : message.senderDisplayName;
+    meta.className = "tribe-message-meta";
+    meta.append(document.createTextNode(message.senderHandle ? `${message.senderDisplayName} (@${message.senderHandle})` : message.senderDisplayName));
+    const timestamp = formatChatTimestamp(message.createdAt);
+    if (timestamp) {
+      const time = document.createElement("time");
+      time.dateTime = message.createdAt;
+      time.textContent = timestamp;
+      meta.append(time);
+    }
     bubble.append(meta);
 
     const text = document.createElement("p");
@@ -3218,6 +3385,19 @@ const formatDate = (value) => {
   return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 };
 
+const formatChatTimestamp = (value) => {
+  const date = new Date(value || "");
+  if (Number.isNaN(date.getTime())) return "";
+  const now = new Date();
+  const sameDay =
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate();
+  return date.toLocaleString(undefined, sameDay
+    ? { hour: "numeric", minute: "2-digit" }
+    : { day: "2-digit", month: "short", hour: "numeric", minute: "2-digit" });
+};
+
 const updateAccountState = (data = {}) => {
   const previousOwner = accountState.userId || accountState.email;
   accountState = {
@@ -3229,6 +3409,9 @@ const updateAccountState = (data = {}) => {
     profilePath: data.profilePath ?? accountState.profilePath,
     profileUrl: data.profileUrl ?? accountState.profileUrl,
     isOwner: data.isOwner ?? accountState.isOwner,
+    onboardingCompleted: data.onboardingCompleted ?? accountState.onboardingCompleted,
+    onboardingSkipped: data.onboardingSkipped ?? accountState.onboardingSkipped,
+    needsOnboarding: data.needsOnboarding ?? accountState.needsOnboarding,
   };
   const nextOwner = accountState.userId || accountState.email;
   if (!isPublicProfilePage && nextOwner && nextOwner !== previousOwner && !friends.length) {
@@ -3299,6 +3482,17 @@ auth.resetForm.addEventListener("submit", (event) => {
   submitResetPassword();
 });
 
+onboarding.skipButton?.addEventListener("click", skipOnboarding);
+onboarding.backButton?.addEventListener("click", () => {
+  onboardingStep = Math.max(0, onboardingStep - 1);
+  renderOnboarding();
+});
+onboarding.nextButton?.addEventListener("click", () => {
+  onboardingStep = Math.min(onboardingSteps.length - 1, onboardingStep + 1);
+  renderOnboarding();
+});
+onboarding.publishButton?.addEventListener("click", goToOnboardingPublish);
+
 landingAuthButtons.forEach((button) => {
   button.addEventListener("click", () => showAuth(button.dataset.landingAuth || "signup"));
 });
@@ -3319,6 +3513,9 @@ const logoutUser = () => {
     profilePath: "",
     profileUrl: "",
     isOwner: false,
+    onboardingCompleted: false,
+    onboardingSkipped: false,
+    needsOnboarding: false,
   };
   setFriends([], { persist: false });
   setFriendRequests([], { persist: false });
@@ -3333,6 +3530,8 @@ const logoutUser = () => {
   addMembersTribeId = "";
   activeTribeChatId = "";
   tribeChatMessages = {};
+  onboardingPublishPrompted = false;
+  hideOnboarding();
   updateSettingsDetails();
   setDashboardSection("home");
   showLanding();
@@ -3587,9 +3786,11 @@ async function loadTribeChatMessages(tribeId, { silent = false } = {}) {
     response = await fetch(`/api/tribes/${encodeURIComponent(tribeId)}/messages`, { headers: authHeaders() });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || "Could not load tribe chat");
-    tribeChatMessages[tribeId] = (Array.isArray(result.messages) ? result.messages : [])
-      .map(sanitizeTribeMessage)
-      .filter((message) => message.senderId && message.text);
+    tribeChatMessages[tribeId] = sortTribeMessages(
+      (Array.isArray(result.messages) ? result.messages : [])
+        .map(sanitizeTribeMessage)
+        .filter((message) => message.senderId && message.text)
+    );
     renderTribeChats();
   } catch (error) {
     if (!silent) showToast(error.message);
@@ -3633,9 +3834,11 @@ async function sendTribeChatMessage(event) {
     });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || "Could not send message");
-    tribeChatMessages[tribe.tribeId] = (Array.isArray(result.messages) ? result.messages : [])
-      .map(sanitizeTribeMessage)
-      .filter((message) => message.senderId && message.text);
+    tribeChatMessages[tribe.tribeId] = sortTribeMessages(
+      (Array.isArray(result.messages) ? result.messages : [])
+        .map(sanitizeTribeMessage)
+        .filter((message) => message.senderId && message.text)
+    );
     input.value = "";
     renderTribeChats();
   } catch (error) {
@@ -4341,13 +4544,26 @@ $("#saveButton").addEventListener("click", async () => {
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || "Could not publish profile");
 
+    const shouldCompleteOnboarding = onboardingPublishPrompted || accountState.needsOnboarding;
     $("#publicLink").href = result.url;
     $("#publicLink").textContent = result.url;
     updateAccountState({
       profileHandle: result.handle,
       profilePath: result.url,
       profileUrl: result.fullUrl,
+      onboardingCompleted: true,
+      onboardingSkipped: false,
+      needsOnboarding: false,
     });
+    if (shouldCompleteOnboarding) {
+      try {
+        await saveOnboardingStatus("complete");
+      } catch {
+        // Publishing already marks onboarding complete when storage is configured.
+      }
+      onboardingPublishPrompted = false;
+      hideOnboarding();
+    }
     showToast(`Published at ${result.url}`);
   } catch (error) {
     showToast(error.message);

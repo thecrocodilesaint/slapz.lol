@@ -256,6 +256,35 @@
       </form>
     </section>
 
+    <section class="onboarding-screen" id="onboardingScreen" aria-label="fun.lol onboarding" hidden>
+      <div class="onboarding-card glass">
+        <button class="onboarding-skip" id="onboardingSkipButton" type="button">Skip</button>
+        <div class="onboarding-progress" id="onboardingProgress" aria-hidden="true"></div>
+        <p class="onboarding-step" id="onboardingStepText">Step 1 of 6</p>
+        <div class="onboarding-copy">
+          <h1 id="onboardingTitle">Welcome to fun.lol</h1>
+          <p id="onboardingBody">Build a custom public profile with your media, music, friends, tribes, chats, and games.</p>
+          <ul id="onboardingList"></ul>
+        </div>
+        <div class="onboarding-publish-fields" id="onboardingPublishFields" hidden>
+          <label>
+            Display name
+            <input id="onboardingNameInput" type="text" maxlength="32" placeholder="Your display name" />
+          </label>
+          <label>
+            Handle
+            <input id="onboardingHandleInput" type="text" maxlength="24" placeholder="your-handle" />
+          </label>
+          <p>To create your official public fun.lol profile, you need to publish your profile in Bio.</p>
+        </div>
+        <div class="onboarding-actions">
+          <button class="preview-button" id="onboardingBackButton" type="button">Back</button>
+          <button class="save-button" id="onboardingNextButton" type="button">Next</button>
+          <button class="save-button" id="onboardingPublishButton" type="button" hidden>Create / Publish My Profile</button>
+        </div>
+      </div>
+    </section>
+
     <main class="shell" aria-label="Account dashboard">
       <aside class="account-sidebar glass" id="accountSidebar" aria-label="Account navigation">
         <div class="sidebar-head">

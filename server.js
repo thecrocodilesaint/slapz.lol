@@ -794,6 +794,46 @@ async function deleteUserAccount(userId) {
   return user;
 }
 
+function onboardingStateForUser(user, profile) {
+  const hasPublishedProfile = Boolean(profile?.handle || user?.profileHandle || user?.profile_handle);
+  const completed = Boolean(user?.onboardingCompleted || user?.onboarding_completed || hasPublishedProfile);
+  const skipped = Boolean(user?.onboardingSkipped || user?.onboarding_skipped);
+  return {
+    onboardingCompleted: completed,
+    onboardingSkipped: skipped,
+    onboardingUpdatedAt: user?.onboardingUpdatedAt || user?.onboarding_updated_at || "",
+    needsOnboarding: !completed && !skipped,
+  };
+}
+
+async function saveUserOnboardingStatus(userId, { completed = false, skipped = false } = {}) {
+  const onboardingCompleted = Boolean(completed);
+  const onboardingSkipped = onboardingCompleted ? false : Boolean(skipped);
+  const onboardingUpdatedAt = new Date().toISOString();
+
+  if (hasSupabase) {
+    await supabaseRequest("app_users", {
+      method: "PATCH",
+      query: `?id=eq.${encodeURIComponent(userId)}`,
+      body: {
+        onboarding_completed: onboardingCompleted,
+        onboarding_skipped: onboardingSkipped,
+        onboarding_updated_at: onboardingUpdatedAt,
+      },
+      prefer: "return=minimal",
+    });
+    return { onboardingCompleted, onboardingSkipped, onboardingUpdatedAt };
+  }
+
+  const store = readUsersFile();
+  if (!store.users[userId]) throw new Error("User not found");
+  store.users[userId].onboardingCompleted = onboardingCompleted;
+  store.users[userId].onboardingSkipped = onboardingSkipped;
+  store.users[userId].onboardingUpdatedAt = onboardingUpdatedAt;
+  writeUsersFile(store);
+  return { onboardingCompleted, onboardingSkipped, onboardingUpdatedAt };
+}
+
 async function saveUserProfileLink(userId, { handle, origin }) {
   const profilePath = `/u/${handle}`;
   const profileUrl = `${origin}${profilePath}`;
@@ -813,6 +853,11 @@ async function saveUserProfileLink(userId, { handle, origin }) {
     } catch (error) {
       console.warn("Could not save profile link on app_users. Run the latest supabase-schema.sql.", error.message);
     }
+    try {
+      await saveUserOnboardingStatus(userId, { completed: true });
+    } catch (error) {
+      console.warn("Could not mark onboarding completed. Run the latest supabase-schema.sql.", error.message);
+    }
     return;
   }
 
@@ -821,6 +866,9 @@ async function saveUserProfileLink(userId, { handle, origin }) {
     store.users[userId].profileHandle = handle;
     store.users[userId].profilePath = profilePath;
     store.users[userId].profileUrl = profileUrl;
+    store.users[userId].onboardingCompleted = true;
+    store.users[userId].onboardingSkipped = false;
+    store.users[userId].onboardingUpdatedAt = new Date().toISOString();
     writeUsersFile(store);
   }
 }
@@ -902,11 +950,14 @@ async function findUserByEmail(email) {
             email: user.email,
             passwordHash: user.password_hash,
             createdAt: user.created_at,
-            profileHandle: user.profile_handle,
-            profilePath: user.profile_path,
-            profileUrl: user.profile_url,
-          },
-        ]
+          profileHandle: user.profile_handle,
+          profilePath: user.profile_path,
+          profileUrl: user.profile_url,
+          onboardingCompleted: Boolean(user.onboarding_completed),
+          onboardingSkipped: Boolean(user.onboarding_skipped),
+          onboardingUpdatedAt: user.onboarding_updated_at,
+        },
+      ]
       : null;
   }
 
@@ -932,7 +983,14 @@ async function createUser(email, passwordHash) {
   }
 
   const store = readUsersFile();
-  store.users[userId] = { email, passwordHash, createdAt };
+  store.users[userId] = {
+    email,
+    passwordHash,
+    createdAt,
+    onboardingCompleted: false,
+    onboardingSkipped: false,
+    onboardingUpdatedAt: "",
+  };
   writeUsersFile(store);
   return userId;
 }
@@ -1257,6 +1315,9 @@ async function getAuthedUser(req) {
       profileHandle: user.profile_handle,
       profilePath: user.profile_path,
       profileUrl: user.profile_url,
+      onboardingCompleted: Boolean(user.onboarding_completed),
+      onboardingSkipped: Boolean(user.onboarding_skipped),
+      onboardingUpdatedAt: user.onboarding_updated_at,
     };
   }
 
@@ -1274,6 +1335,9 @@ async function getAuthedUser(req) {
     profileHandle: user.profileHandle,
     profilePath: user.profilePath,
     profileUrl: user.profileUrl,
+    onboardingCompleted: Boolean(user.onboardingCompleted),
+    onboardingSkipped: Boolean(user.onboardingSkipped),
+    onboardingUpdatedAt: user.onboardingUpdatedAt || "",
   };
 }
 
@@ -1505,15 +1569,46 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, 401, { error: "Not signed in" });
       return;
     }
+    const profileForOnboarding = authed.profileHandle ? null : await getProfileByOwner(authed.userId);
+    const onboarding = onboardingStateForUser(authed, profileForOnboarding);
     sendJson(res, 200, {
       email: authed.email,
       userId: authed.userId,
       createdAt: authed.createdAt,
-      profileHandle: authed.profileHandle,
-      profilePath: authed.profilePath,
+      profileHandle: authed.profileHandle || profileForOnboarding?.handle || "",
+      profilePath: authed.profilePath || (profileForOnboarding?.handle ? `/u/${profileForOnboarding.handle}` : ""),
       profileUrl: authed.profileUrl,
       isOwner: isOwnerUser(authed),
+      ...onboarding,
     });
+    return;
+  }
+
+  if (req.method === "PATCH" && url.pathname === "/api/me/onboarding") {
+    try {
+      const authed = await getAuthedUser(req);
+      if (!authed) {
+        sendJson(res, 401, { error: "Sign in before updating onboarding" });
+        return;
+      }
+
+      const body = JSON.parse((await readBody(req)) || "{}");
+      const action = String(body.action || "").trim().toLowerCase();
+      const completed = action === "complete" || action === "completed" || body.onboardingCompleted === true;
+      const skipped = action === "skip" || action === "skipped" || body.onboardingSkipped === true;
+      if (!completed && !skipped) {
+        sendJson(res, 400, { error: "Choose complete or skip" });
+        return;
+      }
+
+      const onboarding = await saveUserOnboardingStatus(authed.userId, { completed, skipped });
+      sendJson(res, 200, {
+        ...onboarding,
+        needsOnboarding: !onboarding.onboardingCompleted && !onboarding.onboardingSkipped,
+      });
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+    }
     return;
   }
 
