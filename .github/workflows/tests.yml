@@ -1,0 +1,51 @@
+name: fun.lol tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Phase 1-3 automated tests
+    runs-on: windows-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm.cmd ci
+
+      - name: Install Playwright Chromium
+        run: npx.cmd playwright install chromium
+
+      - name: Run Phase 1 browser smoke tests
+        run: npm.cmd run test:phase1
+
+      - name: Run Phase 2 API tests
+        run: npm.cmd run test:phase2
+
+      - name: Run Phase 3 responsive visual tests
+        run: npm.cmd run test:phase3
+
+      - name: Upload Playwright failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-failure-artifacts
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore

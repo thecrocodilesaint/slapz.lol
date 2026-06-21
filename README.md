@@ -143,6 +143,34 @@ npm.cmd run test:phase3:update
 npm.cmd run test:phase3
 ```
 
+## Automated Phase 4 GitHub Actions CI
+
+Phase 4 runs the automated test suite on GitHub whenever code is pushed to `main`, whenever a pull request targets `main`, or whenever you manually start the workflow from GitHub.
+
+The workflow lives at:
+
+```text
+.github/workflows/tests.yml
+```
+
+It runs on `windows-latest` because the Phase 3 screenshot baselines were created on Windows. The CI steps are:
+
+```text
+npm ci
+npx playwright install chromium
+npm run test:phase1
+npm run test:phase2
+npm run test:phase3
+```
+
+On GitHub, open:
+
+```text
+Repository -> Actions -> fun.lol tests
+```
+
+If a test fails, GitHub uploads Playwright reports and failure screenshots/videos as workflow artifacts.
+
 ## Environment Variables
 
 These are optional for local development, but needed for production features.
