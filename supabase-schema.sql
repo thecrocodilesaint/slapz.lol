@@ -50,7 +50,9 @@ create index if not exists app_password_resets_token_hash_idx on public.app_pass
 create index if not exists app_password_resets_user_id_idx on public.app_password_resets(user_id);
 create index if not exists app_profiles_owner_user_id_idx on public.app_profiles(owner_user_id);
 
-create or replace view public.app_user_profiles as
+drop view if exists public.app_user_profiles;
+
+create view public.app_user_profiles as
 select
   u.id as user_id,
   u.email,
