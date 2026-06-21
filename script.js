@@ -1812,8 +1812,38 @@ const showAuth = (mode = "signup") => {
 
 const authHeaders = () => (sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {});
 
+const onboardingLocalSkipKey = () => (accountState.userId ? `funlol:onboarding-skipped:${accountState.userId}` : "");
+
+function hasLocalOnboardingSkip() {
+  const key = onboardingLocalSkipKey();
+  if (!key) return false;
+  try {
+    return localStorage.getItem(key) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function setLocalOnboardingSkip(skipped) {
+  const key = onboardingLocalSkipKey();
+  if (!key) return;
+  try {
+    if (skipped) localStorage.setItem(key, "true");
+    else localStorage.removeItem(key);
+  } catch {
+    // Local storage can be unavailable in private/restricted browser modes.
+  }
+}
+
 const shouldShowOnboarding = () =>
-  Boolean(!isPublicProfilePage && sessionToken && accountState.needsOnboarding && !accountState.onboardingCompleted && !accountState.onboardingSkipped);
+  Boolean(
+    !isPublicProfilePage &&
+      sessionToken &&
+      accountState.needsOnboarding &&
+      !accountState.onboardingCompleted &&
+      !accountState.onboardingSkipped &&
+      !hasLocalOnboardingSkip()
+  );
 
 function renderOnboarding() {
   if (!onboarding.screen) return;
@@ -1864,16 +1894,23 @@ async function saveOnboardingStatus(action) {
   const result = await response.json();
   if (!response.ok) throw new Error(result.error || "Could not save onboarding");
   updateAccountState(result);
+  setLocalOnboardingSkip(Boolean(result.onboardingSkipped));
   return result;
 }
 
 async function skipOnboarding() {
+  setLocalOnboardingSkip(true);
+  updateAccountState({
+    onboardingCompleted: false,
+    onboardingSkipped: true,
+    needsOnboarding: false,
+  });
+  hideOnboarding();
+  showToast("Onboarding skipped");
   try {
     await saveOnboardingStatus("skip");
-    hideOnboarding();
-    showToast("Onboarding skipped");
   } catch (error) {
-    showToast(error.message);
+    showToast("Skipped for now. Run the latest Supabase schema so it stays skipped everywhere.");
   }
 }
 
