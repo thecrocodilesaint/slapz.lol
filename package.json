@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node server.js",
     "test:e2e": "playwright test",
-    "test:phase1": "playwright test tests/e2e/phase1-smoke.spec.js"
+    "test:phase1": "playwright test tests/e2e/phase1-smoke.spec.js",
+    "test:phase2": "playwright test tests/api/phase2-api.spec.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.1"

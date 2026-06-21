@@ -6,7 +6,7 @@ const baseURL = `http://127.0.0.1:${port}`;
 const testDataDir = process.env.FUNLOL_TEST_DATA_DIR || path.join(__dirname, ".test-data");
 
 module.exports = defineConfig({
-  testDir: "./tests/e2e",
+  testDir: "./tests",
   timeout: 60_000,
   expect: {
     timeout: 10_000,

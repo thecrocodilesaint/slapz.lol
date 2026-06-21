@@ -83,6 +83,31 @@ npm run test:phase1
 
 The tests start `server.js` automatically on port `4181` and use `.test-data/` so your real local `data/` files are not changed.
 
+## Automated Phase 2 API Tests
+
+Phase 2 tests the backend routes directly:
+
+- Auth and duplicate-email handling
+- Private route protection
+- Profile publishing and public profile loading
+- Onboarding status API
+- Friend request send, accept, and remove flows
+- Tribe create, join request, owner approval, owner rename, direct add member, remove member, and delete flows
+- Tribe chat membership checks and timestamped message creation
+- Snake high score saving
+
+Run Phase 2:
+
+```powershell
+npm run test:phase2
+```
+
+On Windows PowerShell, use `npm.cmd` if script execution is blocked:
+
+```powershell
+npm.cmd run test:phase2
+```
+
 ## Environment Variables
 
 These are optional for local development, but needed for production features.
