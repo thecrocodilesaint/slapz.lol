@@ -6,7 +6,9 @@
     "start": "node server.js",
     "test:e2e": "playwright test",
     "test:phase1": "playwright test tests/e2e/phase1-smoke.spec.js",
-    "test:phase2": "playwright test tests/api/phase2-api.spec.js"
+    "test:phase2": "playwright test tests/api/phase2-api.spec.js",
+    "test:phase3": "playwright test tests/visual/phase3-responsive.spec.js",
+    "test:phase3:update": "playwright test tests/visual/phase3-responsive.spec.js --update-snapshots"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.1"

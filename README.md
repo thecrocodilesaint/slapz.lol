@@ -108,6 +108,41 @@ On Windows PowerShell, use `npm.cmd` if script execution is blocked:
 npm.cmd run test:phase2
 ```
 
+## Automated Phase 3 Responsive Visual Tests
+
+Phase 3 captures screenshot baselines for the main responsive surfaces:
+
+- Landing page
+- Auth screen
+- Dashboard home
+- Bio editor
+- Public profile
+
+The suite runs at:
+
+- `390px` mobile
+- `768px` tablet
+- `1440px` desktop
+
+Create or refresh the approved visual baselines:
+
+```powershell
+npm run test:phase3:update
+```
+
+Compare the current UI against those baselines:
+
+```powershell
+npm run test:phase3
+```
+
+On Windows PowerShell, use:
+
+```powershell
+npm.cmd run test:phase3:update
+npm.cmd run test:phase3
+```
+
 ## Environment Variables
 
 These are optional for local development, but needed for production features.
