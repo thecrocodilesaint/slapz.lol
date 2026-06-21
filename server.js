@@ -742,7 +742,7 @@ async function listUsersForAdmin() {
   let users;
   if (hasSupabase) {
     const rows = await supabaseRequest("app_users", {
-      query: "?select=id,email,created_at,profile_handle,profile_path,profile_url,role&order=created_at.desc",
+      query: "?select=*&order=created_at.desc",
     });
     users = rows.map((user) => ({
       userId: user.id,
@@ -1120,7 +1120,6 @@ async function createUser(email, passwordHash) {
         id: userId,
         email,
         password_hash: passwordHash,
-        role: "user",
         created_at: createdAt,
       },
       prefer: "return=representation",
