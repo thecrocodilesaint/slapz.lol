@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test:e2e": "playwright test",
+    "test:phase1": "playwright test tests/e2e/phase1-smoke.spec.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.1"
   }
 }

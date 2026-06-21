@@ -4,7 +4,7 @@ const fs = require("fs");
 const path = require("path");
 
 const root = __dirname;
-const dataDir = path.join(root, "data");
+const dataDir = process.env.FUNLOL_DATA_DIR ? path.resolve(process.env.FUNLOL_DATA_DIR) : path.join(root, "data");
 const profilesPath = path.join(dataDir, "profiles.json");
 const usersPath = path.join(dataDir, "users.json");
 const port = Number(process.env.PORT) || 4174;

@@ -1771,6 +1771,7 @@ const finishLoadingIntoEditor = async ({ showWelcome = true } = {}) => {
   setLoading(100, "Ready");
   await wait(260);
   setDashboardSection("home");
+  document.body.classList.remove("landing-active", "auth-required");
   if (showWelcome) {
     await playOwnerWelcome();
   } else {

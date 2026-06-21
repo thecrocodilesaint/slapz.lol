@@ -2,3 +2,6 @@ data/users.json
 node_modules/
 .env
 icon-options.html
+.test-data/
+playwright-report/
+test-results/

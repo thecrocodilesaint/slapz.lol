@@ -56,6 +56,33 @@ http://localhost:4174
 
 No build step is required.
 
+## Automated Phase 1 Smoke Tests
+
+Phase 1 uses Playwright to test the core user journey:
+
+- Landing page loads
+- Login form opens
+- New user signup works
+- Onboarding Skip works
+- Bio publishing works
+- Public `/u/:handle` profile opens
+- Mobile landing/auth screens do not overflow horizontally
+
+Install the test dependency and browser once:
+
+```powershell
+npm install
+npx playwright install chromium
+```
+
+Run the Phase 1 suite:
+
+```powershell
+npm run test:phase1
+```
+
+The tests start `server.js` automatically on port `4181` and use `.test-data/` so your real local `data/` files are not changed.
+
 ## Environment Variables
 
 These are optional for local development, but needed for production features.
