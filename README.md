@@ -180,6 +180,8 @@ These are optional for local development, but needed for production features.
 | `PORT` | No | Server port. Render sets this automatically. |
 | `SUPABASE_URL` | No | Supabase project URL. |
 | `SUPABASE_SERVICE_ROLE_KEY` | No | Supabase service role key for server-side database/storage access. |
+| `ADMIN_EMAILS` | For owner panel | Comma-separated admin account emails. Server-side only; never expose this in frontend code. |
+| `ADMIN_EMAIL` | Alternative | Single admin email if `ADMIN_EMAILS` is not set. |
 | `RESEND_API_KEY` | No | Resend API key for password reset emails. |
 | `SENDGRID_API_KEY` | No | SendGrid API key for password reset emails. |
 | `PASSWORD_RESET_FROM` | For email | Verified sender email, for example `fun.lol <noreply@yourdomain.com>`. |

@@ -30,6 +30,7 @@ module.exports = defineConfig({
     env: {
       PORT: port,
       FUNLOL_DATA_DIR: testDataDir,
+      ADMIN_EMAILS: "phase2-admin@example.com",
       SUPABASE_URL: "",
       SUPABASE_SERVICE_ROLE_KEY: "",
     },

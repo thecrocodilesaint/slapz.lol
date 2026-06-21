@@ -105,10 +105,8 @@ const dashboardMuteKey = "funlol-dashboard-mute-outside-bio";
 const sidebarCollapsedKey = "funlol-sidebar-collapsed";
 const dashboardCursorModeKey = "funlol-dashboard-cursor-mode";
 const cursorColorKey = "funlol-cursor-color";
-const ownerEmailAddress = "thecrocodilesaint@gmail.com";
 const finePointerQuery = window.matchMedia ? window.matchMedia("(hover: hover) and (pointer: fine)") : null;
 const canUsePointerEffects = () => (finePointerQuery ? finePointerQuery.matches : true);
-const normalizeEmail = (email) => String(email || "").trim().toLowerCase();
 const resetPasswordToken = new URLSearchParams(window.location.search).get("token") || "";
 let sessionToken = localStorage.getItem(sessionKey) || "";
 let loadingTimer = null;
@@ -761,7 +759,7 @@ function syncSidebarCollapsedState() {
   }
 }
 
-const isOwnerAccount = () => Boolean(accountState.isOwner || normalizeEmail(accountState.email) === ownerEmailAddress);
+const isOwnerAccount = () => Boolean(accountState.isOwner);
 
 const syncOwnerPanelAccess = () => {
   const isOwner = isOwnerAccount();

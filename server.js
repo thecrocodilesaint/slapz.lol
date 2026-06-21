@@ -20,7 +20,33 @@ const resetPasswordSuccessMessage = "If an account exists for this email, a pass
 const resendApiKey = process.env.RESEND_API_KEY;
 const sendgridApiKey = process.env.SENDGRID_API_KEY;
 const passwordResetEmailFrom = process.env.PASSWORD_RESET_FROM || process.env.EMAIL_FROM || "";
-const ownerEmail = "thecrocodilesaint@gmail.com";
+const adminEmails = new Set(
+  String(process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || process.env.OWNER_EMAIL || "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean)
+);
+const sessionTtlMs = Number(process.env.SESSION_TTL_MS || 7 * 24 * 60 * 60 * 1000);
+const rateLimitBuckets = new Map();
+
+const rateLimits = {
+  auth: { limit: 12, windowMs: 10 * 60 * 1000 },
+  forgotPassword: { limit: 6, windowMs: 10 * 60 * 1000 },
+  resetPassword: { limit: 8, windowMs: 10 * 60 * 1000 },
+  profileWrite: { limit: 30, windowMs: 10 * 60 * 1000 },
+  tribeAction: { limit: 80, windowMs: 10 * 60 * 1000 },
+  chatSend: { limit: 60, windowMs: 60 * 1000 },
+  admin: { limit: 30, windowMs: 10 * 60 * 1000 },
+};
+
+const mediaLimits = {
+  avatar: { maxBytes: 2 * 1024 * 1024, mimes: new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]) },
+  background: {
+    maxBytes: 12 * 1024 * 1024,
+    mimes: new Set(["image/png", "image/jpeg", "image/webp", "image/gif", "video/mp4", "video/webm", "video/ogg"]),
+  },
+  music: { maxBytes: 8 * 1024 * 1024, mimes: new Set(["audio/mpeg", "audio/mp3", "audio/wav", "audio/ogg", "audio/mp4"]) },
+};
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -63,6 +89,82 @@ function readUsersFile() {
 function writeUsersFile(users) {
   ensureStore();
   fs.writeFileSync(usersPath, JSON.stringify(users, null, 2), "utf8");
+}
+
+function logSecurity(event, req, details = {}) {
+  const safeDetails = Object.entries(details)
+    .filter(([, value]) => value !== undefined && value !== "")
+    .map(([key, value]) => `${key}=${String(value).slice(0, 160)}`)
+    .join(" ");
+  console.warn(`[security] ${event} ip=${getRequestIp(req) || "unknown"} ${safeDetails}`.trim());
+}
+
+function isHttpsRequest(req) {
+  const host = req.headers.host || "";
+  return !host.includes("localhost") && !host.startsWith("127.") && (req.headers["x-forwarded-proto"] || "https") === "https";
+}
+
+function setSecurityHeaders(req, res) {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
+  res.setHeader(
+    "Content-Security-Policy",
+    [
+      "default-src 'self'",
+      "script-src 'self'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob: https:",
+      "media-src 'self' data: blob:",
+      "font-src 'self' data:",
+      "connect-src 'self'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "frame-ancestors 'none'",
+      "form-action 'self'",
+    ].join("; ")
+  );
+  if (isHttpsRequest(req)) res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+}
+
+function setNoStore(res) {
+  res.setHeader("Cache-Control", "no-store");
+}
+
+function isTrustedOrigin(req) {
+  const origin = req.headers.origin;
+  if (!origin) return true;
+  try {
+    return new URL(origin).host === String(req.headers.host || "");
+  } catch {
+    return false;
+  }
+}
+
+function rateLimit(req, res, name, { limit, windowMs }) {
+  const now = Date.now();
+  const key = `${name}:${getRequestIp(req) || "unknown"}`;
+  const bucket = rateLimitBuckets.get(key) || { count: 0, resetAt: now + windowMs };
+  if (bucket.resetAt <= now) {
+    bucket.count = 0;
+    bucket.resetAt = now + windowMs;
+  }
+  bucket.count += 1;
+  rateLimitBuckets.set(key, bucket);
+  if (bucket.count <= limit) return false;
+
+  logSecurity("rate_limit_hit", req, { route: name, limit });
+  res.setHeader("Retry-After", Math.max(1, Math.ceil((bucket.resetAt - now) / 1000)));
+  sendJson(res, 429, { error: "Too many requests. Try again soon." });
+  return true;
+}
+
+function cleanupRateLimits() {
+  const now = Date.now();
+  for (const [key, bucket] of rateLimitBuckets) {
+    if (bucket.resetAt <= now) rateLimitBuckets.delete(key);
+  }
 }
 
 async function supabaseRequest(table, { method = "GET", query = "", body, prefer } = {}) {
@@ -155,6 +257,7 @@ function extensionFromMime(mime) {
 async function uploadMediaDataUrl({ ownerUserId, handle, field, dataUrl }) {
   const parsed = parseDataUrl(dataUrl);
   if (!parsed) return "";
+  validateMediaUpload(field, parsed);
 
   await ensureMediaBucket();
   const ext = extensionFromMime(parsed.mime);
@@ -169,6 +272,36 @@ async function uploadMediaDataUrl({ ownerUserId, handle, field, dataUrl }) {
     },
   });
   return objectPath;
+}
+
+function validateMediaUpload(field, parsed) {
+  const rules = mediaLimits[field];
+  if (!rules || !parsed) return;
+  if (!rules.mimes.has(parsed.mime)) throw new Error(`Unsupported ${field} file type`);
+  if (parsed.buffer.length > rules.maxBytes) throw new Error(`${field} file is too large`);
+}
+
+function safeMediaMime(field, mime, fallback) {
+  const rules = mediaLimits[field];
+  const value = String(mime || "").split(";")[0].trim().toLowerCase();
+  return rules?.mimes.has(value) ? value : fallback;
+}
+
+function validateProfileMedia(profile) {
+  const fields = [
+    { key: "avatarData", field: "avatar" },
+    { key: "backgroundData", field: "background" },
+    { key: "musicData", field: "music" },
+  ];
+
+  for (const item of fields) {
+    const value = profile[item.key];
+    if (typeof value === "string" && value.startsWith("data:")) {
+      const parsed = parseDataUrl(value);
+      if (!parsed) throw new Error(`Invalid ${item.field} file`);
+      validateMediaUpload(item.field, parsed);
+    }
+  }
 }
 
 function rowToProfile(row) {
@@ -448,13 +581,14 @@ async function prepareProfileForSave(profile, existingProfile) {
       continue;
     }
 
-    if (next[item.path]) {
+    if (next[item.path] && existingProfile?.[item.path] && next[item.path] === existingProfile[item.path]) {
       delete next[item.data];
       continue;
     }
 
+    delete next[item.path];
+
     if (value === "") {
-      delete next[item.path];
       delete next[item.data];
       continue;
     }
@@ -517,18 +651,24 @@ async function saveProfile(profile) {
   writeProfilesFile(profiles);
 }
 
+function isAdminUser(authed) {
+  return Boolean(authed?.role === "admin" || adminEmails.has(cleanEmail(authed?.email)));
+}
+
 function isOwnerUser(authed) {
-  return cleanEmail(authed?.email) === ownerEmail;
+  return isAdminUser(authed);
 }
 
 async function requireOwner(req, res) {
   const authed = await getAuthedUser(req);
   if (!authed) {
+    logSecurity("admin_access_unauthenticated", req, { path: req.url });
     sendJson(res, 401, { error: "Sign in before opening owner tools" });
     return null;
   }
   if (!isOwnerUser(authed)) {
-    sendJson(res, 403, { error: "Only the owner account can use this area" });
+    logSecurity("admin_access_forbidden", req, { userId: authed.userId, path: req.url });
+    sendJson(res, 403, { error: "Forbidden" });
     return null;
   }
   return authed;
@@ -551,6 +691,7 @@ async function findUserById(userId) {
           profileHandle: user.profile_handle,
           profilePath: user.profile_path,
           profileUrl: user.profile_url,
+          role: user.role || "user",
         }
       : null;
   }
@@ -564,6 +705,7 @@ async function findUserById(userId) {
         profileHandle: user.profileHandle,
         profilePath: user.profilePath,
         profileUrl: user.profileUrl,
+        role: user.role || "user",
       }
     : null;
 }
@@ -582,7 +724,7 @@ function profileSummaryForAdmin(user, profile) {
     views: Number(profile?.views || 0),
     updatedAt: profile?.updatedAt || "",
     hasProfile: Boolean(profile?.handle),
-    isOwner: cleanEmail(user.email) === ownerEmail,
+    isOwner: isAdminUser(user),
   };
 }
 
@@ -600,7 +742,7 @@ async function listUsersForAdmin() {
   let users;
   if (hasSupabase) {
     const rows = await supabaseRequest("app_users", {
-      query: "?select=id,email,created_at,profile_handle,profile_path,profile_url&order=created_at.desc",
+      query: "?select=id,email,created_at,profile_handle,profile_path,profile_url,role&order=created_at.desc",
     });
     users = rows.map((user) => ({
       userId: user.id,
@@ -609,6 +751,7 @@ async function listUsersForAdmin() {
       profileHandle: user.profile_handle,
       profilePath: user.profile_path,
       profileUrl: user.profile_url,
+      role: user.role || "user",
     }));
   } else {
     users = Object.entries(readUsersFile().users).map(([userId, user]) => ({
@@ -618,6 +761,7 @@ async function listUsersForAdmin() {
       profileHandle: user.profileHandle,
       profilePath: user.profilePath,
       profileUrl: user.profileUrl,
+      role: user.role || "user",
     }));
     users.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
   }
@@ -743,7 +887,7 @@ async function removeDeletedUserReferences(userId, deletedHandle = "") {
 async function deleteUserAccount(userId) {
   const user = await findUserById(userId);
   if (!user) throw new Error("User was not found");
-  if (cleanEmail(user.email) === ownerEmail) throw new Error("The owner account cannot be deleted");
+  if (isAdminUser(user)) throw new Error("Admin accounts cannot be deleted");
 
   const profile = await getProfileByOwner(userId);
   await removeDeletedUserReferences(userId, profile?.handle || user.profileHandle);
@@ -950,14 +1094,15 @@ async function findUserByEmail(email) {
             email: user.email,
             passwordHash: user.password_hash,
             createdAt: user.created_at,
-          profileHandle: user.profile_handle,
-          profilePath: user.profile_path,
-          profileUrl: user.profile_url,
-          onboardingCompleted: Boolean(user.onboarding_completed),
-          onboardingSkipped: Boolean(user.onboarding_skipped),
-          onboardingUpdatedAt: user.onboarding_updated_at,
-        },
-      ]
+            profileHandle: user.profile_handle,
+            profilePath: user.profile_path,
+            profileUrl: user.profile_url,
+            role: user.role || "user",
+            onboardingCompleted: Boolean(user.onboarding_completed),
+            onboardingSkipped: Boolean(user.onboarding_skipped),
+            onboardingUpdatedAt: user.onboarding_updated_at,
+          },
+        ]
       : null;
   }
 
@@ -975,6 +1120,7 @@ async function createUser(email, passwordHash) {
         id: userId,
         email,
         password_hash: passwordHash,
+        role: "user",
         created_at: createdAt,
       },
       prefer: "return=representation",
@@ -986,6 +1132,7 @@ async function createUser(email, passwordHash) {
   store.users[userId] = {
     email,
     passwordHash,
+    role: "user",
     createdAt,
     onboardingCompleted: false,
     onboardingSkipped: false,
@@ -1016,6 +1163,29 @@ async function createSession(userId) {
   store.sessions[token] = { userId, createdAt };
   writeUsersFile(store);
   return token;
+}
+
+function isSessionExpired(session) {
+  const created = Date.parse(session?.createdAt || session?.created_at || "");
+  return Number.isFinite(created) && Date.now() - created > sessionTtlMs;
+}
+
+async function deleteSessionToken(token) {
+  if (!token) return;
+  if (hasSupabase) {
+    await supabaseRequest("app_sessions", {
+      method: "DELETE",
+      query: `?token=eq.${encodeURIComponent(token)}`,
+      prefer: "return=minimal",
+    });
+    return;
+  }
+
+  const store = readUsersFile();
+  if (store.sessions[token]) {
+    delete store.sessions[token];
+    writeUsersFile(store);
+  }
 }
 
 function hashResetToken(token) {
@@ -1301,6 +1471,10 @@ async function getAuthedUser(req) {
     });
     const session = sessions[0];
     if (!session) return null;
+    if (isSessionExpired(session)) {
+      await deleteSessionToken(token);
+      return null;
+    }
 
     const users = await supabaseRequest("app_users", {
       query: `?id=eq.${encodeURIComponent(session.user_id)}&select=*&limit=1`,
@@ -1315,6 +1489,7 @@ async function getAuthedUser(req) {
       profileHandle: user.profile_handle,
       profilePath: user.profile_path,
       profileUrl: user.profile_url,
+      role: user.role || "user",
       onboardingCompleted: Boolean(user.onboarding_completed),
       onboardingSkipped: Boolean(user.onboarding_skipped),
       onboardingUpdatedAt: user.onboarding_updated_at,
@@ -1324,6 +1499,11 @@ async function getAuthedUser(req) {
   const store = readUsersFile();
   const session = store.sessions[token];
   if (!session) return null;
+  if (isSessionExpired(session)) {
+    delete store.sessions[token];
+    writeUsersFile(store);
+    return null;
+  }
 
   const user = store.users[session.userId];
   if (!user) return null;
@@ -1335,6 +1515,7 @@ async function getAuthedUser(req) {
     profileHandle: user.profileHandle,
     profilePath: user.profilePath,
     profileUrl: user.profileUrl,
+    role: user.role || "user",
     onboardingCompleted: Boolean(user.onboardingCompleted),
     onboardingSkipped: Boolean(user.onboardingSkipped),
     onboardingUpdatedAt: user.onboardingUpdatedAt || "",
@@ -1366,6 +1547,7 @@ function sanitizeHandle(handle) {
 }
 
 function sendJson(res, status, payload) {
+  if (!res.hasHeader("Cache-Control")) res.setHeader("Cache-Control", "no-store");
   res.writeHead(status, { "Content-Type": "application/json; charset=utf-8" });
   res.end(JSON.stringify(payload));
 }
@@ -1377,6 +1559,7 @@ function siteOrigin(req) {
 }
 
 function sendText(res, status, contentType, text) {
+  if (!res.hasHeader("Cache-Control") && status >= 400) res.setHeader("Cache-Control", "no-store");
   res.writeHead(status, { "Content-Type": contentType });
   res.end(text);
 }
@@ -1392,9 +1575,9 @@ function parseDataUrl(dataUrl) {
 
 async function sendProfileMedia(res, profile, mediaType) {
   const fieldMap = {
-    music: { data: "musicData", path: "musicPath", fallbackMime: "audio/mpeg" },
-    avatar: { data: "avatarData", path: "avatarPath", fallbackMime: "image/jpeg" },
-    background: { data: "backgroundData", path: "backgroundPath", fallbackMime: profile?.backgroundType || "application/octet-stream" },
+    music: { data: "musicData", path: "musicPath", fallbackMime: "audio/mpeg", field: "music" },
+    avatar: { data: "avatarData", path: "avatarPath", fallbackMime: "image/jpeg", field: "avatar" },
+    background: { data: "backgroundData", path: "backgroundPath", fallbackMime: "image/jpeg", field: "background" },
   };
   const fields = fieldMap[mediaType];
   if (!profile || !fields) {
@@ -1406,7 +1589,7 @@ async function sendProfileMedia(res, profile, mediaType) {
     const response = await supabaseStorageRequest(`/object/${mediaBucket}/${profile[fields.path]}`);
     const buffer = Buffer.from(await response.arrayBuffer());
     res.writeHead(200, {
-      "Content-Type": response.headers.get("content-type") || fields.fallbackMime,
+      "Content-Type": safeMediaMime(fields.field, response.headers.get("content-type"), fields.fallbackMime),
       "Content-Length": buffer.length,
       "Cache-Control": "public, max-age=300",
     });
@@ -1421,7 +1604,7 @@ async function sendProfileMedia(res, profile, mediaType) {
   }
 
   res.writeHead(200, {
-    "Content-Type": media.mime,
+    "Content-Type": safeMediaMime(fields.field, media.mime, fields.fallbackMime),
     "Content-Length": media.buffer.length,
     "Cache-Control": "public, max-age=300",
   });
@@ -1458,9 +1641,27 @@ function readBody(req) {
 
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
+  setSecurityHeaders(req, res);
+  cleanupRateLimits();
+
+  if (url.pathname.startsWith("/api/admin") || url.pathname === "/api/me" || url.pathname === "/api/my-profile") {
+    setNoStore(res);
+  }
+
+  if (req.method === "OPTIONS") {
+    sendJson(res, 204, {});
+    return;
+  }
+
+  if (url.pathname.startsWith("/api/") && !["GET", "HEAD", "OPTIONS"].includes(req.method) && !isTrustedOrigin(req)) {
+    logSecurity("cross_origin_api_blocked", req, { origin: req.headers.origin, path: url.pathname });
+    sendJson(res, 403, { error: "Forbidden" });
+    return;
+  }
 
   if (req.method === "POST" && url.pathname === "/api/signup") {
     try {
+      if (rateLimit(req, res, "signup", rateLimits.auth)) return;
       const body = JSON.parse((await readBody(req)) || "{}");
       const email = cleanEmail(body.email);
       const password = String(body.password || "");
@@ -1486,11 +1687,13 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "POST" && url.pathname === "/api/login") {
     try {
+      if (rateLimit(req, res, "login", rateLimits.auth)) return;
       const body = JSON.parse((await readBody(req)) || "{}");
       const email = cleanEmail(body.email);
       const password = String(body.password || "");
       const entry = await findUserByEmail(email);
       if (!entry || !verifyPassword(password, entry[1].passwordHash)) {
+        logSecurity("login_failed", req, { email: maskEmail(email) });
         sendJson(res, 401, { error: "Email or password is incorrect" });
         return;
       }
@@ -1505,6 +1708,7 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "POST" && url.pathname === "/api/forgot-password") {
     try {
+      if (rateLimit(req, res, "forgot_password", rateLimits.forgotPassword)) return;
       cleanupForgotPasswordAttempts();
       const body = JSON.parse((await readBody(req)) || "{}");
       const email = cleanEmail(body.email);
@@ -1537,6 +1741,7 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "POST" && url.pathname === "/api/reset-password") {
     try {
+      if (rateLimit(req, res, "reset_password", rateLimits.resetPassword)) return;
       const body = JSON.parse((await readBody(req)) || "{}");
       const token = String(body.token || "").trim();
       const newPassword = String(body.newPassword || "");
@@ -1548,6 +1753,7 @@ const server = http.createServer(async (req, res) => {
 
       const reset = await findPasswordResetByToken(token);
       if (!reset) {
+        logSecurity("invalid_reset_token", req);
         sendJson(res, 400, { error: "This reset link is invalid or expired. Request a new one." });
         return;
       }
@@ -1614,6 +1820,7 @@ const server = http.createServer(async (req, res) => {
 
   if (url.pathname === "/api/admin/users" && req.method === "GET") {
     try {
+      if (rateLimit(req, res, "admin", rateLimits.admin)) return;
       const owner = await requireOwner(req, res);
       if (!owner) return;
       sendJson(res, 200, { users: await listUsersForAdmin() });
@@ -1625,6 +1832,7 @@ const server = http.createServer(async (req, res) => {
 
   if (url.pathname.startsWith("/api/admin/users/")) {
     try {
+      if (rateLimit(req, res, "admin", rateLimits.admin)) return;
       const owner = await requireOwner(req, res);
       if (!owner) return;
 
@@ -1712,6 +1920,7 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "POST" && url.pathname === "/api/friend-requests") {
     try {
+      if (rateLimit(req, res, "friend_requests", rateLimits.tribeAction)) return;
       const authed = await getAuthedUser(req);
       if (!authed) {
         sendJson(res, 401, { error: "Sign in before sending friend requests" });
@@ -1924,6 +2133,7 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "POST" && url.pathname === "/api/tribes") {
     try {
+      if (rateLimit(req, res, "tribes", rateLimits.tribeAction)) return;
       const authed = await getAuthedUser(req);
       if (!authed) {
         sendJson(res, 401, { error: "Sign in before creating tribes" });
@@ -2005,6 +2215,7 @@ const server = http.createServer(async (req, res) => {
 
   if ((req.method === "GET" || req.method === "POST") && url.pathname.startsWith("/api/tribes/") && url.pathname.endsWith("/messages")) {
     try {
+      if (req.method === "POST" && rateLimit(req, res, "tribe_chat", rateLimits.chatSend)) return;
       const authed = await getAuthedUser(req);
       if (!authed) {
         sendJson(res, 401, { error: "Sign in before opening tribe chats" });
@@ -2122,6 +2333,7 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "POST" && url.pathname.startsWith("/api/tribes/") && url.pathname.endsWith("/join")) {
     try {
+      if (rateLimit(req, res, "tribe_join", rateLimits.tribeAction)) return;
       const authed = await getAuthedUser(req);
       if (!authed) {
         sendJson(res, 401, { error: "Sign in before joining tribes" });
@@ -2182,6 +2394,7 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "POST" && url.pathname.startsWith("/api/tribes/") && url.pathname.endsWith("/members")) {
     try {
+      if (rateLimit(req, res, "tribe_members", rateLimits.tribeAction)) return;
       const authed = await getAuthedUser(req);
       if (!authed) {
         sendJson(res, 401, { error: "Sign in before adding tribe members" });
@@ -2519,6 +2732,7 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "PUT" && url.pathname.startsWith("/api/profiles/")) {
     try {
+      if (rateLimit(req, res, "profile_publish", rateLimits.profileWrite)) return;
       const body = await readBody(req);
       const incoming = JSON.parse(body || "{}");
       const handle = sanitizeHandle(incoming.handle || url.pathname.split("/").pop());
@@ -2549,6 +2763,7 @@ const server = http.createServer(async (req, res) => {
       const origin = siteOrigin(req);
       const profilePath = `/u/${handle}`;
       const profileUrl = `${origin}${profilePath}`;
+      validateProfileMedia(incoming);
       const profile = await prepareProfileForSave({
         ...incoming,
         handle,
@@ -2581,10 +2796,11 @@ const server = http.createServer(async (req, res) => {
   }
 
   const requestedPath = url.pathname === "/" ? "/index.html" : url.pathname;
-  const safePath = path.normalize(decodeURIComponent(requestedPath)).replace(/^(\.\.[/\\])+/, "");
-  const filePath = path.join(root, safePath);
+  const safePath = path.normalize(decodeURIComponent(requestedPath)).replace(/^[/\\]+/, "");
+  const filePath = path.resolve(root, safePath);
 
-  if (!filePath.startsWith(root)) {
+  if (filePath !== root && !filePath.startsWith(`${root}${path.sep}`)) {
+    logSecurity("path_traversal_blocked", req, { path: url.pathname });
     sendJson(res, 403, { error: "Forbidden" });
     return;
   }

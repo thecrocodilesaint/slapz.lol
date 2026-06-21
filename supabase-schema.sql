@@ -2,6 +2,7 @@ create table if not exists public.app_users (
   id text primary key,
   email text unique not null,
   password_hash text not null,
+  role text not null default 'user',
   profile_handle text,
   profile_path text,
   profile_url text,
@@ -16,10 +17,24 @@ alter table public.app_users
   add column if not exists profile_handle text,
   add column if not exists profile_path text,
   add column if not exists profile_url text,
+  add column if not exists role text not null default 'user',
   add column if not exists snake_high_score integer not null default 0,
   add column if not exists onboarding_completed boolean not null default false,
   add column if not exists onboarding_skipped boolean not null default false,
   add column if not exists onboarding_updated_at timestamptz;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'app_users_role_check'
+      and conrelid = 'public.app_users'::regclass
+  ) then
+    alter table public.app_users
+      add constraint app_users_role_check check (role in ('user', 'admin'));
+  end if;
+end $$;
 
 create table if not exists public.app_sessions (
   token text primary key,

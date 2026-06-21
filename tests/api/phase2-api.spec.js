@@ -30,6 +30,27 @@ async function signUp(request, testInfo, label) {
   return { ...user, token: signup.token, userId: me.userId };
 }
 
+async function signUpOrLoginFixed(request, user) {
+  const signup = await request.post("/api/signup", {
+    data: { email: user.email, password: user.password },
+  });
+  if (![201, 409].includes(signup.status())) {
+    throw new Error(`Unexpected signup status ${signup.status()}: ${await signup.text()}`);
+  }
+
+  const auth =
+    signup.status() === 201
+      ? await signup.json()
+      : await json(
+          await request.post("/api/login", {
+            data: { email: user.email, password: user.password },
+          }),
+          200
+        );
+  const me = await json(await request.get("/api/me", { headers: authHeaders(auth.token) }), 200);
+  return { ...user, token: auth.token, userId: me.userId, isOwner: me.isOwner };
+}
+
 async function publishProfile(request, user, overrides = {}) {
   const payload = {
     name: user.name,
@@ -142,10 +163,51 @@ test("auth and profile APIs protect private routes and publish public profiles",
   const publicProfile = await json(await request.get(`/api/profiles/${user.handle}`), 200);
   expect(publicProfile.name).toBe(user.name);
   expect(publicProfile.handle).toBe(user.handle);
+  expect(publicProfile.email).toBeUndefined();
+  expect(publicProfile.passwordHash).toBeUndefined();
+  expect(publicProfile.ownerUserId).toBeUndefined();
+  expect(publicProfile.adminNotifications).toBeUndefined();
+  expect(publicProfile.tribes).toBeUndefined();
 
   const me = await json(await request.get("/api/me", { headers: authHeaders(user.token) }), 200);
   expect(me.profileHandle).toBe(user.handle);
   expect(me.needsOnboarding).toBe(false);
+});
+
+test("security headers and admin APIs are server-authorized", async ({ request }, testInfo) => {
+  const sensitiveOwnerFragment = ["the", "crocodile", "saint"].join("");
+  const pageResponse = await request.get("/");
+  expect(pageResponse.headers()["content-security-policy"]).toContain("frame-ancestors 'none'");
+  expect(pageResponse.headers()["x-frame-options"]).toBe("DENY");
+  expect(pageResponse.headers()["x-content-type-options"]).toBe("nosniff");
+  expect(pageResponse.headers()["permissions-policy"]).toContain("camera=()");
+  const pageHtml = await pageResponse.text();
+  expect(pageHtml).not.toContain("phase2-admin@example.com");
+  expect(pageHtml).not.toContain(sensitiveOwnerFragment);
+
+  const scriptResponse = await request.get("/script.js");
+  const scriptBody = await scriptResponse.text();
+  expect(scriptBody).not.toContain("phase2-admin@example.com");
+  expect(scriptBody).not.toContain(sensitiveOwnerFragment);
+  expect(scriptBody).not.toContain("ADMIN_EMAIL");
+
+  await json(await request.get("/api/admin/users"), 401);
+
+  const normalUser = await signUp(request, testInfo, "notadmin");
+  await publishProfile(request, normalUser);
+  await json(await request.get("/api/admin/users", { headers: authHeaders(normalUser.token) }), 403);
+
+  const admin = await signUpOrLoginFixed(request, {
+    email: "phase2-admin@example.com",
+    password: "TestPass123!",
+    handle: "phase2_admin",
+    name: "Phase 2 Admin",
+  });
+  expect(admin.isOwner).toBe(true);
+
+  const adminUsers = await json(await request.get("/api/admin/users", { headers: authHeaders(admin.token) }), 200);
+  expect(Array.isArray(adminUsers.users)).toBe(true);
+  expect(adminUsers.users.some((user) => user.email === normalUser.email)).toBe(true);
 });
 
 test("friend request APIs send, accept, and remove friends", async ({ request }, testInfo) => {
@@ -359,4 +421,18 @@ test("game score API keeps the highest snake score", async ({ request }, testInf
     200
   );
   expect(lowerScore.highScore).toBe(42);
+});
+
+test("auth rate limiting blocks repeated failed attempts", async ({ request }) => {
+  let lastStatus = 0;
+  for (let index = 0; index < 20; index += 1) {
+    const response = await request.post("/api/login", {
+      data: { email: `rate-limit-${index}@example.com`, password: "wrong-password" },
+    });
+    lastStatus = response.status();
+    if (lastStatus === 429) {
+      break;
+    }
+  }
+  expect(lastStatus).toBe(429);
 });
