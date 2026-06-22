@@ -39,7 +39,7 @@ async function publishBio(page, user) {
   if (await bioEntryGate.isVisible().catch(() => false)) await bioEntryGate.click();
   await page.locator("#nameInput").fill(user.name);
   await page.locator("#handleInput").fill(user.handle);
-  await page.locator("#bioInput").fill("Automated smoke test bio for fun.lol.");
+  await page.locator("#bioInput").fill("Automated smoke test bio for slapz.lol.");
   await page.locator("#locationInput").fill("Test Lab");
   await page.locator("#saveButton").click();
   await expect(page.locator("#publicLink")).toHaveText(`/u/${user.handle}`, { timeout: 20_000 });
@@ -54,7 +54,7 @@ test.beforeEach(async ({ page }) => {
 
 test("landing page loads and opens the login form", async ({ page }) => {
   await page.goto("/");
-  await expect(page).toHaveTitle(/fun\.lol/i);
+  await expect(page).toHaveTitle(/slapz\.lol/i);
   await expect(page.getByRole("heading", { name: /build your profile/i })).toBeVisible();
   await expect(page.getByText(/customizable public profile platform/i)).toBeVisible();
 
@@ -67,9 +67,9 @@ test("landing page loads and opens the login form", async ({ page }) => {
 test("new user can sign up and skip onboarding", async ({ page }, testInfo) => {
   const user = uniqueUser(testInfo, "skip");
   await signUp(page, user);
-  await expect(page.locator("#onboardingTitle")).toContainText("Welcome to fun.lol");
+  await expect(page.locator("#onboardingTitle")).toContainText("Welcome to slapz.lol");
   await skipOnboarding(page);
-  await expect(page.getByRole("heading", { name: /welcome to fun\.lol/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /welcome to slapz\.lol/i })).toBeVisible();
 });
 
 test("new user can publish a Bio and open the public profile", async ({ page }, testInfo) => {

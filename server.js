@@ -353,7 +353,7 @@ function handleFromFriendTarget(value) {
   if (!raw) return "";
 
   try {
-    const targetUrl = raw.startsWith("http") ? new URL(raw) : new URL(raw, "https://fun.lol");
+    const targetUrl = raw.startsWith("http") ? new URL(raw) : new URL(raw, "https://slapz.lol");
     const match = targetUrl.pathname.match(/^\/u\/([^/]+)/);
     if (match) return sanitizeHandle(decodeURIComponent(match[1]));
   } catch {
@@ -1479,9 +1479,9 @@ function isLocalResetLink(resetLink) {
 
 function passwordResetEmailContent(resetLink) {
   return {
-    subject: "Reset your fun.lol password",
+    subject: "Reset your slapz.lol password",
     text: [
-      "Reset your fun.lol password",
+      "Reset your slapz.lol password",
       "",
       "Use this link to choose a new password. It expires in 30 minutes and can only be used once:",
       resetLink,
@@ -1490,7 +1490,7 @@ function passwordResetEmailContent(resetLink) {
     ].join("\n"),
     html: `
       <div style="font-family:Inter,Arial,sans-serif;background:#050508;color:#f5f7fb;padding:24px;border-radius:8px">
-        <h1 style="margin:0 0 12px;font-size:28px">Reset your fun.lol password</h1>
+        <h1 style="margin:0 0 12px;font-size:28px">Reset your slapz.lol password</h1>
         <p style="color:#b8bbc8;line-height:1.5">Use this link to choose a new password. It expires in 30 minutes and can only be used once.</p>
         <p><a href="${resetLink}" style="display:inline-block;padding:12px 16px;border-radius:8px;background:#f5f7fb;color:#050508;font-weight:800;text-decoration:none">Reset password</a></p>
         <p style="color:#8f95a8;font-size:13px;line-height:1.5">If you did not request this, you can ignore this email.</p>
@@ -3277,5 +3277,5 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(port, () => {
   const storage = hasSupabase ? "Supabase" : "local JSON";
-  console.log(`NightCard running at http://localhost:${port} using ${storage}`);
+  console.log(`slapz.lol running at http://localhost:${port} using ${storage}`);
 });

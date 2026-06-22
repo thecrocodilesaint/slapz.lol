@@ -185,13 +185,13 @@ let onboardingPublishPrompted = false;
 
 const onboardingSteps = [
   {
-    title: "Welcome to fun.lol",
-    body: "fun.lol is your private dashboard for building a public bio page with music, media, friends, tribes, chats, and games.",
+    title: "Welcome to slapz.lol",
+    body: "slapz.lol is your private dashboard for building a public bio page with music, media, friends, tribes, chats, and games.",
     items: ["Customize your profile", "Share one public link", "Keep your dashboard private"],
   },
   {
     title: "Create your public profile",
-    body: "Your Bio is where your official public fun.lol profile is made. Publish from Bio when you are ready for people to see it.",
+    body: "Your Bio is where your official public slapz.lol profile is made. Publish from Bio when you are ready for people to see it.",
     items: ["Choose a display name", "Pick a clean handle", "Add your bio, location, and social icons"],
   },
   {
@@ -211,7 +211,7 @@ const onboardingSteps = [
   },
   {
     title: "Publish and share",
-    body: "To create your official public fun.lol profile, you need to publish your profile in Bio.",
+    body: "To create your official public slapz.lol profile, you need to publish your profile in Bio.",
     items: ["Play mini-games from the dashboard", "Share your /u/handle link", "Publish your Bio to finish onboarding"],
     publish: true,
   },
@@ -1802,9 +1802,9 @@ const showResetPassword = () => {
   if (isPublicProfilePage) return;
   showAuthShell();
   setAuthScreenMode("reset");
-  document.title = "Reset Password | fun.lol";
+  document.title = "Reset Password | slapz.lol";
   setResetPasswordMessage(
-    resetPasswordToken ? "Enter a new password for your fun.lol account." : "This reset link is missing a token."
+    resetPasswordToken ? "Enter a new password for your slapz.lol account." : "This reset link is missing a token."
   );
   auth.resetNewPassword.focus();
 };
@@ -1876,7 +1876,7 @@ const showLanding = () => {
   hideOnboarding();
   hideEntryGate();
   exitPreview();
-  document.title = "fun.lol | Custom Bio Pages, Friends, Tribes & Games";
+  document.title = "slapz.lol | Custom Bio Pages, Friends, Tribes & Games";
   document.body.classList.remove("auth-required", "loading", "welcoming", "welcome-leaving", "owner-entering");
   document.body.classList.add("landing-active");
 };
@@ -1889,7 +1889,7 @@ const showAuth = (mode = "signup") => {
     setAuthScreenMode(mode === "login" ? "login" : "signup");
     setAuthMessage(
       mode === "login"
-        ? "Log in to continue editing your fun.lol profile."
+        ? "Log in to continue editing your slapz.lol profile."
         : "Create an account to start editing your public profile."
     );
     auth.email.focus();
@@ -2377,7 +2377,7 @@ const sanitizeVisitorItems = (items = []) =>
     .slice(0, 5);
 
 const sanitizeUserSearchResult = (user = {}) => ({
-  displayName: String(user?.displayName || user?.name || "fun.lol user").trim().slice(0, 40),
+  displayName: String(user?.displayName || user?.name || "slapz.lol user").trim().slice(0, 40),
   handle: cleanHandle(user?.handle || user?.profileHandle || ""),
   profilePath: String(user?.profilePath || (user?.handle ? `/u/${cleanHandle(user.handle)}` : "")),
   views: Number(user?.views || 0),
@@ -3990,7 +3990,7 @@ function renderVisitors(visitors = []) {
 
 function renderDashboardInsights() {
   const featured = currentFeatured();
-  const featuredText = featured.text || `${sanitizeStatus(inputs.status?.value)} on fun.lol`;
+  const featuredText = featured.text || `${sanitizeStatus(inputs.status?.value)} on slapz.lol`;
   $("#homeStatusText").textContent = sanitizeStatus(inputs.status?.value);
   $("#homeFeaturedText").textContent = featuredText;
   renderChipList($("#homeAchievementsList"), achievementList(), "No achievements yet");
@@ -5666,7 +5666,7 @@ async function loadPublicProfile() {
     await applyProfileMediaRoutes(data, publicHandle);
     enterPreview(true);
     showPublicEntryGate(Boolean(data.hasMusic));
-    document.title = `${data.name || data.handle} | NightCard`;
+    document.title = `${data.name || data.handle} | slapz.lol`;
   } catch (error) {
     const isPrivate = /private/i.test(error.message);
     profile.name.textContent = isPrivate ? "This profile is private." : "Profile not found";

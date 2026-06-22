@@ -1,6 +1,6 @@
-# fun.lol
+# slapz.lol
 
-fun.lol is a customizable public profile platform. Users can sign up, build a public bio page, upload profile media, play background music, add friends, join tribes, chat with tribe members, and play mini-games from a private dashboard.
+slapz.lol is a customizable public profile platform. Users can sign up, build a public bio page, upload profile media, play background music, add friends, join tribes, chat with tribe members, and play mini-games from a private dashboard.
 
 ## Features
 
@@ -166,7 +166,7 @@ npm run test:phase3
 On GitHub, open:
 
 ```text
-Repository -> Actions -> fun.lol tests
+Repository -> Actions -> slapz.lol tests
 ```
 
 If a test fails, GitHub uploads Playwright reports and failure screenshots/videos as workflow artifacts.
@@ -184,7 +184,7 @@ These are optional for local development, but needed for production features.
 | `ADMIN_EMAIL` | Alternative | Single admin email if `ADMIN_EMAILS` is not set. |
 | `RESEND_API_KEY` | No | Resend API key for password reset emails. |
 | `SENDGRID_API_KEY` | No | SendGrid API key for password reset emails. |
-| `PASSWORD_RESET_FROM` | For email | Verified sender email, for example `fun.lol <noreply@yourdomain.com>`. |
+| `PASSWORD_RESET_FROM` | For email | Verified sender email, for example `slapz.lol <noreply@slapz.lol>`. |
 | `EMAIL_FROM` | Alternative | Used if `PASSWORD_RESET_FROM` is not set. |
 
 ## Supabase Setup
@@ -227,7 +227,7 @@ Example Resend config on Render:
 
 ```text
 RESEND_API_KEY=your_resend_api_key
-PASSWORD_RESET_FROM=fun.lol <noreply@yourverifieddomain.com>
+PASSWORD_RESET_FROM=slapz.lol <noreply@slapz.lol>
 ```
 
 The `PASSWORD_RESET_FROM` address must be verified in your email provider.
