@@ -1,4 +1,5 @@
 const $ = (selector) => document.querySelector(selector);
+const maxFriendCount = 150;
 
 const profile = {
   name: $("#name"),
@@ -164,6 +165,7 @@ let friendSearchResults = [];
 let friendSuggestions = [];
 let bestFriendHandles = [];
 let friendActivity = [];
+let unlockedBadges = new Set();
 let friendRefreshTimer = 0;
 let pendingFriendRemoval = null;
 let pendingConfirmAction = null;
@@ -235,7 +237,7 @@ const sanitizeProfilePrivacy = (value) => (profilePrivacyOptions.has(String(valu
 const badgeOptions = ["Early User", "Verified Profile", "Tribe Owner", "Game Champion", "Top Friend", "Profile Creator"];
 const dailyChallenges = [
   { title: "Play Wordle today", text: "Finish one Wordle round to keep your brain warm." },
-  { title: "Beat 50 in Click Rush", text: "Warm up your aim and chase a new best." },
+  { title: "Beat 25 in Click Rush", text: "A fast but realistic target for a clean 15 second round." },
   { title: "Get a new Snake score", text: "Play Snake and try to beat your saved high score." },
 ];
 
@@ -2210,7 +2212,7 @@ const sanitizeFriends = (items = []) =>
     .map(sanitizeFriend)
     .filter(Boolean)
     .filter((friend, index, list) => list.findIndex((item) => item.link === friend.link) === index)
-    .slice(0, 24);
+    .slice(0, maxFriendCount);
 
 const sanitizeFriendRequest = (request) => {
   const rawName = String(request?.fromName || request?.name || "").trim().slice(0, 32);
@@ -2296,13 +2298,65 @@ const sanitizeBadges = (items = []) =>
     .slice(0, 6);
 
 const selectedBadges = () =>
-  sanitizeBadges([...document.querySelectorAll("#badgeOptionGrid input:checked")].map((input) => input.value));
+  sanitizeBadges([...document.querySelectorAll("#badgeOptionGrid input:checked:not(:disabled)")].map((input) => input.value));
 
-const applyBadgeInputs = (items = []) => {
-  const values = new Set(sanitizeBadges(items));
-  document.querySelectorAll("#badgeOptionGrid input").forEach((input) => {
-    input.checked = values.has(input.value);
+const derivedUnlockedBadges = () => {
+  const earned = new Set();
+  const handle = cleanHandle(inputs.handle.value || accountState.profileHandle);
+  if (accountState.profileHandle || handle) earned.add("Verified Profile");
+  if ((inputs.name.value.trim() || "Nova") && handle) earned.add("Profile Creator");
+  if (myTribes().some((tribe) => tribe.isOwner)) earned.add("Tribe Owner");
+  if (friends.length > 100) earned.add("Top Friend");
+  const ownLeaderboardIndex = leaderboards.global.findIndex(
+    (row) => row.userId === accountState.userId || (handle && row.handle === handle)
+  );
+  if (ownLeaderboardIndex >= 0 && ownLeaderboardIndex < 25) earned.add("Game Champion");
+  return sanitizeBadges([...earned]);
+};
+
+const currentUnlockedBadges = () => {
+  const serverBadges = sanitizeBadges([...unlockedBadges]);
+  return new Set(serverBadges.length ? serverBadges : derivedUnlockedBadges());
+};
+
+const selectedBadgeOptOuts = () => {
+  const selected = new Set(selectedBadges());
+  return sanitizeBadges([...currentUnlockedBadges()].filter((badge) => !selected.has(badge)));
+};
+
+const badgeUnlockHints = {
+  "Early User": "Unlocked for the first 1000 accounts.",
+  "Verified Profile": "Publish your public profile.",
+  "Tribe Owner": "Create and own a tribe.",
+  "Game Champion": "Reach the top 25 globally in a game leaderboard.",
+  "Top Friend": "Add over 100 friends.",
+  "Profile Creator": "Publish a basic profile with a display name and handle.",
+};
+
+const syncBadgeEditor = () => {
+  const earned = currentUnlockedBadges();
+  document.querySelectorAll("#badgeOptionGrid label").forEach((label) => {
+    const input = label.querySelector("input");
+    if (!input) return;
+    const isUnlocked = earned.has(input.value);
+    input.disabled = !isUnlocked;
+    if (!isUnlocked) input.checked = false;
+    label.classList.toggle("badge-locked", !isUnlocked);
+    label.classList.toggle("badge-active", input.checked && isUnlocked);
+    label.title = isUnlocked ? `${input.value} unlocked` : `Locked: ${badgeUnlockHints[input.value] || "Earn this badge first."}`;
   });
+};
+
+const applyBadgeInputs = (items = [], optOuts = []) => {
+  const values = new Set(sanitizeBadges(items));
+  const optedOut = new Set(sanitizeBadges(optOuts));
+  currentUnlockedBadges().forEach((badge) => {
+    if (!optedOut.has(badge)) values.add(badge);
+  });
+  document.querySelectorAll("#badgeOptionGrid input").forEach((input) => {
+    input.checked = currentUnlockedBadges().has(input.value) && values.has(input.value);
+  });
+  syncBadgeEditor();
 };
 
 const sanitizeFeatured = (featured = {}) => ({
@@ -3797,6 +3851,8 @@ async function refreshFriendState() {
     setAdminNotifications(data.adminNotifications || []);
     setTribeInvites(data.tribeInvites || []);
     setTribeJoinRequests(data.tribeJoinRequests || []);
+    unlockedBadges = new Set(sanitizeBadges(data.unlockedBadges || []));
+    applyBadgeInputs(data.badges || selectedBadges(), data.badgeOptOuts || selectedBadgeOptOuts());
     if (Array.isArray(data.bestFriendHandles)) setBestFriendHandles(data.bestFriendHandles);
     friendActivity = Array.isArray(data.friendActivity) ? data.friendActivity.map((item) => String(item).slice(0, 100)).slice(0, 20) : friendActivity;
     await loadTribes({ silent: true });
@@ -3874,6 +3930,30 @@ function renderChipList(container, items, emptyText) {
   });
 }
 
+function renderProfileBadgeChips(items) {
+  if (!profile.badges) return;
+  const badges = sanitizeBadges(items);
+  profile.badges.textContent = "";
+  profile.badges.classList.toggle("is-empty", badges.length === 0);
+  if (!badges.length) {
+    profile.badges.hidden = isPublicProfilePage;
+    if (!isPublicProfilePage) {
+      const empty = document.createElement("span");
+      empty.className = "mini-empty";
+      empty.textContent = "No badges worn yet";
+      profile.badges.append(empty);
+    }
+    return;
+  }
+  profile.badges.hidden = false;
+  badges.forEach((item) => {
+    const chip = document.createElement("span");
+    chip.className = "mini-chip";
+    chip.textContent = item;
+    profile.badges.append(chip);
+  });
+}
+
 const achievementList = () => {
   const achievements = [];
   if (accountState.profileHandle || cleanHandle(inputs.handle.value)) achievements.push("Profile Published");
@@ -3887,14 +3967,10 @@ const achievementList = () => {
 };
 
 function renderProfileBadges() {
-  const manualBadges = selectedBadges();
-  const autoBadges = [];
-  if (accountState.profileHandle || cleanHandle(inputs.handle.value)) autoBadges.push("Profile Creator");
-  if (myTribes().some((tribe) => tribe.isOwner)) autoBadges.push("Tribe Owner");
-  if (snake.bestValue >= 10) autoBadges.push("Game Champion");
-  if (bestFriendHandles.length) autoBadges.push("Top Friend");
-  const badges = sanitizeBadges([...manualBadges, ...autoBadges]);
-  renderChipList(profile.badges, badges, "No badges yet");
+  const earned = currentUnlockedBadges();
+  const badges = selectedBadges().filter((badge) => isPublicProfilePage || earned.has(badge));
+  renderProfileBadgeChips(badges);
+  syncBadgeEditor();
 }
 
 function renderVisitors(visitors = []) {
@@ -4579,6 +4655,7 @@ async function loadLeaderboards({ tribeId = selectedTribeId, silent = false } = 
     };
     renderLeaderboards();
     renderDailyChallenge();
+    renderProfileBadges();
   } catch (error) {
     if (!silent) showToast(error.message);
   }
@@ -5422,6 +5499,7 @@ const collectProfile = () => ({
   entryAnimation: sanitizeEntryAnimation(inputs.entryAnimation?.value),
   featured: currentFeatured(),
   badges: selectedBadges(),
+  badgeOptOuts: selectedBadgeOptOuts(),
   bestFriendHandles,
   theme: getActiveTheme(),
   compactLinks: $("#compactToggle").checked,
@@ -5459,7 +5537,8 @@ const applyProfile = (data) => {
   const featured = sanitizeFeatured(data.featured);
   if (inputs.featuredType) inputs.featuredType.value = featured.type;
   if (inputs.featuredText) inputs.featuredText.value = featured.text;
-  applyBadgeInputs(data.badges || []);
+  unlockedBadges = new Set(sanitizeBadges(isPublicProfilePage ? data.badges || [] : data.unlockedBadges || []));
+  applyBadgeInputs(data.badges || [], data.badgeOptOuts || []);
   bestFriendHandles = sanitizeBestFriendHandles(data.bestFriendHandles || []);
   friendActivity = Array.isArray(data.friendActivity) ? data.friendActivity.map((item) => String(item).slice(0, 100)).slice(0, 20) : [];
   updateAccountState({
@@ -5552,6 +5631,9 @@ $("#saveButton").addEventListener("click", async () => {
       onboardingSkipped: false,
       needsOnboarding: false,
     });
+    unlockedBadges = new Set(sanitizeBadges(result.unlockedBadges || []));
+    applyBadgeInputs(result.badges || selectedBadges(), result.badgeOptOuts || selectedBadgeOptOuts());
+    renderProfileBadges();
     if (shouldCompleteOnboarding) {
       try {
         await saveOnboardingStatus("complete");

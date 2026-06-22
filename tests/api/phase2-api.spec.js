@@ -160,6 +160,20 @@ test("auth and profile APIs protect private routes and publish public profiles",
 
   await publishProfile(request, user);
 
+  const badgeProfile = await getMyProfile(request, user);
+  expect(badgeProfile.unlockedBadges).toEqual(expect.arrayContaining(["Verified Profile", "Profile Creator"]));
+  expect(badgeProfile.badges).toEqual(expect.arrayContaining(["Verified Profile", "Profile Creator"]));
+
+  await publishProfile(request, user, {
+    badges: ["Top Friend", "Profile Creator"],
+    badgeOptOuts: ["Verified Profile"],
+  });
+  const filteredBadges = await getMyProfile(request, user);
+  expect(filteredBadges.badges).toContain("Profile Creator");
+  expect(filteredBadges.badges).not.toContain("Top Friend");
+  expect(filteredBadges.badges).not.toContain("Verified Profile");
+  expect(filteredBadges.badgeOptOuts).toContain("Verified Profile");
+
   const publicProfile = await json(await request.get(`/api/profiles/${user.handle}`), 200);
   expect(publicProfile.name).toBe(user.name);
   expect(publicProfile.handle).toBe(user.handle);
@@ -170,6 +184,8 @@ test("auth and profile APIs protect private routes and publish public profiles",
   expect(publicProfile.tribes).toBeUndefined();
   expect(publicProfile.profilePrivacy).toBe("public");
   expect(publicProfile.entryAnimation).toBe("none");
+  expect(publicProfile.badges).toContain("Profile Creator");
+  expect(publicProfile.badges).not.toContain("Top Friend");
 
   await publishProfile(request, user, { profilePrivacy: "hidden", entryAnimation: "portal" });
   const blockedProfile = await json(await request.get(`/api/profiles/${user.handle}?view=1`), 403);

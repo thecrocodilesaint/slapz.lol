@@ -28,6 +28,7 @@ const adminEmails = new Set(
 );
 const sessionTtlMs = Number(process.env.SESSION_TTL_MS || 7 * 24 * 60 * 60 * 1000);
 const rateLimitBuckets = new Map();
+const maxFriendCount = 150;
 
 const rateLimits = {
   auth: { limit: 12, windowMs: 10 * 60 * 1000 },
@@ -336,6 +337,8 @@ function publicProfilePayload(profile) {
     tribes,
     tribeInvites,
     tribeJoinRequests,
+    badgeOptOuts,
+    unlockedBadges,
     ...publicProfile
   } = profile;
   return {
@@ -436,7 +439,7 @@ function mergeFriend(list, friend) {
   const current = Array.isArray(list) ? list : [];
   const friendKey = friend.handle || friend.link;
   if (current.some((item) => (item.handle || item.link) === friendKey)) return current;
-  return [...current, friend].slice(0, 24);
+  return [...current, friend].slice(0, maxFriendCount);
 }
 
 function friendMatchesKey(friend, key) {
@@ -1210,6 +1213,71 @@ async function listUserScores() {
       score: Number(user.snakeHighScore || 0),
     };
   });
+}
+
+async function listUserCreationFacts() {
+  if (hasSupabase) {
+    try {
+      const rows = await supabaseRequest("app_users", { query: "?select=id,created_at&order=created_at.asc" });
+      return rows.map((user) => ({
+        userId: String(user.id),
+        createdAt: user.created_at || "",
+      }));
+    } catch {
+      return [];
+    }
+  }
+
+  return Object.entries(readUsersFile().users)
+    .map(([userId, user]) => ({
+      userId,
+      createdAt: user.createdAt || "",
+    }))
+    .sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
+}
+
+async function isEarlyUser(userId) {
+  const users = await listUserCreationFacts();
+  const index = users.findIndex((user) => user.userId === String(userId || ""));
+  return index >= 0 && index < 1000;
+}
+
+async function isGameChampion(userId) {
+  const scores = (await listUserScores())
+    .filter((row) => Number(row.score || 0) > 0)
+    .sort((a, b) => Number(b.score || 0) - Number(a.score || 0));
+  const index = scores.findIndex((row) => row.userId === String(userId || ""));
+  return index >= 0 && index < 25;
+}
+
+async function unlockedProfileBadges(profile, user) {
+  const userId = String(user?.userId || user?.id || profile?.ownerUserId || "");
+  const unlocked = new Set();
+  const hasPublishedProfile = Boolean(profile?.handle && profile?.ownerUserId);
+  const hasBasicProfile = Boolean(hasPublishedProfile && sanitizeShortText(profile?.name, 32) && sanitizeHandle(profile?.handle));
+
+  if (userId && (await isEarlyUser(userId))) unlocked.add("Early User");
+  if (hasPublishedProfile) unlocked.add("Verified Profile");
+  if (hasBasicProfile) unlocked.add("Profile Creator");
+  if (normalizeTribesForProfile(profile).some((tribe) => tribe.ownerId === userId)) unlocked.add("Tribe Owner");
+  if ((Array.isArray(profile?.friends) ? profile.friends : []).length > 100) unlocked.add("Top Friend");
+  if (userId && (await isGameChampion(userId))) unlocked.add("Game Champion");
+
+  return sanitizeProfileBadges([...unlocked]);
+}
+
+async function applyProfileBadgeRules(profile, user) {
+  const unlocked = new Set(await unlockedProfileBadges(profile, user));
+  const optOuts = sanitizeProfileBadges(profile.badgeOptOuts).filter((badge) => unlocked.has(badge));
+  const optedOut = new Set(optOuts);
+  const badges = sanitizeProfileBadges([...sanitizeProfileBadges(profile.badges), ...unlocked]).filter(
+    (badge) => unlocked.has(badge) && !optedOut.has(badge)
+  );
+  return {
+    ...profile,
+    badges,
+    badgeOptOuts: optOuts,
+  };
 }
 
 async function publicUserSearch(viewerProfile, query = "", { suggestions = false } = {}) {
@@ -2071,7 +2139,9 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    const { ownerToken, ownerUserId, ...safeProfile } = profile;
+    const filteredProfile = await applyProfileBadgeRules(profile, authed);
+    const { ownerToken, ownerUserId, ...safeProfile } = filteredProfile;
+    safeProfile.unlockedBadges = await unlockedProfileBadges(filteredProfile, authed);
     sendJson(res, 200, safeProfile);
     return;
   }
@@ -3093,6 +3163,9 @@ const server = http.createServer(async (req, res) => {
       await incrementProfileViews(profile);
     }
     const publicProfile = publicProfilePayload(profile);
+    const ownerUser = profile.ownerUserId ? await findUserById(profile.ownerUserId) : null;
+    const unlockedBadges = new Set(ownerUser ? await unlockedProfileBadges(profile, ownerUser) : []);
+    publicProfile.badges = sanitizeProfileBadges(publicProfile.badges).filter((badge) => unlockedBadges.has(badge));
     if (url.searchParams.get("view") === "1") {
       publicProfile.hasAvatar = Boolean(publicProfile.avatarPath || publicProfile.avatarData);
       publicProfile.hasBackground = Boolean(publicProfile.backgroundPath || publicProfile.backgroundData);
@@ -3148,8 +3221,9 @@ const server = http.createServer(async (req, res) => {
       incoming.entryAnimation = sanitizeEntryAnimation(incoming.entryAnimation);
       incoming.featured = sanitizeFeaturedProfileItem(incoming.featured);
       incoming.badges = sanitizeProfileBadges(incoming.badges);
+      incoming.badgeOptOuts = sanitizeProfileBadges(incoming.badgeOptOuts);
       incoming.bestFriendHandles = cleanIdList(incoming.bestFriendHandles).map(sanitizeHandle).filter(Boolean).slice(0, 8);
-      const profile = await prepareProfileForSave({
+      let profile = await prepareProfileForSave({
         ...incoming,
         handle,
         profileHandle: handle,
@@ -3166,9 +3240,17 @@ const server = http.createServer(async (req, res) => {
         views: Number(existingProfile?.views || incoming.views || 0),
         updatedAt: new Date().toISOString(),
       }, existingProfile);
+      profile = await applyProfileBadgeRules(profile, authed);
       await saveProfile(profile);
       await saveUserProfileLink(authed.userId, { handle, origin });
-      sendJson(res, 200, { handle, url: profilePath, fullUrl: profileUrl });
+      sendJson(res, 200, {
+        handle,
+        url: profilePath,
+        fullUrl: profileUrl,
+        badges: profile.badges,
+        badgeOptOuts: profile.badgeOptOuts,
+        unlockedBadges: await unlockedProfileBadges(profile, authed),
+      });
     } catch (error) {
       sendJson(res, 400, { error: error.message });
     }

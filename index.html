@@ -1297,7 +1297,13 @@
           <input id="sparkleEffectInput" type="hidden" value="none" />
         </div>
         <div class="field">
-          <span>Profile badges</span>
+          <div class="field-title-row">
+            <span>Profile badges</span>
+            <button class="badge-help-button" type="button" aria-label="How profile badges work" aria-describedby="badgeHelpText">?</button>
+            <span class="badge-help-tooltip" id="badgeHelpText" role="tooltip">
+              Badges must be earned. Once you unlock badges, they will appear here and you can choose which ones to wear on your public profile.
+            </span>
+          </div>
           <div class="badge-option-grid" id="badgeOptionGrid" aria-label="Choose profile badges">
             <label><input type="checkbox" value="Early User" /> Early User</label>
             <label><input type="checkbox" value="Verified Profile" /> Verified Profile</label>

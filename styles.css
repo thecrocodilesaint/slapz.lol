@@ -1784,21 +1784,151 @@ body.sidebar-collapsed .sidebar-status-badge {
 
 .badge-option-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
-  gap: 0.45rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 7.6rem), 1fr));
+  gap: 0.42rem;
 }
 
 .badge-option-grid label {
-  display: flex;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: 1.05rem minmax(0, 1fr);
+  gap: 0.45rem;
   align-items: center;
+  justify-items: center;
+  min-height: 2.55rem;
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 0.6rem 0.7rem;
+  padding: 0.45rem 0.55rem;
   background: rgba(255, 255, 255, 0.045);
   color: var(--text);
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 900;
+  line-height: 1.15;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    opacity 160ms ease;
+}
+
+.badge-option-grid input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0.5rem rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+}
+
+.badge-option-grid input:checked {
+  border-color: var(--accent-2);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-2) 76%, #ffffff), var(--accent));
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--accent-2) 28%, transparent),
+    0 0 0.85rem color-mix(in srgb, var(--accent-2) 42%, transparent),
+    inset 0 0 0.2rem rgba(255, 255, 255, 0.35);
+}
+
+.badge-option-grid input:checked::after {
+  content: "";
+  display: block;
+  width: 0.34rem;
+  height: 0.56rem;
+  margin: 0.08rem auto 0;
+  border: solid #071016;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.badge-option-grid input:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.badge-option-grid label.badge-active {
+  border-color: color-mix(in srgb, var(--accent-2) 38%, var(--line));
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.badge-option-grid label.badge-locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.badge-option-grid label.badge-locked input {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.035);
+  box-shadow: none;
+}
+
+.field-title-row {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: max-content;
+  max-width: 100%;
+}
+
+.field-title-row > span:first-child {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.badge-help-button {
+  display: inline-grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.07);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 950;
+  cursor: help;
+  box-shadow: 0 0 0.75rem rgba(255, 255, 255, 0.08);
+}
+
+.badge-help-tooltip {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  left: 0;
+  z-index: 30;
+  width: min(18rem, calc(100vw - 2rem));
+  padding: 0.72rem 0.82rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  background: rgba(8, 9, 14, 0.94);
+  box-shadow:
+    0 1rem 2rem rgba(0, 0, 0, 0.38),
+    0 0 1.2rem color-mix(in srgb, var(--accent) 16%, transparent);
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1.45;
+  text-transform: none;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-0.25rem);
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+.badge-help-button:hover + .badge-help-tooltip,
+.badge-help-button:focus-visible + .badge-help-tooltip,
+.badge-help-button:active + .badge-help-tooltip {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .friend-card.best-friend {
@@ -3203,6 +3333,13 @@ body.sidebar-collapsed .sidebar-status-badge {
   text-transform: uppercase;
 }
 
+.wordle-entry .save-button,
+.wordle-entry .preview-button {
+  align-self: stretch;
+  min-height: 2.8rem;
+  margin: 0;
+}
+
 .click-rush-board {
   position: relative;
   width: min(100%, 32rem);
@@ -3273,6 +3410,7 @@ body.sidebar-collapsed .sidebar-status-badge {
 
 .snake-controls .save-button,
 .snake-controls .preview-button {
+  min-height: 2.8rem;
   margin: 0;
 }
 
@@ -4395,6 +4533,25 @@ select option:focus {
 select option:disabled {
   color: #858b9b;
   background: #08090f;
+}
+
+.editor select,
+.profile-editor select {
+  border-color: color-mix(in srgb, var(--line) 82%, var(--accent) 18%);
+  background-color: rgba(8, 9, 14, 0.76);
+  box-shadow:
+    inset 0 0 1rem rgba(255, 255, 255, 0.035),
+    0 0 0.7rem color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.editor select:hover,
+.profile-editor select:hover,
+.editor select:focus,
+.profile-editor select:focus {
+  border-color: color-mix(in srgb, var(--accent-2) 54%, rgba(255, 255, 255, 0.2));
+  box-shadow:
+    0 0 1rem color-mix(in srgb, var(--accent-2) 18%, transparent),
+    inset 0 0 1rem rgba(255, 255, 255, 0.045);
 }
 
 input[type="file"] {
