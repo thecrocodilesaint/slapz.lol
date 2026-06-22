@@ -18,6 +18,8 @@ const inputs = {
   location: $("#locationInput"),
   status: $("#statusInput"),
   template: $("#templateInput"),
+  profilePrivacy: $("#profilePrivacyInput"),
+  entryAnimation: $("#entryAnimationInput"),
   featuredType: $("#featuredTypeInput"),
   featuredText: $("#featuredTextInput"),
   cursorTrail: $("#cursorTrailInput"),
@@ -123,6 +125,7 @@ let dashboardTheme = localStorage.getItem(dashboardThemeKey) || "black";
 let dashboardMusicMutedOutsideBio = localStorage.getItem(dashboardMuteKey) === "true";
 let sidebarCollapsed = localStorage.getItem(sidebarCollapsedKey) === "true";
 let cursorColor = localStorage.getItem(cursorColorKey) || "white";
+let activeEntryAnimation = "none";
 let accountState = {
   email: "",
   userId: "",
@@ -205,6 +208,12 @@ const profileTemplates = {
   retro: { theme: "black", sparkle: "white", cursor: "normal" },
 };
 
+const entryAnimationOptions = new Set(["none", "fade-in", "neon-pulse", "glitch", "portal", "pixel-load"]);
+const profilePrivacyOptions = new Set(["public", "friends", "hidden"]);
+
+const sanitizeEntryAnimation = (value) => (entryAnimationOptions.has(String(value || "")) ? String(value) : "none");
+const sanitizeProfilePrivacy = (value) => (profilePrivacyOptions.has(String(value || "")) ? String(value) : "public");
+
 const badgeOptions = ["Early User", "Verified Profile", "Tribe Owner", "Game Champion", "Top Friend", "Profile Creator"];
 const dailyChallenges = [
   { title: "Play Wordle today", text: "Finish one Wordle round to keep your brain warm." },
@@ -224,6 +233,7 @@ const mediaState = {
   musicName: "",
   musicPath: "",
   musicObjectUrl: "",
+  privateMediaUrls: {},
 };
 
 const snake = {
@@ -3928,6 +3938,96 @@ function renderDailyChallenge() {
   $("#dailyChallengeText").textContent = challenge.text;
 }
 
+const hasProfileMedia = (dataKey, pathKey) => Boolean(mediaState[dataKey] || mediaState[pathKey]);
+const hasAnySocialLink = () => Object.values(collectSocialLinks()).some((value) => value.trim());
+
+function profileCompletionItems() {
+  return [
+    {
+      label: "Display name",
+      done: Boolean(inputs.name.value.trim()),
+      suggestion: "Add a display name",
+    },
+    {
+      label: "Handle",
+      done: Boolean(cleanHandle(inputs.handle.value)),
+      suggestion: "Choose a handle",
+    },
+    {
+      label: "Bio text",
+      done: Boolean(inputs.bio.value.trim()),
+      suggestion: "Write a short bio",
+    },
+    {
+      label: "Location",
+      done: Boolean(inputs.location.value.trim()),
+      suggestion: "Add a location",
+    },
+    {
+      label: "Avatar",
+      done: hasProfileMedia("avatarData", "avatarPath"),
+      suggestion: "Add an avatar",
+    },
+    {
+      label: "Background media",
+      done: hasProfileMedia("backgroundData", "backgroundPath"),
+      suggestion: "Upload background media",
+    },
+    {
+      label: "Music",
+      done: hasProfileMedia("musicData", "musicPath"),
+      suggestion: "Add background music",
+    },
+    {
+      label: "Social link",
+      done: hasAnySocialLink(),
+      suggestion: "Add one social link",
+    },
+    {
+      label: "Theme",
+      done: Boolean(profileTheme),
+      suggestion: "Choose a theme",
+    },
+    {
+      label: "Published",
+      done: Boolean(accountState.profileHandle || accountState.profilePath),
+      suggestion: "Publish your profile",
+    },
+  ];
+}
+
+function renderProfileCompletion() {
+  const list = $("#profileCompletionList");
+  if (!list) return;
+
+  const items = profileCompletionItems();
+  const completeCount = items.filter((item) => item.done).length;
+  const percent = Math.round((completeCount / items.length) * 100);
+  const title = $("#profileCompletionTitle");
+  const percentLabel = $("#profileCompletionPercent");
+  const bar = $("#profileCompletionBar");
+  const suggestions = $("#profileCompletionSuggestions");
+
+  if (title) title.textContent = `Profile ${percent}% complete`;
+  if (percentLabel) percentLabel.textContent = `${percent}%`;
+  if (bar) bar.style.width = `${percent}%`;
+
+  list.textContent = "";
+  items.forEach((item) => {
+    const row = document.createElement("li");
+    row.className = item.done ? "complete" : "";
+    row.textContent = `${item.done ? "Done" : "To do"}: ${item.label}`;
+    list.append(row);
+  });
+
+  const nextSuggestions = items.filter((item) => !item.done).map((item) => item.suggestion).slice(0, 3);
+  if (suggestions) {
+    suggestions.textContent = nextSuggestions.length
+      ? `Next: ${nextSuggestions.join(", ")}.`
+      : "Nice. Your profile has the full setup.";
+  }
+}
+
 const updateAccountState = (data = {}) => {
   const previousOwner = accountState.userId || accountState.email;
   accountState = {
@@ -3955,6 +4055,7 @@ const updateAccountState = (data = {}) => {
   }
   syncOwnerPanelAccess();
   updateSettingsDetails();
+  renderProfileCompletion();
 };
 
 function updateSettingsDetails() {
@@ -3988,6 +4089,7 @@ const syncProfile = () => {
   syncSocialLinks();
   updatePublicLink();
   updateSettingsDetails();
+  renderProfileCompletion();
 };
 
 const formatViews = (count) => {
@@ -3998,6 +4100,10 @@ const formatViews = (count) => {
 [...Object.values(inputs), ...Object.values(socialInputs)].forEach((input) =>
   input.addEventListener("input", syncProfile)
 );
+
+[inputs.profilePrivacy, inputs.entryAnimation, inputs.template].forEach((input) => {
+  input?.addEventListener("change", syncProfile);
+});
 
 auth.form.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -4128,6 +4234,7 @@ document.querySelectorAll(".editor .swatch").forEach((button) => {
   button.addEventListener("click", () => {
     profileTheme = button.dataset.theme || "black";
     applyThemeForCurrentSection();
+    renderProfileCompletion();
   });
 });
 
@@ -4870,6 +4977,7 @@ const setAvatarSource = (src, name = "") => {
     src ||
     "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=320&q=80";
   $("#avatarFileName").textContent = name || "Choose a profile image";
+  renderProfileCompletion();
 };
 
 $("#avatarInput").addEventListener("change", async (event) => {
@@ -4899,6 +5007,7 @@ const setBackgroundSource = (src, name = "", type = "") => {
 
   if (!src) {
     $("#backgroundFileName").textContent = "Choose an image or video";
+    renderProfileCompletion();
     return;
   }
 
@@ -4907,6 +5016,7 @@ const setBackgroundSource = (src, name = "", type = "") => {
   if (type.startsWith("image/")) {
     image.style.backgroundImage = `url("${src}")`;
     document.body.classList.add("has-image");
+    renderProfileCompletion();
     return;
   }
 
@@ -4914,6 +5024,7 @@ const setBackgroundSource = (src, name = "", type = "") => {
   video.loop = !isPublicProfilePage;
   video.play().catch(() => {});
   document.body.classList.add("has-video");
+  renderProfileCompletion();
 };
 
 $("#backgroundVideo").addEventListener("loadedmetadata", () => {
@@ -4940,6 +5051,7 @@ const setMusicSource = (src, name = "") => {
     $("#musicFileName").textContent = "Choose an audio file";
     $("#musicIcon").textContent = "Play";
     syncDashboardAudioState();
+    renderProfileCompletion();
     return;
   }
 
@@ -4953,7 +5065,51 @@ const setMusicSource = (src, name = "") => {
   $("#musicPlayer").hidden = false;
   $("#musicIcon").textContent = "Play";
   syncDashboardAudioState();
+  renderProfileCompletion();
 };
+
+const clearPrivateMediaUrl = (kind) => {
+  const current = mediaState.privateMediaUrls?.[kind];
+  if (current) URL.revokeObjectURL(current);
+  mediaState.privateMediaUrls[kind] = "";
+};
+
+async function authenticatedProfileMediaUrl(handle, kind) {
+  if (!sessionToken) return "";
+  const response = await fetch(`/api/profiles/${handle}/${kind}`, { headers: authHeaders() });
+  if (!response.ok) return "";
+  const blob = await response.blob();
+  clearPrivateMediaUrl(kind);
+  const objectUrl = URL.createObjectURL(blob);
+  mediaState.privateMediaUrls[kind] = objectUrl;
+  return objectUrl;
+}
+
+async function applyProfileMediaRoutes(data, handle) {
+  const cleanProfileHandle = cleanHandle(handle);
+  if (!cleanProfileHandle) return;
+
+  const needsAuth = sanitizeProfilePrivacy(data.profilePrivacy) !== "public" && Boolean(sessionToken);
+  const sourceFor = async (kind) =>
+    needsAuth ? authenticatedProfileMediaUrl(cleanProfileHandle, kind) : `/api/profiles/${cleanProfileHandle}/${kind}`;
+
+  if (data.hasAvatar) {
+    const avatarSource = await sourceFor("avatar");
+    if (avatarSource) setAvatarSource(avatarSource, data.avatarName || "Saved profile image");
+  }
+
+  if (data.hasBackground) {
+    const backgroundSource = await sourceFor("background");
+    if (backgroundSource) {
+      setBackgroundSource(backgroundSource, data.backgroundName || "Saved background", data.backgroundType || "image/jpeg");
+    }
+  }
+
+  if (data.hasMusic) {
+    const musicSource = await sourceFor("music");
+    if (musicSource) setMusicSource(musicSource, data.musicName || "Background music");
+  }
+}
 
 $("#backgroundInput").addEventListener("change", async (event) => {
   const file = event.target.files[0];
@@ -5032,16 +5188,30 @@ const hideEntryGate = () => {
   $("#musicGate").classList.remove("entry-active");
 };
 
+const runProfileEntryAnimation = () => {
+  if (!isPublicProfilePage || activeEntryAnimation === "none") return;
+  if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+  const card = $(".profile-card");
+  if (!card) return;
+  const animationClasses = [...entryAnimationOptions].filter((item) => item !== "none").map((item) => `entry-animation-${item}`);
+  card.classList.remove(...animationClasses);
+  void card.offsetWidth;
+  card.classList.add(`entry-animation-${activeEntryAnimation}`);
+  window.setTimeout(() => card.classList.remove(`entry-animation-${activeEntryAnimation}`), 1500);
+};
+
 const startEntryGate = async () => {
   if (entryMusicStarting || !$("#musicGate").classList.contains("entry-active")) return;
   const audio = $("#backgroundMusic");
   if (!audio.src) {
     hideEntryGate();
+    runProfileEntryAnimation();
     return;
   }
 
   entryMusicStarting = true;
   hideEntryGate();
+  runProfileEntryAnimation();
   try {
     if (audio.src) {
       audio.currentTime = 0;
@@ -5128,6 +5298,8 @@ const collectProfile = () => ({
   location: inputs.location.value.trim() || "Somewhere online",
   status: sanitizeStatus(inputs.status?.value),
   profileTemplate: sanitizeProfileTemplate(inputs.template?.value),
+  profilePrivacy: sanitizeProfilePrivacy(inputs.profilePrivacy?.value),
+  entryAnimation: sanitizeEntryAnimation(inputs.entryAnimation?.value),
   featured: currentFeatured(),
   badges: selectedBadges(),
   bestFriendHandles,
@@ -5161,6 +5333,9 @@ const applyProfile = (data) => {
   inputs.location.value = data.location || "Somewhere online";
   if (inputs.status) inputs.status.value = sanitizeStatus(data.status);
   if (inputs.template) inputs.template.value = sanitizeProfileTemplate(data.profileTemplate || data.template);
+  if (inputs.profilePrivacy) inputs.profilePrivacy.value = sanitizeProfilePrivacy(data.profilePrivacy);
+  activeEntryAnimation = sanitizeEntryAnimation(data.entryAnimation);
+  if (inputs.entryAnimation) inputs.entryAnimation.value = activeEntryAnimation;
   const featured = sanitizeFeatured(data.featured);
   if (inputs.featuredType) inputs.featuredType.value = featured.type;
   if (inputs.featuredText) inputs.featuredText.value = featured.text;
@@ -5207,15 +5382,28 @@ const applyProfile = (data) => {
   mediaState.musicPath = data.musicPath || "";
 
   const profileHandle = cleanHandle(data.handle || inputs.handle.value);
-  const avatarSource = mediaState.avatarPath ? `/api/profiles/${profileHandle}/avatar` : mediaState.avatarData;
-  const backgroundSource = mediaState.backgroundPath ? `/api/profiles/${profileHandle}/background` : mediaState.backgroundData;
-  const musicSource = mediaState.musicPath ? `/api/profiles/${profileHandle}/music` : mediaState.musicData;
+  const shouldLoadMediaWithAuth = sessionToken && sanitizeProfilePrivacy(data.profilePrivacy) !== "public";
+  const avatarSource = mediaState.avatarPath && !shouldLoadMediaWithAuth ? `/api/profiles/${profileHandle}/avatar` : mediaState.avatarData;
+  const backgroundSource =
+    mediaState.backgroundPath && !shouldLoadMediaWithAuth ? `/api/profiles/${profileHandle}/background` : mediaState.backgroundData;
+  const musicSource = mediaState.musicPath && !shouldLoadMediaWithAuth ? `/api/profiles/${profileHandle}/music` : mediaState.musicData;
 
   setAvatarSource(avatarSource, mediaState.avatarName);
   setBackgroundSource(backgroundSource, mediaState.backgroundName, mediaState.backgroundType);
   setMusicSource(musicSource, mediaState.musicName);
   profile.views.textContent = formatViews(data.views);
   syncProfile();
+  if (shouldLoadMediaWithAuth) {
+    applyProfileMediaRoutes(
+      {
+        ...data,
+        hasAvatar: Boolean(data.hasAvatar || mediaState.avatarPath),
+        hasBackground: Boolean(data.hasBackground || mediaState.backgroundPath),
+        hasMusic: Boolean(data.hasMusic || mediaState.musicPath),
+      },
+      profileHandle
+    );
+  }
 };
 
 $("#saveButton").addEventListener("click", async () => {
@@ -5267,24 +5455,23 @@ async function loadPublicProfile() {
   if (!publicHandle) return;
 
   try {
-    const response = await fetch(`/api/profiles/${publicHandle}?view=1`);
+    const response = await fetch(`/api/profiles/${publicHandle}?view=1`, {
+      headers: sessionToken ? authHeaders() : {},
+    });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Profile not found");
     applyProfile(data);
-    if (data.hasMusic && !mediaState.musicData && !mediaState.musicPath) {
-      mediaState.musicData = `/api/profiles/${publicHandle}/music`;
-      mediaState.musicName = data.musicName || "Background music";
-      setMusicSource(mediaState.musicData, mediaState.musicName);
-    }
+    await applyProfileMediaRoutes(data, publicHandle);
     enterPreview(true);
     showPublicEntryGate(Boolean(data.hasMusic));
     document.title = `${data.name || data.handle} | NightCard`;
   } catch (error) {
-    profile.name.textContent = "Profile not found";
+    const isPrivate = /private/i.test(error.message);
+    profile.name.textContent = isPrivate ? "This profile is private." : "Profile not found";
     profile.handle.textContent = `@${publicHandle}`;
-    profile.bio.textContent = error.message;
+    profile.bio.textContent = isPrivate ? "Only approved viewers can open this profile." : error.message;
     enterPreview(true);
-    showPublicEntryGate(false);
+    hideEntryGate();
   }
 }
 

@@ -1052,6 +1052,21 @@
           /u/nightcard
         </a>
 
+        <section class="profile-completion-card" id="profileCompletionCard" aria-label="Profile completion">
+          <div class="profile-completion-top">
+            <div>
+              <span>Profile guide</span>
+              <strong id="profileCompletionTitle">Profile 0% complete</strong>
+            </div>
+            <span class="profile-completion-percent" id="profileCompletionPercent">0%</span>
+          </div>
+          <div class="profile-completion-track" aria-hidden="true">
+            <span id="profileCompletionBar"></span>
+          </div>
+          <ul class="profile-completion-list" id="profileCompletionList"></ul>
+          <p class="profile-completion-suggestions" id="profileCompletionSuggestions"></p>
+        </section>
+
         <label>
           Display name
           <input id="nameInput" type="text" value="Nova" maxlength="24" />
@@ -1092,6 +1107,25 @@
             <option value="music">Music</option>
             <option value="creator">Creator</option>
             <option value="retro">Retro</option>
+          </select>
+        </label>
+        <label>
+          Profile privacy
+          <select id="profilePrivacyInput">
+            <option value="public">Public</option>
+            <option value="friends">Friends Only</option>
+            <option value="hidden">Hidden</option>
+          </select>
+        </label>
+        <label>
+          Profile entry animation
+          <select id="entryAnimationInput">
+            <option value="none">None</option>
+            <option value="fade-in">Fade In</option>
+            <option value="neon-pulse">Neon Pulse</option>
+            <option value="glitch">Glitch</option>
+            <option value="portal">Portal</option>
+            <option value="pixel-load">Pixel Load</option>
           </select>
         </label>
         <div class="field">

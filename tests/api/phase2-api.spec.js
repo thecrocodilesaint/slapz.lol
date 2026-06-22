@@ -168,6 +168,20 @@ test("auth and profile APIs protect private routes and publish public profiles",
   expect(publicProfile.ownerUserId).toBeUndefined();
   expect(publicProfile.adminNotifications).toBeUndefined();
   expect(publicProfile.tribes).toBeUndefined();
+  expect(publicProfile.profilePrivacy).toBe("public");
+  expect(publicProfile.entryAnimation).toBe("none");
+
+  await publishProfile(request, user, { profilePrivacy: "hidden", entryAnimation: "portal" });
+  const blockedProfile = await json(await request.get(`/api/profiles/${user.handle}?view=1`), 403);
+  expect(blockedProfile.error).toBe("This profile is private.");
+  const ownerProfile = await json(
+    await request.get(`/api/profiles/${user.handle}?view=1`, { headers: authHeaders(user.token) }),
+    200
+  );
+  expect(ownerProfile.profilePrivacy).toBe("hidden");
+  expect(ownerProfile.entryAnimation).toBe("portal");
+  expect(ownerProfile.avatarData).toBeUndefined();
+  expect(ownerProfile.avatarPath).toBeUndefined();
 
   const me = await json(await request.get("/api/me", { headers: authHeaders(user.token) }), 200);
   expect(me.profileHandle).toBe(user.handle);

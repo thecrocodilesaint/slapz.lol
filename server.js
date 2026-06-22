@@ -338,7 +338,11 @@ function publicProfilePayload(profile) {
     tribeJoinRequests,
     ...publicProfile
   } = profile;
-  return publicProfile;
+  return {
+    ...publicProfile,
+    entryAnimation: sanitizeEntryAnimation(publicProfile.entryAnimation),
+    profilePrivacy: sanitizeProfilePrivacy(publicProfile.profilePrivacy),
+  };
 }
 
 function handleFromFriendTarget(value) {
@@ -385,6 +389,34 @@ function ownFriendFromProfile(profile) {
     handle,
     link: requestLinkFor(handle),
   };
+}
+
+function profileHasFriend(profile, friendHandle, friendUserId) {
+  const handle = sanitizeHandle(friendHandle);
+  const userId = String(friendUserId || "");
+  return (Array.isArray(profile?.friends) ? profile.friends : []).some((friend) => {
+    const linkedHandle = sanitizeHandle(friend?.handle) || handleFromFriendTarget(friend?.link);
+    return (handle && linkedHandle === handle) || (userId && String(friend?.userId || friend?.id || "") === userId);
+  });
+}
+
+async function canViewProfile(profile, req) {
+  const privacy = sanitizeProfilePrivacy(profile?.profilePrivacy);
+  if (privacy === "public") return { allowed: true, privacy };
+
+  const authed = await getAuthedUser(req);
+  if (!authed) return { allowed: false, privacy };
+  if (profile?.ownerUserId && profile.ownerUserId === authed.userId) return { allowed: true, privacy, authed };
+  if (privacy === "hidden") return { allowed: false, privacy, authed };
+
+  const viewerProfile = await getProfileByOwner(authed.userId);
+  const ownerHandle = sanitizeHandle(profile?.handle);
+  const viewerHandle = sanitizeHandle(viewerProfile?.handle);
+  const allowed =
+    profileHasFriend(profile, viewerHandle, authed.userId) ||
+    profileHasFriend(viewerProfile, ownerHandle, profile?.ownerUserId);
+
+  return { allowed, privacy, authed };
 }
 
 function sentRequestFromTarget(profile, request) {
@@ -447,6 +479,16 @@ function sanitizeProfileTemplate(value) {
   return ["dark", "gamer", "neon", "cute", "anime", "music", "creator", "retro"].includes(String(value || ""))
     ? String(value)
     : "dark";
+}
+
+function sanitizeEntryAnimation(value) {
+  return ["none", "fade-in", "neon-pulse", "glitch", "portal", "pixel-load"].includes(String(value || ""))
+    ? String(value)
+    : "none";
+}
+
+function sanitizeProfilePrivacy(value) {
+  return ["public", "friends", "hidden"].includes(String(value || "")) ? String(value) : "public";
 }
 
 function sanitizeProfileStatus(value) {
@@ -1711,7 +1753,7 @@ function parseDataUrl(dataUrl) {
   };
 }
 
-async function sendProfileMedia(res, profile, mediaType) {
+async function sendProfileMedia(req, res, profile, mediaType) {
   const fieldMap = {
     music: { data: "musicData", path: "musicPath", fallbackMime: "audio/mpeg", field: "music" },
     avatar: { data: "avatarData", path: "avatarPath", fallbackMime: "image/jpeg", field: "avatar" },
@@ -1723,13 +1765,20 @@ async function sendProfileMedia(res, profile, mediaType) {
     return;
   }
 
+  const access = await canViewProfile(profile, req);
+  if (!access.allowed) {
+    sendJson(res, 403, { error: "This profile is private." });
+    return;
+  }
+  const cacheControl = access.privacy === "public" ? "public, max-age=300" : "no-store";
+
   if (hasSupabase && profile[fields.path]) {
     const response = await supabaseStorageRequest(`/object/${mediaBucket}/${profile[fields.path]}`);
     const buffer = Buffer.from(await response.arrayBuffer());
     res.writeHead(200, {
       "Content-Type": safeMediaMime(fields.field, response.headers.get("content-type"), fields.fallbackMime),
       "Content-Length": buffer.length,
-      "Cache-Control": "public, max-age=300",
+      "Cache-Control": cacheControl,
     });
     res.end(buffer);
     return;
@@ -1744,7 +1793,7 @@ async function sendProfileMedia(res, profile, mediaType) {
   res.writeHead(200, {
     "Content-Type": safeMediaMime(fields.field, media.mime, fields.fallbackMime),
     "Content-Length": media.buffer.length,
-    "Cache-Control": "public, max-age=300",
+    "Cache-Control": cacheControl,
   });
   res.end(media.buffer);
 }
@@ -3005,10 +3054,12 @@ const server = http.createServer(async (req, res) => {
     const profiles = await listProfiles();
     const urls = [
       { loc: origin, lastmod: new Date().toISOString() },
-      ...profiles.map((profile) => ({
-        loc: `${origin}/u/${profile.handle}`,
-        lastmod: profile.updatedAt || new Date().toISOString(),
-      })),
+      ...profiles
+        .filter((profile) => sanitizeProfilePrivacy(profile.profilePrivacy) === "public")
+        .map((profile) => ({
+          loc: `${origin}/u/${profile.handle}`,
+          lastmod: profile.updatedAt || new Date().toISOString(),
+        })),
     ];
     const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls
       .map((item) => `  <url>\n    <loc>${item.loc}</loc>\n    <lastmod>${item.lastmod}</lastmod>\n  </url>`)
@@ -3022,7 +3073,7 @@ const server = http.createServer(async (req, res) => {
     const handle = sanitizeHandle(decodeURIComponent(parts[3] || ""));
     const mediaType = parts[4];
     const profile = await getProfile(handle);
-    await sendProfileMedia(res, profile, mediaType);
+    await sendProfileMedia(req, res, profile, mediaType);
     return;
   }
 
@@ -3031,6 +3082,11 @@ const server = http.createServer(async (req, res) => {
     const profile = await getProfile(handle);
     if (!profile) {
       sendJson(res, 404, { error: "Profile not found" });
+      return;
+    }
+    const access = await canViewProfile(profile, req);
+    if (!access.allowed) {
+      sendJson(res, 403, { error: "This profile is private." });
       return;
     }
     if (url.searchParams.get("view") === "1") {
@@ -3042,8 +3098,11 @@ const server = http.createServer(async (req, res) => {
       publicProfile.hasBackground = Boolean(publicProfile.backgroundPath || publicProfile.backgroundData);
       publicProfile.hasMusic = Boolean(publicProfile.musicPath || publicProfile.musicData);
       delete publicProfile.avatarData;
+      delete publicProfile.avatarPath;
       delete publicProfile.backgroundData;
+      delete publicProfile.backgroundPath;
       delete publicProfile.musicData;
+      delete publicProfile.musicPath;
     }
     sendJson(res, 200, publicProfile);
     return;
@@ -3085,6 +3144,8 @@ const server = http.createServer(async (req, res) => {
       validateProfileMedia(incoming);
       incoming.status = sanitizeProfileStatus(incoming.status);
       incoming.profileTemplate = sanitizeProfileTemplate(incoming.profileTemplate || incoming.template);
+      incoming.profilePrivacy = sanitizeProfilePrivacy(incoming.profilePrivacy);
+      incoming.entryAnimation = sanitizeEntryAnimation(incoming.entryAnimation);
       incoming.featured = sanitizeFeaturedProfileItem(incoming.featured);
       incoming.badges = sanitizeProfileBadges(incoming.badges);
       incoming.bestFriendHandles = cleanIdList(incoming.bestFriendHandles).map(sanitizeHandle).filter(Boolean).slice(0, 8);
