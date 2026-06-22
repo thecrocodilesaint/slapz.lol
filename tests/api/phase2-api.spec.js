@@ -220,6 +220,14 @@ test("friend request APIs send, accept, and remove friends", async ({ request },
   expect(sent.targetHandle).toBe(receiver.handle);
   expect(sent.status).toBe("sent");
 
+  const search = await json(
+    await request.get(`/api/users/search?q=${encodeURIComponent(receiver.handle)}`, {
+      headers: authHeaders(sender.token),
+    }),
+    200
+  );
+  expect(search.users.some((user) => user.handle === receiver.handle)).toBe(true);
+
   const receiverBeforeAccept = await getMyProfile(request, receiver);
   expect(receiverBeforeAccept.friendRequests).toHaveLength(1);
   expect(receiverBeforeAccept.friendRequests[0].fromHandle).toBe(sender.handle);
@@ -310,6 +318,25 @@ test("tribe APIs enforce membership, owner controls, and tribe chat scope", asyn
   expect(lastMessage.text).toBe(messageText);
   expect(lastMessage.senderHandle).toBe(member.handle);
   expect(lastMessage.createdAt).toBeTruthy();
+
+  const reactedState = await json(
+    await request.post(`/api/tribes/${tribe.tribeId}/messages/${lastMessage.id}/reactions`, {
+      headers: authHeaders(member.token),
+      data: { emoji: "🔥" },
+    }),
+    200
+  );
+  const reactedMessage = reactedState.messages.find((message) => message.id === lastMessage.id);
+  expect(reactedMessage.reactions["🔥"]).toContain(member.userId);
+
+  const pinnedState = await json(
+    await request.post(`/api/tribes/${tribe.tribeId}/messages/${lastMessage.id}/pin`, {
+      headers: authHeaders(owner.token),
+      data: { pinned: true },
+    }),
+    200
+  );
+  expect(pinnedState.messages.find((message) => message.id === lastMessage.id).pinned).toBe(true);
 
   const ownerMessages = await json(
     await request.get(`/api/tribes/${tribe.tribeId}/messages`, {
@@ -421,6 +448,15 @@ test("game score API keeps the highest snake score", async ({ request }, testInf
     200
   );
   expect(lowerScore.highScore).toBe(42);
+
+  await publishProfile(request, user);
+  const leaderboard = await json(
+    await request.get("/api/games/leaderboards", {
+      headers: authHeaders(user.token),
+    }),
+    200
+  );
+  expect(leaderboard.global.some((row) => row.handle === user.handle && row.score === 42)).toBe(true);
 });
 
 test("auth rate limiting blocks repeated failed attempts", async ({ request }) => {

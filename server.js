@@ -431,6 +431,59 @@ function sanitizeChatText(text) {
   return String(text || "").trim().replace(/\s+/g, " ").slice(0, 500);
 }
 
+function sanitizeTribeVisibility(value) {
+  return ["public", "private", "invite-only"].includes(String(value || "")) ? String(value) : "public";
+}
+
+function sanitizeTribeIcon(value) {
+  return String(value || "T").trim().slice(0, 4) || "T";
+}
+
+function sanitizeShortText(value, max = 140) {
+  return String(value || "").trim().replace(/\s+/g, " ").slice(0, max);
+}
+
+function sanitizeProfileTemplate(value) {
+  return ["dark", "gamer", "neon", "cute", "anime", "music", "creator", "retro"].includes(String(value || ""))
+    ? String(value)
+    : "dark";
+}
+
+function sanitizeProfileStatus(value) {
+  const status = sanitizeShortText(value || "Online", 32);
+  return ["Online", "Chilling", "Gaming", "Busy", "Listening to music"].includes(status) ? status : "Online";
+}
+
+function sanitizeProfileBadges(items = []) {
+  const allowed = new Set(["Early User", "Verified Profile", "Tribe Owner", "Game Champion", "Top Friend", "Profile Creator"]);
+  return [...new Set((Array.isArray(items) ? items : []).map((item) => sanitizeShortText(item, 32)).filter((item) => allowed.has(item)))].slice(0, 6);
+}
+
+function sanitizeFeaturedProfileItem(item = {}) {
+  const type = ["status", "game", "song", "tribe", "friend"].includes(String(item.type || "")) ? String(item.type) : "status";
+  return { type, text: sanitizeShortText(item.text, 80) };
+}
+
+function sanitizeImageDataUrl(value, maxBytes = 1024 * 1024) {
+  const dataUrl = String(value || "");
+  if (!dataUrl) return "";
+  const parsed = parseDataUrl(dataUrl);
+  if (!parsed || !["image/png", "image/jpeg", "image/webp", "image/gif"].includes(parsed.mime)) return "";
+  if (parsed.buffer.length > maxBytes) return "";
+  return dataUrl;
+}
+
+function sanitizeChatAttachment(attachment) {
+  if (!attachment?.data) return null;
+  const data = sanitizeImageDataUrl(attachment.data, 1024 * 1024);
+  if (!data) return null;
+  return {
+    name: sanitizeShortText(attachment.name || "attachment", 80),
+    type: String(attachment.type || "").slice(0, 48),
+    data,
+  };
+}
+
 function cleanIdList(items) {
   return [...new Set((Array.isArray(items) ? items : []).map((item) => String(item || "").trim()).filter(Boolean))];
 }
@@ -442,6 +495,7 @@ function tribeMemberFromProfile(profile) {
     displayName: requestDisplayName(profile),
     handle,
     link: requestLinkFor(handle),
+    role: "member",
   };
 }
 
@@ -455,6 +509,7 @@ function normalizeTribe(tribe, ownerProfile) {
       : [];
   const memberIds = cleanIdList(rawMemberIds);
   if (ownerId && !memberIds.includes(ownerId)) memberIds.unshift(ownerId);
+  const adminIds = cleanIdList(tribe?.adminIds).filter((id) => id && id !== ownerId && memberIds.includes(id));
 
   return {
     tribeId: String(tribe?.tribeId || crypto.randomUUID()),
@@ -463,6 +518,7 @@ function normalizeTribe(tribe, ownerProfile) {
     ownerDisplayName: requestDisplayName(ownerProfile) || String(tribe?.ownerDisplayName || "Owner").slice(0, 32),
     ownerHandle: sanitizeHandle(ownerProfile?.handle || tribe?.ownerHandle),
     memberIds,
+    adminIds,
     pendingInviteIds: cleanIdList(tribe?.pendingInviteIds),
     pendingJoinIds: cleanIdList(tribe?.pendingJoinIds),
     messages: (Array.isArray(tribe?.messages) ? tribe.messages : [])
@@ -472,11 +528,22 @@ function normalizeTribe(tribe, ownerProfile) {
         senderDisplayName: String(message?.senderDisplayName || "Member").trim().slice(0, 32),
         senderHandle: sanitizeHandle(message?.senderHandle),
         text: sanitizeChatText(message?.text),
+        attachment: sanitizeChatAttachment(message?.attachment),
+        reactions: Object.fromEntries(
+          Object.entries(message?.reactions || {})
+            .map(([emoji, userIds]) => [String(emoji).slice(0, 4), cleanIdList(userIds).slice(0, 60)])
+            .filter(([emoji]) => emoji)
+        ),
+        pinned: Boolean(message?.pinned),
         createdAt: message?.createdAt || now,
       }))
-      .filter((message) => message.senderId && message.text)
+      .filter((message) => message.senderId && (message.text || message.attachment))
       .slice(-300),
     themeColor: sanitizeThemeColor(tribe?.themeColor),
+    visibility: sanitizeTribeVisibility(tribe?.visibility),
+    icon: sanitizeTribeIcon(tribe?.icon),
+    bannerData: sanitizeImageDataUrl(tribe?.bannerData, 1024 * 1024),
+    announcement: sanitizeShortText(tribe?.announcement, 140),
     createdAt: tribe?.createdAt || now,
     updatedAt: tribe?.updatedAt || now,
   };
@@ -498,12 +565,14 @@ function serializeTribe(tribe, ownerProfile, viewerProfile, profiles = []) {
   const profileByOwnerId = new Map(profiles.map((profile) => [String(profile.ownerUserId || ""), profile]));
   const members = tribe.memberIds.map((memberId) => {
     const memberProfile = profileByOwnerId.get(String(memberId)) || (String(memberId) === String(ownerProfile?.ownerUserId) ? ownerProfile : null);
-    if (memberProfile) return tribeMemberFromProfile(memberProfile);
+    const role = String(memberId) === String(tribe.ownerId) ? "owner" : tribe.adminIds.includes(String(memberId)) ? "admin" : "member";
+    if (memberProfile) return { ...tribeMemberFromProfile(memberProfile), role };
     return {
       userId: String(memberId),
       displayName: "Unknown member",
       handle: "",
       link: "",
+      role,
     };
   });
   const viewerId = String(viewerProfile?.ownerUserId || "");
@@ -515,6 +584,7 @@ function serializeTribe(tribe, ownerProfile, viewerProfile, profiles = []) {
     ownerHandle: sanitizeHandle(ownerProfile?.handle || tribe.ownerHandle),
     members,
     isOwner: Boolean(viewerId && viewerId === tribe.ownerId),
+    isAdmin: Boolean(viewerId && tribe.adminIds.includes(viewerId)),
     isMember: Boolean(viewerId && tribe.memberIds.includes(viewerId)),
     hasPendingJoin: Boolean(viewerId && tribe.pendingJoinIds.includes(viewerId)),
   };
@@ -525,10 +595,16 @@ function canAccessTribe(tribe, userId) {
   return Boolean(viewerId && (tribe.ownerId === viewerId || tribe.memberIds.includes(viewerId)));
 }
 
+function canManageTribe(tribe, userId) {
+  const viewerId = String(userId || "");
+  return Boolean(viewerId && (tribe.ownerId === viewerId || tribe.adminIds.includes(viewerId)));
+}
+
 async function listTribeSummaries(viewerProfile) {
   const profiles = await listProfiles();
   return profiles
     .flatMap((profile) => normalizeTribesForProfile(profile).map((tribe) => serializeTribe(tribe, profile, viewerProfile, profiles)))
+    .filter((tribe) => tribe.visibility === "public" || tribe.isOwner || tribe.isMember || tribe.hasPendingJoin)
     .sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")));
 }
 
@@ -1061,23 +1137,86 @@ async function saveSnakeHighScore(userId, score) {
   return highScore;
 }
 
+async function listUserScores() {
+  const profiles = await listProfiles();
+  const profileByOwner = new Map(profiles.map((profile) => [String(profile.ownerUserId || ""), profile]));
+
+  if (hasSupabase) {
+    try {
+      const rows = await supabaseRequest("app_users", { query: "?select=*" });
+      return rows.map((user) => {
+        const profile = profileByOwner.get(String(user.id));
+        return {
+          userId: String(user.id),
+          displayName: requestDisplayName(profile),
+          handle: sanitizeHandle(profile?.handle || user.profile_handle),
+          score: Number(user.snake_high_score || 0),
+        };
+      });
+    } catch {
+      return [];
+    }
+  }
+
+  const users = readUsersFile().users;
+  return Object.entries(users).map(([userId, user]) => {
+    const profile = profileByOwner.get(String(userId));
+    return {
+      userId,
+      displayName: requestDisplayName(profile),
+      handle: sanitizeHandle(profile?.handle || user.profileHandle),
+      score: Number(user.snakeHighScore || 0),
+    };
+  });
+}
+
+async function publicUserSearch(viewerProfile, query = "", { suggestions = false } = {}) {
+  const profiles = await listProfiles();
+  const viewerHandle = sanitizeHandle(viewerProfile?.handle);
+  const friendHandles = profileFriendHandles(viewerProfile);
+  const viewerTribeIds = new Set(normalizeTribesForProfile(viewerProfile).map((tribe) => tribe.tribeId));
+  const search = String(query || "").trim().toLowerCase();
+  const targetHandle = handleFromFriendTarget(search);
+
+  return profiles
+    .filter((profile) => profile?.handle && profile.handle !== viewerHandle)
+    .map((profile) => {
+      const profileTribeIds = new Set(normalizeTribesForProfile(profile).map((tribe) => tribe.tribeId));
+      const sharedTribeCount = [...profileTribeIds].filter((id) => viewerTribeIds.has(id)).length;
+      return {
+        displayName: requestDisplayName(profile),
+        handle: sanitizeHandle(profile.handle),
+        profilePath: `/u/${sanitizeHandle(profile.handle)}`,
+        views: Number(profile.views || 0),
+        friendCount: Array.isArray(profile.friends) ? profile.friends.length : 0,
+        sharedTribeCount,
+        alreadyFriend: friendHandles.has(sanitizeHandle(profile.handle)),
+      };
+    })
+    .filter((user) => {
+      if (suggestions) return !user.alreadyFriend;
+      if (!search) return false;
+      return (
+        user.handle.includes(targetHandle || search) ||
+        user.displayName.toLowerCase().includes(search) ||
+        user.profilePath.toLowerCase().includes(search)
+      );
+    })
+    .sort((a, b) => {
+      if (suggestions) return (b.sharedTribeCount - a.sharedTribeCount) || (b.friendCount - a.friendCount) || (b.views - a.views);
+      return b.views - a.views;
+    })
+    .slice(0, suggestions ? 8 : 12)
+    .map(({ alreadyFriend, ...user }) => user);
+}
+
 async function incrementProfileViews(profile) {
   const views = Number(profile.views || 0) + 1;
   profile.views = views;
-
-  if (hasSupabase) {
-    await supabaseRequest("app_profiles", {
-      method: "PATCH",
-      query: `?handle=eq.${encodeURIComponent(profile.handle)}`,
-      body: {
-        views,
-        updated_at: profile.updatedAt || new Date().toISOString(),
-      },
-      prefer: "return=minimal",
-    });
-    return;
-  }
-
+  profile.recentVisitors = [
+    { label: "Anonymous visitor", viewedAt: new Date().toISOString() },
+    ...(Array.isArray(profile.recentVisitors) ? profile.recentVisitors : []),
+  ].slice(0, 8);
   await saveProfile(profile);
 }
 
@@ -1888,6 +2027,28 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (req.method === "GET" && url.pathname === "/api/users/search") {
+    try {
+      const authed = await getAuthedUser(req);
+      if (!authed) {
+        sendJson(res, 401, { error: "Sign in before searching users" });
+        return;
+      }
+      const viewerProfile = await getProfileByOwner(authed.userId);
+      if (!viewerProfile) {
+        sendJson(res, 404, { error: "Publish your profile before searching users" });
+        return;
+      }
+      const users = await publicUserSearch(viewerProfile, url.searchParams.get("q") || "", {
+        suggestions: url.searchParams.get("mode") === "suggestions",
+      });
+      sendJson(res, 200, { users });
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+    }
+    return;
+  }
+
   if (req.method === "GET" && url.pathname === "/api/games/snake-score") {
     const authed = await getAuthedUser(req);
     if (!authed) {
@@ -1911,6 +2072,38 @@ const server = http.createServer(async (req, res) => {
       const body = JSON.parse((await readBody(req)) || "{}");
       const highScore = await saveSnakeHighScore(authed.userId, body.score);
       sendJson(res, 200, { highScore });
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+    }
+    return;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/games/leaderboards") {
+    try {
+      const authed = await getAuthedUser(req);
+      if (!authed) {
+        sendJson(res, 401, { error: "Sign in before opening leaderboards" });
+        return;
+      }
+      const viewerProfile = await getProfileByOwner(authed.userId);
+      if (!viewerProfile) {
+        sendJson(res, 404, { error: "Publish your profile before opening leaderboards" });
+        return;
+      }
+      const scores = (await listUserScores()).filter((row) => row.handle);
+      const friendHandles = profileFriendHandles(viewerProfile);
+      const tribeId = String(url.searchParams.get("tribeId") || "");
+      let tribeMemberIds = new Set();
+      if (tribeId) {
+        const found = await findTribeById(tribeId);
+        if (found && canAccessTribe(found.tribe, authed.userId)) tribeMemberIds = new Set(found.tribe.memberIds);
+      }
+      const byScore = (rows) => rows.filter((row) => row.score > 0).sort((a, b) => b.score - a.score).slice(0, 8);
+      sendJson(res, 200, {
+        global: byScore(scores),
+        friends: byScore(scores.filter((row) => friendHandles.has(row.handle) || row.userId === authed.userId)),
+        tribe: byScore(scores.filter((row) => tribeMemberIds.has(row.userId))),
+      });
     } catch (error) {
       sendJson(res, 400, { error: error.message });
     }
@@ -2162,9 +2355,14 @@ const server = http.createServer(async (req, res) => {
           ownerDisplayName: requestDisplayName(ownerProfile),
           ownerHandle: ownerProfile.handle,
           memberIds: [authed.userId],
+          adminIds: [],
           pendingInviteIds: [],
           pendingJoinIds: [],
           themeColor: sanitizeThemeColor(body.themeColor),
+          visibility: sanitizeTribeVisibility(body.visibility),
+          icon: sanitizeTribeIcon(body.icon),
+          bannerData: sanitizeImageDataUrl(body.bannerData, 1024 * 1024),
+          announcement: sanitizeShortText(body.announcement, 140),
           createdAt: now,
           updatedAt: now,
         },
@@ -2247,7 +2445,8 @@ const server = http.createServer(async (req, res) => {
 
       const body = JSON.parse((await readBody(req)) || "{}");
       const text = sanitizeChatText(body.text);
-      if (!text) {
+      const attachment = sanitizeChatAttachment(body.attachment);
+      if (!text && !attachment) {
         sendJson(res, 400, { error: "Write a message first" });
         return;
       }
@@ -2259,6 +2458,9 @@ const server = http.createServer(async (req, res) => {
         senderDisplayName: requestDisplayName(viewerProfile),
         senderHandle: sanitizeHandle(viewerProfile.handle),
         text,
+        attachment,
+        reactions: {},
+        pinned: false,
         createdAt: now,
       };
 
@@ -2270,6 +2472,70 @@ const server = http.createServer(async (req, res) => {
       await saveProfile(ownerProfile);
 
       sendJson(res, 201, { messages: tribe.messages });
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname.startsWith("/api/tribes/") && url.pathname.includes("/messages/")) {
+    try {
+      const authed = await getAuthedUser(req);
+      if (!authed) {
+        sendJson(res, 401, { error: "Sign in before managing messages" });
+        return;
+      }
+
+      const parts = url.pathname.split("/");
+      const tribeId = decodeURIComponent(parts[3] || "");
+      const messageId = decodeURIComponent(parts[5] || "");
+      const action = parts[6] || "";
+      const found = await findTribeById(tribeId);
+      if (!found) {
+        sendJson(res, 404, { error: "Tribe was not found" });
+        return;
+      }
+      const { ownerProfile, tribe, tribeIndex, tribes } = found;
+      if (!canAccessTribe(tribe, authed.userId)) {
+        sendJson(res, 403, { error: "Only tribe members can use this chat" });
+        return;
+      }
+      const messages = Array.isArray(tribe.messages) ? tribe.messages : [];
+      const message = messages.find((item) => item.id === messageId);
+      if (!message) {
+        sendJson(res, 404, { error: "Message was not found" });
+        return;
+      }
+
+      const body = JSON.parse((await readBody(req)) || "{}");
+      if (action === "reactions") {
+        const emoji = sanitizeShortText(body.emoji, 4);
+        if (!emoji) {
+          sendJson(res, 400, { error: "Choose a reaction" });
+          return;
+        }
+        const current = new Set(Array.isArray(message.reactions?.[emoji]) ? message.reactions[emoji] : []);
+        if (current.has(authed.userId)) current.delete(authed.userId);
+        else current.add(authed.userId);
+        message.reactions = { ...(message.reactions || {}), [emoji]: [...current] };
+      } else if (action === "pin") {
+        if (!canManageTribe(tribe, authed.userId)) {
+          sendJson(res, 403, { error: "Only tribe managers can pin messages" });
+          return;
+        }
+        message.pinned = Boolean(body.pinned);
+      } else {
+        sendJson(res, 404, { error: "Not found" });
+        return;
+      }
+
+      tribe.messages = messages;
+      tribe.updatedAt = new Date().toISOString();
+      tribes[tribeIndex] = tribe;
+      ownerProfile.tribes = tribes;
+      ownerProfile.updatedAt = tribe.updatedAt;
+      await saveProfile(ownerProfile);
+      sendJson(res, 200, { messages: tribe.messages });
     } catch (error) {
       sendJson(res, 400, { error: error.message });
     }
@@ -2357,6 +2623,10 @@ const server = http.createServer(async (req, res) => {
         sendJson(res, 200, { ...(await tribeStateFor(requesterProfile)), status: "joined" });
         return;
       }
+      if (tribe.visibility !== "public") {
+        sendJson(res, 403, { error: "This tribe is invite-only or private" });
+        return;
+      }
 
       if (!tribe.pendingJoinIds.includes(authed.userId)) {
         tribe.pendingJoinIds.push(authed.userId);
@@ -2418,12 +2688,13 @@ const server = http.createServer(async (req, res) => {
       }
 
       const { ownerProfile, tribe, tribeIndex, tribes } = found;
-      if (tribe.ownerId !== authed.userId || ownerProfile.ownerUserId !== authed.userId) {
-        sendJson(res, 403, { error: "Only the tribe owner can add members directly" });
+      if (!canManageTribe(tribe, authed.userId)) {
+        sendJson(res, 403, { error: "Only tribe managers can add members directly" });
         return;
       }
 
-      const friendHandles = profileFriendHandles(ownerProfile);
+      const managerProfile = await getProfileByOwner(authed.userId);
+      const friendHandles = profileFriendHandles(managerProfile);
       const profiles = await listProfiles();
       const profilesById = new Map(profiles.map((profile) => [String(profile.ownerUserId || ""), profile]));
       const profilesByHandle = new Map(profiles.map((profile) => [sanitizeHandle(profile.handle), profile]));
@@ -2540,20 +2811,18 @@ const server = http.createServer(async (req, res) => {
 
       const tribeId = decodeURIComponent(url.pathname.split("/")[3] || "");
       const body = JSON.parse((await readBody(req)) || "{}");
-      const ownerProfile = await getProfileByOwner(authed.userId);
-      if (!ownerProfile) {
-        sendJson(res, 404, { error: "Publish your profile before editing tribes" });
+      const found = await findTribeById(tribeId);
+      if (!found) {
+        sendJson(res, 404, { error: "Tribe was not found" });
         return;
       }
 
-      const tribes = normalizeTribesForProfile(ownerProfile);
-      const tribeIndex = tribes.findIndex((tribe) => tribe.tribeId === tribeId && tribe.ownerId === authed.userId);
-      if (tribeIndex < 0) {
-        sendJson(res, 403, { error: "Only the tribe owner can edit this tribe" });
+      const { ownerProfile, tribe, tribeIndex, tribes } = found;
+      if (!canManageTribe(tribe, authed.userId)) {
+        sendJson(res, 403, { error: "Only tribe managers can edit this tribe" });
         return;
       }
 
-      const tribe = tribes[tribeIndex];
       const nextName = sanitizeTribeName(body.name);
       if (!nextName) {
         sendJson(res, 400, { error: "Enter a tribe name" });
@@ -2562,6 +2831,10 @@ const server = http.createServer(async (req, res) => {
 
       tribe.name = nextName;
       tribe.themeColor = sanitizeThemeColor(body.themeColor);
+      tribe.visibility = sanitizeTribeVisibility(body.visibility);
+      tribe.icon = sanitizeTribeIcon(body.icon);
+      tribe.announcement = sanitizeShortText(body.announcement, 140);
+      if (body.bannerData) tribe.bannerData = sanitizeImageDataUrl(body.bannerData, 1024 * 1024);
       tribe.updatedAt = new Date().toISOString();
       tribes[tribeIndex] = tribe;
       ownerProfile.tribes = tribes;
@@ -2571,6 +2844,50 @@ const server = http.createServer(async (req, res) => {
       ownerProfile.updatedAt = tribe.updatedAt;
       await saveProfile(ownerProfile);
 
+      sendJson(res, 200, await tribeStateFor(ownerProfile));
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname.startsWith("/api/tribes/") && url.pathname.includes("/members/") && url.pathname.endsWith("/role")) {
+    try {
+      const authed = await getAuthedUser(req);
+      if (!authed) {
+        sendJson(res, 401, { error: "Sign in before changing tribe roles" });
+        return;
+      }
+
+      const parts = url.pathname.split("/");
+      const tribeId = decodeURIComponent(parts[3] || "");
+      const memberId = decodeURIComponent(parts[5] || "");
+      const body = JSON.parse((await readBody(req)) || "{}");
+      const role = String(body.role || "").toLowerCase() === "admin" ? "admin" : "member";
+      const found = await findTribeById(tribeId);
+      if (!found) {
+        sendJson(res, 404, { error: "Tribe was not found" });
+        return;
+      }
+
+      const { ownerProfile, tribe, tribeIndex, tribes } = found;
+      if (tribe.ownerId !== authed.userId) {
+        sendJson(res, 403, { error: "Only the tribe owner can change roles" });
+        return;
+      }
+      if (!memberId || memberId === tribe.ownerId || !tribe.memberIds.includes(memberId)) {
+        sendJson(res, 400, { error: "Choose a valid tribe member" });
+        return;
+      }
+
+      tribe.adminIds = role === "admin"
+        ? cleanIdList([...tribe.adminIds, memberId])
+        : tribe.adminIds.filter((id) => id !== memberId);
+      tribe.updatedAt = new Date().toISOString();
+      tribes[tribeIndex] = tribe;
+      ownerProfile.tribes = tribes;
+      ownerProfile.updatedAt = tribe.updatedAt;
+      await saveProfile(ownerProfile);
       sendJson(res, 200, await tribeStateFor(ownerProfile));
     } catch (error) {
       sendJson(res, 400, { error: error.message });
@@ -2589,26 +2906,29 @@ const server = http.createServer(async (req, res) => {
       const parts = url.pathname.split("/");
       const tribeId = decodeURIComponent(parts[3] || "");
       const memberId = decodeURIComponent(parts[5] || "");
-      const ownerProfile = await getProfileByOwner(authed.userId);
-      if (!ownerProfile) {
-        sendJson(res, 404, { error: "Publish your profile before managing tribes" });
+      const found = await findTribeById(tribeId);
+      if (!found) {
+        sendJson(res, 404, { error: "Tribe was not found" });
         return;
       }
 
-      const tribes = normalizeTribesForProfile(ownerProfile);
-      const tribeIndex = tribes.findIndex((tribe) => tribe.tribeId === tribeId && tribe.ownerId === authed.userId);
-      if (tribeIndex < 0) {
-        sendJson(res, 403, { error: "Only the tribe owner can remove members" });
+      const { ownerProfile, tribe, tribeIndex, tribes } = found;
+      if (!canManageTribe(tribe, authed.userId)) {
+        sendJson(res, 403, { error: "Only tribe managers can remove members" });
         return;
       }
 
-      const tribe = tribes[tribeIndex];
       if (!memberId || memberId === tribe.ownerId) {
         sendJson(res, 400, { error: "The tribe owner cannot be removed" });
         return;
       }
+      if (tribe.adminIds.includes(memberId) && tribe.ownerId !== authed.userId) {
+        sendJson(res, 403, { error: "Only the owner can remove admins" });
+        return;
+      }
 
       tribe.memberIds = tribe.memberIds.filter((id) => id !== memberId);
+      tribe.adminIds = tribe.adminIds.filter((id) => id !== memberId);
       tribe.updatedAt = new Date().toISOString();
       tribes[tribeIndex] = tribe;
       ownerProfile.tribes = tribes;
@@ -2763,6 +3083,11 @@ const server = http.createServer(async (req, res) => {
       const profilePath = `/u/${handle}`;
       const profileUrl = `${origin}${profilePath}`;
       validateProfileMedia(incoming);
+      incoming.status = sanitizeProfileStatus(incoming.status);
+      incoming.profileTemplate = sanitizeProfileTemplate(incoming.profileTemplate || incoming.template);
+      incoming.featured = sanitizeFeaturedProfileItem(incoming.featured);
+      incoming.badges = sanitizeProfileBadges(incoming.badges);
+      incoming.bestFriendHandles = cleanIdList(incoming.bestFriendHandles).map(sanitizeHandle).filter(Boolean).slice(0, 8);
       const profile = await prepareProfileForSave({
         ...incoming,
         handle,

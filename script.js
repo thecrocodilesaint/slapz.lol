@@ -6,6 +6,9 @@ const profile = {
   bio: $("#bio"),
   location: $("#location"),
   views: $("#views"),
+  status: $("#profileStatus"),
+  badges: $("#profileBadges"),
+  visitors: $("#profileVisitors"),
 };
 
 const inputs = {
@@ -13,6 +16,10 @@ const inputs = {
   handle: $("#handleInput"),
   bio: $("#bioInput"),
   location: $("#locationInput"),
+  status: $("#statusInput"),
+  template: $("#templateInput"),
+  featuredType: $("#featuredTypeInput"),
+  featuredText: $("#featuredTextInput"),
   cursorTrail: $("#cursorTrailInput"),
   sparkleEffect: $("#sparkleEffectInput"),
 };
@@ -132,6 +139,10 @@ let friends = [];
 let friendRequests = [];
 let sentFriendRequests = [];
 let adminNotifications = [];
+let friendSearchResults = [];
+let friendSuggestions = [];
+let bestFriendHandles = [];
+let friendActivity = [];
 let friendRefreshTimer = 0;
 let pendingFriendRemoval = null;
 let pendingConfirmAction = null;
@@ -142,6 +153,8 @@ let selectedTribeId = "";
 let addMembersTribeId = "";
 let activeTribeChatId = "";
 let tribeChatMessages = {};
+let tribeChatAttachment = null;
+let leaderboards = { global: [], friends: [], tribe: [] };
 let ownerUsers = [];
 let ownerUsersLoading = false;
 let onboardingStep = 0;
@@ -179,6 +192,24 @@ const onboardingSteps = [
     items: ["Play mini-games from the dashboard", "Share your /u/handle link", "Publish your Bio to finish onboarding"],
     publish: true,
   },
+];
+
+const profileTemplates = {
+  dark: { theme: "black", sparkle: "none", cursor: "normal" },
+  gamer: { theme: "aqua", sparkle: "aqua", cursor: "dot" },
+  neon: { theme: "violet", sparkle: "purple", cursor: "dot" },
+  cute: { theme: "ember", sparkle: "pink", cursor: "normal" },
+  anime: { theme: "violet", sparkle: "pink", cursor: "dot" },
+  music: { theme: "black", sparkle: "gold", cursor: "dot" },
+  creator: { theme: "ember", sparkle: "gold", cursor: "normal" },
+  retro: { theme: "black", sparkle: "white", cursor: "normal" },
+};
+
+const badgeOptions = ["Early User", "Verified Profile", "Tribe Owner", "Game Champion", "Top Friend", "Profile Creator"];
+const dailyChallenges = [
+  { title: "Play Wordle today", text: "Finish one Wordle round to keep your brain warm." },
+  { title: "Beat 50 in Click Rush", text: "Warm up your aim and chase a new best." },
+  { title: "Get a new Snake score", text: "Play Snake and try to beat your saved high score." },
 ];
 
 const mediaState = {
@@ -970,6 +1001,8 @@ const updateSnakeBest = (score) => {
   snake.bestValue = Math.max(0, Number(score || 0));
   snake.best.textContent = String(snake.bestValue);
   localStorage.setItem(localSnakeScoreKey(), String(snake.bestValue));
+  renderProfileBadges();
+  renderDashboardInsights();
 };
 
 const loadSnakeBestScore = async () => {
@@ -1002,6 +1035,7 @@ const saveSnakeBestScore = async () => {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Could not save score");
     updateSnakeBest(data.highScore);
+    await loadLeaderboards({ silent: true });
   } catch {
     snake.status.textContent = "New best saved on this device.";
   }
@@ -2198,6 +2232,82 @@ const sanitizeAdminNotifications = (items = []) =>
     .filter(Boolean)
     .slice(0, 40);
 
+const sanitizeProfileTemplate = (value) => (profileTemplates[String(value || "").toLowerCase()] ? String(value).toLowerCase() : "dark");
+
+const sanitizeStatus = (value) => {
+  const allowed = new Set(["Online", "Chilling", "Gaming", "Busy", "Listening to music"]);
+  const next = String(value || "Online").trim();
+  return allowed.has(next) ? next : "Online";
+};
+
+const sanitizeBadges = (items = []) =>
+  [...new Set((Array.isArray(items) ? items : []).map((item) => String(item || "").trim()).filter((item) => badgeOptions.includes(item)))]
+    .slice(0, 6);
+
+const selectedBadges = () =>
+  sanitizeBadges([...document.querySelectorAll("#badgeOptionGrid input:checked")].map((input) => input.value));
+
+const applyBadgeInputs = (items = []) => {
+  const values = new Set(sanitizeBadges(items));
+  document.querySelectorAll("#badgeOptionGrid input").forEach((input) => {
+    input.checked = values.has(input.value);
+  });
+};
+
+const sanitizeFeatured = (featured = {}) => ({
+  type: ["status", "game", "song", "tribe", "friend"].includes(String(featured?.type || "")) ? String(featured.type) : "status",
+  text: String(featured?.text || "").trim().slice(0, 80),
+});
+
+const sanitizeBestFriendHandles = (items = []) =>
+  [...new Set((Array.isArray(items) ? items : []).map(cleanHandle).filter(Boolean))].slice(0, 8);
+
+const sanitizeVisitorItems = (items = []) =>
+  (Array.isArray(items) ? items : [])
+    .map((item) => ({
+      label: String(item?.label || "Anonymous visitor").trim().slice(0, 28),
+      viewedAt: item?.viewedAt || item?.createdAt || "",
+    }))
+    .filter((item) => item.viewedAt)
+    .slice(0, 5);
+
+const sanitizeUserSearchResult = (user = {}) => ({
+  displayName: String(user?.displayName || user?.name || "fun.lol user").trim().slice(0, 40),
+  handle: cleanHandle(user?.handle || user?.profileHandle || ""),
+  profilePath: String(user?.profilePath || (user?.handle ? `/u/${cleanHandle(user.handle)}` : "")),
+  views: Number(user?.views || 0),
+  friendCount: Number(user?.friendCount || 0),
+  sharedTribeCount: Number(user?.sharedTribeCount || 0),
+});
+
+const sanitizeLeaderboardRows = (items = []) =>
+  (Array.isArray(items) ? items : [])
+    .map((item) => ({
+      displayName: String(item?.displayName || item?.name || "Player").trim().slice(0, 32),
+      handle: cleanHandle(item?.handle || ""),
+      score: Number(item?.score || item?.snakeHighScore || 0),
+    }))
+    .filter((item) => item.score > 0)
+    .slice(0, 8);
+
+const currentFeatured = () => sanitizeFeatured({ type: inputs.featuredType?.value, text: inputs.featuredText?.value });
+
+const readFileAsDataUrl = (file, maxBytes = 1024 * 1024) =>
+  new Promise((resolve, reject) => {
+    if (!file) {
+      resolve(null);
+      return;
+    }
+    if (file.size > maxBytes) {
+      reject(new Error("Attachment is too large"));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("Could not read file"));
+    reader.readAsDataURL(file);
+  });
+
 const sanitizeOwnerUser = (user) => ({
   userId: String(user?.userId || ""),
   email: String(user?.email || ""),
@@ -2222,6 +2332,7 @@ const sanitizeTribeMember = (member) => ({
   displayName: String(member?.displayName || member?.name || "Member").trim().slice(0, 32),
   handle: cleanHandle(member?.handle || ""),
   link: member?.link || (member?.handle ? `/u/${cleanHandle(member.handle)}` : ""),
+  role: ["owner", "admin", "member"].includes(String(member?.role || "").toLowerCase()) ? String(member.role).toLowerCase() : "member",
 });
 
 const sanitizeTribe = (tribe) => ({
@@ -2231,13 +2342,19 @@ const sanitizeTribe = (tribe) => ({
   ownerDisplayName: String(tribe?.ownerDisplayName || "Owner").trim().slice(0, 32),
   ownerHandle: cleanHandle(tribe?.ownerHandle || ""),
   memberIds: Array.isArray(tribe?.memberIds) ? tribe.memberIds.map(String).filter(Boolean) : [],
+  adminIds: Array.isArray(tribe?.adminIds) ? tribe.adminIds.map(String).filter(Boolean) : [],
   pendingInviteIds: Array.isArray(tribe?.pendingInviteIds) ? tribe.pendingInviteIds.map(String).filter(Boolean) : [],
   pendingJoinIds: Array.isArray(tribe?.pendingJoinIds) ? tribe.pendingJoinIds.map(String).filter(Boolean) : [],
   members: Array.isArray(tribe?.members) ? tribe.members.map(sanitizeTribeMember).filter((member) => member.userId) : [],
   themeColor: sanitizeTribeColor(tribe?.themeColor),
+  visibility: ["public", "private", "invite-only"].includes(String(tribe?.visibility || "")) ? String(tribe.visibility) : "public",
+  icon: String(tribe?.icon || "T").trim().slice(0, 4) || "T",
+  bannerData: String(tribe?.bannerData || "").startsWith("data:image/") ? String(tribe.bannerData) : "",
+  announcement: String(tribe?.announcement || "").trim().slice(0, 140),
   createdAt: tribe?.createdAt || "",
   updatedAt: tribe?.updatedAt || "",
   isOwner: Boolean(tribe?.isOwner),
+  isAdmin: Boolean(tribe?.isAdmin),
   isMember: Boolean(tribe?.isMember),
   hasPendingJoin: Boolean(tribe?.hasPendingJoin),
 });
@@ -2268,6 +2385,19 @@ const sanitizeTribeMessage = (message) => ({
   senderDisplayName: String(message?.senderDisplayName || "Member").trim().slice(0, 32),
   senderHandle: cleanHandle(message?.senderHandle || ""),
   text: String(message?.text || "").trim().slice(0, 500),
+  attachment: message?.attachment?.data
+    ? {
+        name: String(message.attachment.name || "attachment").trim().slice(0, 80),
+        type: String(message.attachment.type || "").trim().slice(0, 40),
+        data: String(message.attachment.data || ""),
+      }
+    : null,
+  reactions: Object.fromEntries(
+    Object.entries(message?.reactions || {})
+      .map(([emoji, userIds]) => [String(emoji).slice(0, 4), Array.isArray(userIds) ? userIds.map(String).filter(Boolean).slice(0, 60) : []])
+      .filter(([emoji]) => emoji)
+  ),
+  pinned: Boolean(message?.pinned),
   createdAt: message?.createdAt || new Date().toISOString(),
 });
 
@@ -2329,9 +2459,11 @@ const friendInitials = (name) =>
     .map((part) => part[0]?.toUpperCase())
     .join("") || "F";
 
-const createFriendCard = (friend, { removable = false } = {}) => {
+const isBestFriend = (friend) => Boolean(friend?.handle && bestFriendHandles.includes(friend.handle));
+
+const createFriendCard = (friend, { removable = false, pinnable = false } = {}) => {
   const card = document.createElement("article");
-  card.className = "friend-card";
+  card.className = `friend-card${isBestFriend(friend) ? " best-friend" : ""}`;
 
   const avatar = document.createElement("span");
   avatar.className = "friend-avatar";
@@ -2353,6 +2485,15 @@ const createFriendCard = (friend, { removable = false } = {}) => {
   copy.append(link);
   card.append(copy);
 
+  if (pinnable && friend.handle) {
+    const pinButton = document.createElement("button");
+    pinButton.className = "friend-accept";
+    pinButton.type = "button";
+    pinButton.textContent = isBestFriend(friend) ? "Best" : "Pin";
+    pinButton.addEventListener("click", () => toggleBestFriend(friend));
+    card.append(pinButton);
+  }
+
   if (removable) {
     const removeButton = document.createElement("button");
     removeButton.className = "friend-remove";
@@ -2367,6 +2508,25 @@ const createFriendCard = (friend, { removable = false } = {}) => {
 
   return card;
 };
+
+function createUserResultCard(user) {
+  const card = createFriendCard(
+    {
+      id: user.handle,
+      name: user.displayName,
+      handle: user.handle,
+      link: user.profilePath || (user.handle ? `/u/${user.handle}` : "#"),
+    },
+    { removable: false }
+  );
+  const actions = document.createElement("div");
+  actions.className = "friend-actions";
+  const sendButton = createSmallActionButton("Add", "friend-accept", () => sendFriendRequestTo(user.handle || user.profilePath));
+  sendButton.disabled = !user.handle || friends.some((friend) => friend.handle === user.handle);
+  actions.append(sendButton);
+  card.append(actions);
+  return card;
+}
 
 const createNotificationCard = (request) => {
   const card = document.createElement("article");
@@ -2616,6 +2776,18 @@ const selectedTribe = () => {
 
 const activeTribeChat = () => myTribes().find((tribe) => tribe.tribeId === activeTribeChatId) || null;
 
+const tribeReadKey = (tribeId) => `funlol-tribe-read:${accountState.userId || accountState.email || "guest"}:${tribeId}`;
+
+const unreadCountForTribe = (tribeId) => {
+  const lastRead = Number(localStorage.getItem(tribeReadKey(tribeId)) || 0);
+  return (tribeChatMessages[tribeId] || []).filter((message) => tribeMessageTime(message) > lastRead).length;
+};
+
+const markTribeRead = (tribeId) => {
+  if (!tribeId) return;
+  localStorage.setItem(tribeReadKey(tribeId), String(Date.now()));
+};
+
 const applyTribePayload = (result) => {
   if (Array.isArray(result?.tribes)) setTribes(result.tribes);
   if (Array.isArray(result?.tribeInvites)) setTribeInvites(result.tribeInvites);
@@ -2653,7 +2825,7 @@ const renderTribeInviteFriendOptions = () => {
 };
 
 const friendsAvailableForTribe = (tribe) => {
-  if (!tribe?.isOwner) return [];
+  if (!tribe?.isOwner && !tribe?.isAdmin) return [];
   const memberHandles = new Set((tribe.members || []).map((member) => cleanHandle(member.handle)).filter(Boolean));
   return friends
     .filter((friend) => friend.handle)
@@ -2667,7 +2839,7 @@ function renderTribeAddMembersPanel(tribe) {
   const submitButton = $("#submitTribeAddMembersButton");
   if (!form || !list || !submitButton) return;
 
-  const isOpen = Boolean(tribe?.isOwner && addMembersTribeId === tribe.tribeId);
+  const isOpen = Boolean((tribe?.isOwner || tribe?.isAdmin) && addMembersTribeId === tribe.tribeId);
   form.hidden = !isOpen;
   list.textContent = "";
   submitButton.disabled = true;
@@ -2736,6 +2908,7 @@ const createTribeCard = (tribe, { selectable = false, joinable = false, compact 
 
   const dot = document.createElement("span");
   dot.className = "tribe-dot";
+  dot.textContent = tribe.icon || "";
   head.append(dot);
 
   const copy = document.createElement("div");
@@ -2773,7 +2946,7 @@ const createTribeCard = (tribe, { selectable = false, joinable = false, compact 
   const meta = document.createElement("span");
   meta.className = "tribe-meta";
   const memberCount = tribe.members.length || tribe.memberIds.length;
-  meta.textContent = `${memberCount} ${memberCount === 1 ? "member" : "members"}`;
+  meta.textContent = `${memberCount} ${memberCount === 1 ? "member" : "members"} • ${tribe.visibility}`;
   card.append(meta);
 
   if (selectable && tribe.isOwner) {
@@ -2830,12 +3003,30 @@ const renderSelectedTribe = () => {
 
   selectedTribeId = tribe.tribeId;
   name.textContent = tribe.name;
-  role.textContent = tribe.isOwner ? "Owner controls" : "Member view";
-  form.hidden = !tribe.isOwner;
+  const canManage = tribe.isOwner || tribe.isAdmin;
+  role.textContent = tribe.isOwner ? "Owner controls" : tribe.isAdmin ? "Admin controls" : "Member view";
+  form.hidden = !canManage;
   $("#tribeEditNameInput").value = tribe.name;
   $("#tribeEditThemeInput").value = tribe.themeColor;
-  if (!tribe.isOwner) addMembersTribeId = "";
+  $("#tribeEditVisibilityInput").value = tribe.visibility;
+  $("#tribeEditIconInput").value = tribe.icon || "T";
+  $("#tribeEditAnnouncementInput").value = tribe.announcement || "";
+  $("#deleteTribeButton").hidden = !tribe.isOwner;
+  if (!canManage) addMembersTribeId = "";
   renderTribeAddMembersPanel(tribe);
+
+  const announcementPanel = $("#tribeAnnouncementPanel");
+  if (announcementPanel) {
+    announcementPanel.hidden = !tribe.announcement;
+    announcementPanel.textContent = tribe.announcement ? `Announcement: ${tribe.announcement}` : "";
+  }
+  const bannerPreview = $("#tribeBannerPreview");
+  if (bannerPreview) {
+    bannerPreview.hidden = !tribe.bannerData;
+    bannerPreview.style.backgroundImage = tribe.bannerData ? `url("${tribe.bannerData}")` : "";
+  }
+  renderChipList($("#tribeChallengesList"), ["Highest Snake score this week", "Best Click Rush score", "Wordle streak challenge"], "Challenges are coming soon.");
+  loadLeaderboards({ tribeId: tribe.tribeId, silent: true });
 
   const members = tribe.members.length ? tribe.members : tribe.memberIds.map((memberId) => ({ userId: memberId, displayName: "Member", handle: "" }));
   members.forEach((member) => {
@@ -2862,17 +3053,25 @@ const renderSelectedTribe = () => {
     copy.append(handle);
     card.append(copy);
 
-    if (tribe.isOwner && member.userId !== tribe.ownerId) {
+    if (canManage && member.userId !== tribe.ownerId) {
       const removeButton = document.createElement("button");
       removeButton.className = "friend-remove";
       removeButton.type = "button";
       removeButton.textContent = "Remove";
       removeButton.addEventListener("click", () => confirmRemoveTribeMember(tribe, member));
       card.append(removeButton);
+      if (tribe.isOwner) {
+        const roleButton = document.createElement("button");
+        roleButton.className = member.role === "admin" ? "friend-remove" : "friend-accept";
+        roleButton.type = "button";
+        roleButton.textContent = member.role === "admin" ? "Demote" : "Promote";
+        roleButton.addEventListener("click", () => changeTribeMemberRole(tribe, member, member.role === "admin" ? "member" : "admin"));
+        card.append(roleButton);
+      }
     } else {
       const status = document.createElement("span");
       status.className = "request-status";
-      status.textContent = member.userId === tribe.ownerId ? "Owner" : "Member";
+      status.textContent = member.role || (member.userId === tribe.ownerId ? "Owner" : "Member");
       card.append(status);
     }
 
@@ -2951,6 +3150,13 @@ function createTribeChatCard(tribe) {
   meta.className = "tribe-meta";
   meta.textContent = `${memberCount} ${memberCount === 1 ? "member" : "members"}`;
   card.append(meta);
+  const unread = unreadCountForTribe(tribe.tribeId);
+  if (unread) {
+    const badge = document.createElement("span");
+    badge.className = "tab-badge tribe-unread-badge";
+    badge.textContent = String(unread);
+    card.append(badge);
+  }
 
   const button = document.createElement("button");
   button.className = "friend-accept";
@@ -2964,10 +3170,30 @@ function createTribeChatCard(tribe) {
 
 function renderTribeMessages() {
   const messagesList = $("#tribeChatMessages");
+  const pinnedList = $("#tribePinnedMessages");
   if (!messagesList) return;
   messagesList.textContent = "";
+  if (pinnedList) pinnedList.textContent = "";
 
   const messages = sortTribeMessages(tribeChatMessages[activeTribeChatId] || []);
+  const active = activeTribeChat();
+  const canPin = Boolean(active?.isOwner || active?.isAdmin);
+  const pinnedMessages = messages.filter((message) => message.pinned);
+  if (pinnedList) {
+    if (!pinnedMessages.length) {
+      const emptyPinned = document.createElement("span");
+      emptyPinned.className = "mini-empty";
+      emptyPinned.textContent = "No pinned messages.";
+      pinnedList.append(emptyPinned);
+    } else {
+      pinnedMessages.forEach((message) => {
+        const pinned = document.createElement("article");
+        pinned.className = "pinned-message";
+        pinned.textContent = `${message.senderDisplayName}: ${message.text}`;
+        pinnedList.append(pinned);
+      });
+    }
+  }
   if (!messages.length) {
     const empty = document.createElement("p");
     empty.className = "friend-empty";
@@ -2995,6 +3221,41 @@ function renderTribeMessages() {
     const text = document.createElement("p");
     text.textContent = message.text;
     bubble.append(text);
+
+    if (message.attachment?.data) {
+      const link = document.createElement("a");
+      link.className = "message-attachment";
+      link.href = message.attachment.data;
+      link.target = "_blank";
+      link.rel = "noreferrer";
+      if (String(message.attachment.type || "").startsWith("image/")) {
+        const image = document.createElement("img");
+        image.src = message.attachment.data;
+        image.alt = message.attachment.name || "Attachment";
+        link.append(image);
+      } else {
+        link.textContent = message.attachment.name || "Attachment";
+      }
+      bubble.append(link);
+    }
+
+    const tools = document.createElement("div");
+    tools.className = "message-tools";
+    ["❤️", "🔥", "😂"].forEach((emoji) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = `${emoji} ${(message.reactions?.[emoji] || []).length || ""}`.trim();
+      button.addEventListener("click", () => reactToTribeMessage(message.id, emoji));
+      tools.append(button);
+    });
+    if (canPin) {
+      const pinButton = document.createElement("button");
+      pinButton.type = "button";
+      pinButton.textContent = message.pinned ? "Unpin" : "Pin";
+      pinButton.addEventListener("click", () => pinTribeMessage(message.id, !message.pinned));
+      tools.append(pinButton);
+    }
+    bubble.append(tools);
 
     messagesList.append(bubble);
   });
@@ -3060,11 +3321,12 @@ function setTribeJoinRequests(nextRequests) {
 function renderFriends() {
   const homeList = $("#homeFriendsList");
   const communitiesList = $("#communitiesFriendsList");
+  const bestList = $("#bestFriendsList");
   const count = $("#friendsCount");
   const friendCountText = `${friends.length} ${friends.length === 1 ? "friend" : "friends"}`;
   if (count) count.textContent = friendCountText;
 
-  [homeList, communitiesList].forEach((list) => {
+  [homeList, communitiesList, bestList].forEach((list) => {
     if (!list) return;
     list.textContent = "";
   });
@@ -3079,15 +3341,27 @@ function renderFriends() {
     emptyCommunities.className = "friend-empty";
     emptyCommunities.textContent = "Add friends above and they will show here.";
     communitiesList?.append(emptyCommunities);
+    bestList?.append(emptyCommunities.cloneNode(true));
     renderTribeInviteFriendOptions();
+    renderActivity();
     return;
   }
 
   friends.forEach((friend) => {
     homeList?.append(createFriendCard(friend));
-    communitiesList?.append(createFriendCard(friend, { removable: true }));
+    communitiesList?.append(createFriendCard(friend, { removable: true, pinnable: true }));
   });
+  const bestFriends = friends.filter((friend) => isBestFriend(friend));
+  if (!bestFriends.length) {
+    const empty = document.createElement("p");
+    empty.className = "friend-empty";
+    empty.textContent = "Pin best friends from your list.";
+    bestList?.append(empty);
+  } else {
+    bestFriends.forEach((friend) => bestList?.append(createFriendCard(friend, { pinnable: true })));
+  }
   renderTribeInviteFriendOptions();
+  renderActivity();
 }
 
 function renderFriendRequests() {
@@ -3376,6 +3650,90 @@ function setSentFriendRequests(nextRequests, { persist = true } = {}) {
   if (persist) saveSentFriendRequestsLocal();
 }
 
+function setBestFriendHandles(items = []) {
+  bestFriendHandles = sanitizeBestFriendHandles(items);
+  renderFriends();
+  renderProfileBadges();
+  renderDashboardInsights();
+}
+
+function toggleBestFriend(friend) {
+  if (!friend?.handle) return;
+  const next = new Set(bestFriendHandles);
+  if (next.has(friend.handle)) {
+    next.delete(friend.handle);
+    showToast(`Removed ${friend.name} from best friends`);
+  } else {
+    next.add(friend.handle);
+    showToast(`Pinned ${friend.name} as a best friend`);
+  }
+  setBestFriendHandles([...next]);
+}
+
+function renderUserResults(list, items, emptyText) {
+  if (!list) return;
+  list.textContent = "";
+  if (!items.length) {
+    const empty = document.createElement("p");
+    empty.className = "friend-empty";
+    empty.textContent = emptyText;
+    list.append(empty);
+    return;
+  }
+  items.forEach((item) => list.append(createUserResultCard(item)));
+}
+
+function renderFriendDiscovery() {
+  renderUserResults($("#friendSearchResults"), friendSearchResults, "Search for users by handle, name, or link.");
+  renderUserResults($("#friendSuggestionsList"), friendSuggestions, "No suggestions yet.");
+}
+
+async function loadFriendSuggestions() {
+  if (!sessionToken || isPublicProfilePage) return;
+  try {
+    const response = await fetch("/api/users/search?mode=suggestions", { headers: authHeaders() });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Could not load suggestions");
+    friendSuggestions = (result.users || []).map(sanitizeUserSearchResult).filter((user) => user.handle);
+    renderFriendDiscovery();
+  } catch {
+    friendSuggestions = [];
+    renderFriendDiscovery();
+  }
+}
+
+let friendSearchTimer = 0;
+async function searchFriendsNow() {
+  const query = $("#friendSearchInput")?.value.trim() || "";
+  if (!query) {
+    friendSearchResults = [];
+    renderFriendDiscovery();
+    return;
+  }
+  try {
+    const response = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`, { headers: authHeaders() });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Could not search users");
+    friendSearchResults = (result.users || []).map(sanitizeUserSearchResult).filter((user) => user.handle);
+    renderFriendDiscovery();
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+function queueFriendSearch() {
+  clearTimeout(friendSearchTimer);
+  friendSearchTimer = setTimeout(searchFriendsNow, 250);
+}
+
+async function sendFriendRequestTo(target) {
+  const handle = friendHandleFor(target);
+  if (!handle) return;
+  friendInputs.name.value = handle;
+  friendInputs.link.value = `@${handle}`;
+  await submitFriendRequest();
+}
+
 async function refreshFriendState() {
   if (!sessionToken || isPublicProfilePage) return;
   try {
@@ -3388,6 +3746,8 @@ async function refreshFriendState() {
     setAdminNotifications(data.adminNotifications || []);
     setTribeInvites(data.tribeInvites || []);
     setTribeJoinRequests(data.tribeJoinRequests || []);
+    if (Array.isArray(data.bestFriendHandles)) setBestFriendHandles(data.bestFriendHandles);
+    friendActivity = Array.isArray(data.friendActivity) ? data.friendActivity.map((item) => String(item).slice(0, 100)).slice(0, 20) : friendActivity;
     await loadTribes({ silent: true });
     if (activeTribeChatId) await loadTribeChatMessages(activeTribeChatId, { silent: true });
   } catch {
@@ -3433,6 +3793,140 @@ const formatChatTimestamp = (value) => {
     ? { hour: "numeric", minute: "2-digit" }
     : { day: "2-digit", month: "short", hour: "numeric", minute: "2-digit" });
 };
+
+const formatRelativeTime = (value) => {
+  const date = new Date(value || "");
+  if (Number.isNaN(date.getTime())) return "";
+  const diff = Date.now() - date.getTime();
+  const minutes = Math.max(1, Math.round(diff / 60000));
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.round(hours / 24)}d ago`;
+};
+
+function renderChipList(container, items, emptyText) {
+  if (!container) return;
+  container.textContent = "";
+  if (!items.length) {
+    const empty = document.createElement("span");
+    empty.className = "mini-empty";
+    empty.textContent = emptyText;
+    container.append(empty);
+    return;
+  }
+  items.forEach((item) => {
+    const chip = document.createElement("span");
+    chip.className = "mini-chip";
+    chip.textContent = item;
+    container.append(chip);
+  });
+}
+
+const achievementList = () => {
+  const achievements = [];
+  if (accountState.profileHandle || cleanHandle(inputs.handle.value)) achievements.push("Profile Published");
+  if (friends.length) achievements.push("First Friend Added");
+  if (myTribes().length) achievements.push("First Tribe Joined");
+  if (myTribes().some((tribe) => tribe.isOwner)) achievements.push("Tribe Owner");
+  if (snake.bestValue > 0) achievements.push("First Game Played");
+  if (snake.bestValue >= 10) achievements.push("Snake Master");
+  if (bestFriendHandles.length) achievements.push("Top Friend");
+  return achievements.slice(0, 8);
+};
+
+function renderProfileBadges() {
+  const manualBadges = selectedBadges();
+  const autoBadges = [];
+  if (accountState.profileHandle || cleanHandle(inputs.handle.value)) autoBadges.push("Profile Creator");
+  if (myTribes().some((tribe) => tribe.isOwner)) autoBadges.push("Tribe Owner");
+  if (snake.bestValue >= 10) autoBadges.push("Game Champion");
+  if (bestFriendHandles.length) autoBadges.push("Top Friend");
+  const badges = sanitizeBadges([...manualBadges, ...autoBadges]);
+  renderChipList(profile.badges, badges, "No badges yet");
+}
+
+function renderVisitors(visitors = []) {
+  if (!profile.visitors) return;
+  const safeVisitors = sanitizeVisitorItems(visitors);
+  profile.visitors.textContent = "";
+  if (!safeVisitors.length) {
+    profile.visitors.textContent = "Recent visitors appear here after views.";
+    return;
+  }
+  safeVisitors.forEach((visitor) => {
+    const item = document.createElement("span");
+    item.textContent = `${visitor.label} • ${formatRelativeTime(visitor.viewedAt) || "recently"}`;
+    profile.visitors.append(item);
+  });
+}
+
+function renderDashboardInsights() {
+  const featured = currentFeatured();
+  const featuredText = featured.text || `${sanitizeStatus(inputs.status?.value)} on fun.lol`;
+  $("#homeStatusText").textContent = sanitizeStatus(inputs.status?.value);
+  $("#homeFeaturedText").textContent = featuredText;
+  renderChipList($("#homeAchievementsList"), achievementList(), "No achievements yet");
+  renderActivity();
+}
+
+function renderActivity() {
+  const activities = [
+    ...friendActivity,
+    ...friends.slice(0, 4).map((friend) => `${friend.name} is in your friends list`),
+    ...myTribes().slice(0, 3).map((tribe) => `Joined ${tribe.name}`),
+  ].slice(0, 8);
+  [$("#friendActivityList"), $("#communitiesFriendActivityList")].forEach((list) => {
+    if (!list) return;
+    list.textContent = "";
+    if (!activities.length) {
+      const empty = document.createElement("span");
+      empty.className = "mini-empty";
+      empty.textContent = "No activity yet.";
+      list.append(empty);
+      return;
+    }
+    activities.forEach((activity) => {
+      const item = document.createElement("span");
+      item.textContent = activity;
+      list.append(item);
+    });
+  });
+}
+
+function renderLeaderboard(container, rows, emptyText = "No scores yet.") {
+  if (!container) return;
+  container.textContent = "";
+  if (!rows.length) {
+    const empty = document.createElement("span");
+    empty.className = "mini-empty";
+    empty.textContent = emptyText;
+    container.append(empty);
+    return;
+  }
+  rows.forEach((row, index) => {
+    const item = document.createElement("article");
+    item.className = "leaderboard-row";
+    const name = document.createElement("span");
+    name.textContent = `${index + 1}. ${row.displayName}${row.handle ? ` (@${row.handle})` : ""}`;
+    const score = document.createElement("strong");
+    score.textContent = String(row.score);
+    item.append(name, score);
+    container.append(item);
+  });
+}
+
+function renderLeaderboards() {
+  renderLeaderboard($("#globalLeaderboardList"), leaderboards.global, "No global scores yet.");
+  renderLeaderboard($("#friendLeaderboardList"), leaderboards.friends, "No friend scores yet.");
+  renderLeaderboard($("#tribeLeaderboardList"), leaderboards.tribe, "No tribe scores yet.");
+}
+
+function renderDailyChallenge() {
+  const challenge = dailyChallenges[new Date().getDate() % dailyChallenges.length];
+  $("#dailyChallengeTitle").textContent = challenge.title;
+  $("#dailyChallengeText").textContent = challenge.text;
+}
 
 const updateAccountState = (data = {}) => {
   const previousOwner = accountState.userId || accountState.email;
@@ -3482,8 +3976,15 @@ const syncProfile = () => {
   profile.handle.textContent = `@${handle}`;
   profile.bio.textContent = inputs.bio.value.trim() || "No bio yet.";
   profile.location.textContent = inputs.location.value.trim() || "Somewhere online";
-  $("#featuredTitle").textContent = `${profile.name.textContent}'s profile`;
-  $("#featuredText").textContent = profile.bio.textContent;
+  const status = sanitizeStatus(inputs.status?.value);
+  const template = sanitizeProfileTemplate(inputs.template?.value);
+  const featured = currentFeatured();
+  document.body.dataset.profileTemplate = template;
+  if (profile.status) profile.status.textContent = status;
+  $("#featuredTitle").textContent = featured.type === "status" ? `${profile.name.textContent}'s status` : `Featured ${featured.type}`;
+  $("#featuredText").textContent = featured.text || profile.bio.textContent;
+  renderProfileBadges();
+  renderDashboardInsights();
   syncSocialLinks();
   updatePublicLink();
   updateSettingsDetails();
@@ -3593,6 +4094,7 @@ dashboardButtons.forEach((button) => {
     if (target !== "games") closeActiveGame();
     setDashboardSection(target);
     if (target === "home" || target === "communities") refreshFriendState();
+    if (target === "games") loadLeaderboards({ silent: true });
     exitPreview();
     if (target === "bio" && !isPublicProfilePage) {
       showOwnerBioEntryGate();
@@ -3613,7 +4115,9 @@ const setCommunityTab = (tab) => {
     panel.hidden = panel.dataset.communityPanel !== nextTab;
     panel.classList.toggle("active", panel.dataset.communityPanel === nextTab);
   });
+  if (nextTab === "add") loadFriendSuggestions();
   if (nextTab === "communities" || nextTab === "join" || nextTab === "chats") loadTribes({ silent: true });
+  if (nextTab === "chats") renderTribeChats();
 };
 
 document.querySelectorAll("[data-community-tab]").forEach((button) => {
@@ -3626,6 +4130,23 @@ document.querySelectorAll(".editor .swatch").forEach((button) => {
     applyThemeForCurrentSection();
   });
 });
+
+inputs.template?.addEventListener("change", () => {
+  const preset = profileTemplates[sanitizeProfileTemplate(inputs.template.value)];
+  if (preset) {
+    profileTheme = preset.theme;
+    setSparkleEffect(preset.sparkle);
+    setCursorMode(preset.cursor);
+    applyThemeForCurrentSection();
+  }
+  syncProfile();
+});
+
+document.querySelectorAll("#badgeOptionGrid input").forEach((input) => {
+  input.addEventListener("change", syncProfile);
+});
+
+$("#friendSearchInput")?.addEventListener("input", queueFriendSearch);
 
 dashboardThemeButtons.forEach((button) => {
   button.addEventListener("click", () => {
@@ -3767,8 +4288,7 @@ document.querySelectorAll("[data-sparkle]").forEach((button) => {
   button.addEventListener("click", () => setSparkleEffect(button.dataset.sparkle));
 });
 
-$("#friendForm").addEventListener("submit", async (event) => {
-  event.preventDefault();
+async function submitFriendRequest() {
   const friend = sanitizeFriend({
     name: friendInputs.name.value,
     link: friendInputs.link.value,
@@ -3799,6 +4319,11 @@ $("#friendForm").addEventListener("submit", async (event) => {
   } catch (error) {
     showToast(error.message);
   }
+}
+
+$("#friendForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  await submitFriendRequest();
 });
 
 async function loadTribes({ silent = false } = {}) {
@@ -3809,6 +4334,25 @@ async function loadTribes({ silent = false } = {}) {
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || "Could not load tribes");
     applyTribePayload(result);
+  } catch (error) {
+    if (!silent) showToast(error.message);
+  }
+}
+
+async function loadLeaderboards({ tribeId = selectedTribeId, silent = false } = {}) {
+  if (!sessionToken || isPublicProfilePage) return;
+  try {
+    const url = tribeId ? `/api/games/leaderboards?tribeId=${encodeURIComponent(tribeId)}` : "/api/games/leaderboards";
+    const response = await fetch(url, { headers: authHeaders() });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Could not load leaderboards");
+    leaderboards = {
+      global: sanitizeLeaderboardRows(result.global),
+      friends: sanitizeLeaderboardRows(result.friends),
+      tribe: sanitizeLeaderboardRows(result.tribe),
+    };
+    renderLeaderboards();
+    renderDailyChallenge();
   } catch (error) {
     if (!silent) showToast(error.message);
   }
@@ -3825,8 +4369,9 @@ async function loadTribeChatMessages(tribeId, { silent = false } = {}) {
     tribeChatMessages[tribeId] = sortTribeMessages(
       (Array.isArray(result.messages) ? result.messages : [])
         .map(sanitizeTribeMessage)
-        .filter((message) => message.senderId && message.text)
+        .filter((message) => message.senderId && (message.text || message.attachment))
     );
+    if (activeTribeChatId === tribeId) markTribeRead(tribeId);
     renderTribeChats();
   } catch (error) {
     if (!silent) showToast(error.message);
@@ -3848,6 +4393,7 @@ async function openTribeChat(tribeId, { switchTab = false } = {}) {
   if (switchTab) setCommunityTab("chats");
   renderTribeChats();
   await loadTribeChatMessages(tribeId, { silent: true });
+  markTribeRead(tribeId);
   $("#tribeChatInput")?.focus();
 }
 
@@ -3860,22 +4406,25 @@ async function sendTribeChatMessage(event) {
     showToast("Open a tribe chat first");
     return;
   }
-  if (!text) return;
+  if (!text && !tribeChatAttachment) return;
 
   try {
     const response = await fetch(`/api/tribes/${encodeURIComponent(tribe.tribeId)}/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...authHeaders() },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ text, attachment: tribeChatAttachment }),
     });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || "Could not send message");
     tribeChatMessages[tribe.tribeId] = sortTribeMessages(
       (Array.isArray(result.messages) ? result.messages : [])
         .map(sanitizeTribeMessage)
-        .filter((message) => message.senderId && message.text)
+        .filter((message) => message.senderId && (message.text || message.attachment))
     );
     input.value = "";
+    tribeChatAttachment = null;
+    $("#tribeChatAttachmentInput").value = "";
+    markTribeRead(tribe.tribeId);
     renderTribeChats();
   } catch (error) {
     showToast(error.message);
@@ -3885,6 +4434,42 @@ async function sendTribeChatMessage(event) {
 function exitTribeChat() {
   activeTribeChatId = "";
   renderTribeChats();
+}
+
+async function reactToTribeMessage(messageId, emoji) {
+  const tribe = activeTribeChat();
+  if (!tribe) return;
+  try {
+    const response = await fetch(`/api/tribes/${encodeURIComponent(tribe.tribeId)}/messages/${encodeURIComponent(messageId)}/reactions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ emoji }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Could not react");
+    tribeChatMessages[tribe.tribeId] = sortTribeMessages((result.messages || []).map(sanitizeTribeMessage));
+    renderTribeChats();
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function pinTribeMessage(messageId, pinned) {
+  const tribe = activeTribeChat();
+  if (!tribe) return;
+  try {
+    const response = await fetch(`/api/tribes/${encodeURIComponent(tribe.tribeId)}/messages/${encodeURIComponent(messageId)}/pin`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ pinned }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Could not pin message");
+    tribeChatMessages[tribe.tribeId] = sortTribeMessages((result.messages || []).map(sanitizeTribeMessage));
+    renderTribeChats();
+  } catch (error) {
+    showToast(error.message);
+  }
 }
 
 async function createTribe(event) {
@@ -3901,6 +4486,10 @@ async function createTribe(event) {
         name,
         inviteHandles,
         themeColor: $("#tribeThemeInput").value,
+        visibility: $("#tribeVisibilityInput").value,
+        icon: $("#tribeIconInput").value,
+        bannerData: await readFileAsDataUrl($("#tribeBannerInput").files?.[0], 1024 * 1024),
+        announcement: $("#tribeAnnouncementInput").value,
       }),
     });
     const result = await response.json();
@@ -3921,7 +4510,7 @@ async function createTribe(event) {
 async function saveSelectedTribe(event) {
   event.preventDefault();
   const tribe = selectedTribe();
-  if (!tribe?.isOwner) return;
+  if (!tribe?.isOwner && !tribe?.isAdmin) return;
 
   try {
     const response = await fetch(`/api/tribes/${encodeURIComponent(tribe.tribeId)}`, {
@@ -3930,6 +4519,10 @@ async function saveSelectedTribe(event) {
       body: JSON.stringify({
         name: $("#tribeEditNameInput").value,
         themeColor: $("#tribeEditThemeInput").value,
+        visibility: $("#tribeEditVisibilityInput").value,
+        icon: $("#tribeEditIconInput").value,
+        bannerData: await readFileAsDataUrl($("#tribeEditBannerInput").files?.[0], 1024 * 1024),
+        announcement: $("#tribeEditAnnouncementInput").value,
       }),
     });
     const result = await response.json();
@@ -3994,11 +4587,27 @@ async function removeTribeMember(tribe, member) {
   }
 }
 
+async function changeTribeMemberRole(tribe, member, role) {
+  try {
+    const response = await fetch(`/api/tribes/${encodeURIComponent(tribe.tribeId)}/members/${encodeURIComponent(member.userId)}/role`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ role }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Could not change role");
+    applyTribePayload(result);
+    showToast(role === "admin" ? "Member promoted" : "Member demoted");
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
 async function addSelectedTribeMembers(event) {
   event.preventDefault();
   const tribe = selectedTribe();
-  if (!tribe?.isOwner) {
-    showToast("Only the tribe owner can add members");
+  if (!tribe?.isOwner && !tribe?.isAdmin) {
+    showToast("Only tribe managers can add members");
     return;
   }
 
@@ -4080,13 +4689,43 @@ $("#tribeManageForm")?.addEventListener("submit", saveSelectedTribe);
 $("#tribeAddMembersForm")?.addEventListener("submit", addSelectedTribeMembers);
 $("#showAddTribeMembersButton")?.addEventListener("click", () => {
   const tribe = selectedTribe();
-  if (tribe?.isOwner) openTribeAddMembers(tribe.tribeId);
+  if (tribe?.isOwner || tribe?.isAdmin) openTribeAddMembers(tribe.tribeId);
 });
 $("#closeTribeAddMembersButton")?.addEventListener("click", closeTribeAddMembers);
 $("#deleteTribeButton")?.addEventListener("click", confirmDeleteSelectedTribe);
 $("#tribeSearchInput")?.addEventListener("input", renderTribes);
 $("#tribeChatForm")?.addEventListener("submit", sendTribeChatMessage);
 $("#exitTribeChatButton")?.addEventListener("click", exitTribeChat);
+$("#tribeChatAttachmentInput")?.addEventListener("change", async (event) => {
+  try {
+    const file = event.target.files?.[0];
+    if (!file) {
+      tribeChatAttachment = null;
+      return;
+    }
+    if (!["image/png", "image/jpeg", "image/webp", "image/gif"].includes(file.type)) throw new Error("Only images and GIFs can be attached");
+    tribeChatAttachment = {
+      name: file.name,
+      type: file.type,
+      data: await readFileAsDataUrl(file, 1024 * 1024),
+    };
+    showToast("Attachment ready");
+  } catch (error) {
+    event.target.value = "";
+    tribeChatAttachment = null;
+    showToast(error.message);
+  }
+});
+let typingTimer = 0;
+$("#tribeChatInput")?.addEventListener("input", () => {
+  const typing = $("#tribeTypingIndicator");
+  if (!typing) return;
+  typing.hidden = false;
+  clearTimeout(typingTimer);
+  typingTimer = setTimeout(() => {
+    typing.hidden = true;
+  }, 1100);
+});
 
 $("#copyLink").addEventListener("click", async () => {
   const handle = profile.handle.textContent.slice(1);
@@ -4487,6 +5126,11 @@ const collectProfile = () => ({
   handle: cleanHandle(inputs.handle.value) || "nightcard",
   bio: inputs.bio.value.trim() || "No bio yet.",
   location: inputs.location.value.trim() || "Somewhere online",
+  status: sanitizeStatus(inputs.status?.value),
+  profileTemplate: sanitizeProfileTemplate(inputs.template?.value),
+  featured: currentFeatured(),
+  badges: selectedBadges(),
+  bestFriendHandles,
   theme: getActiveTheme(),
   compactLinks: $("#compactToggle").checked,
   animatedBackground: $("#particlesToggle").checked,
@@ -4515,6 +5159,14 @@ const applyProfile = (data) => {
   inputs.handle.value = data.handle || "nightcard";
   inputs.bio.value = data.bio || "No bio yet.";
   inputs.location.value = data.location || "Somewhere online";
+  if (inputs.status) inputs.status.value = sanitizeStatus(data.status);
+  if (inputs.template) inputs.template.value = sanitizeProfileTemplate(data.profileTemplate || data.template);
+  const featured = sanitizeFeatured(data.featured);
+  if (inputs.featuredType) inputs.featuredType.value = featured.type;
+  if (inputs.featuredText) inputs.featuredText.value = featured.text;
+  applyBadgeInputs(data.badges || []);
+  bestFriendHandles = sanitizeBestFriendHandles(data.bestFriendHandles || []);
+  friendActivity = Array.isArray(data.friendActivity) ? data.friendActivity.map((item) => String(item).slice(0, 100)).slice(0, 20) : [];
   updateAccountState({
     profileHandle: data.profileHandle || data.handle,
     profilePath: data.profilePath || (data.handle ? `/u/${data.handle}` : accountState.profilePath),
@@ -4537,6 +5189,7 @@ const applyProfile = (data) => {
   setAdminNotifications(Array.isArray(data.adminNotifications) ? data.adminNotifications : []);
   setTribeInvites(Array.isArray(data.tribeInvites) ? data.tribeInvites : []);
   setTribeJoinRequests(Array.isArray(data.tribeJoinRequests) ? data.tribeJoinRequests : []);
+  renderVisitors(data.recentVisitors || data.visitors || []);
 
   document.body.classList.toggle("compact", $("#compactToggle").checked);
   document.body.classList.toggle("no-motion", !$("#particlesToggle").checked);
@@ -4656,6 +5309,9 @@ syncProfile();
 renderFriends();
 renderFriendRequests();
 renderTribes();
+renderFriendDiscovery();
+renderDailyChallenge();
+renderLeaderboards();
 
 async function bootApp() {
   if (isPublicProfilePage) {

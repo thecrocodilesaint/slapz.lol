@@ -356,12 +356,42 @@
               <div class="notifications-list" id="notificationsList" aria-live="polite"></div>
             </section>
           </div>
+          <div class="dashboard-feature-grid">
+            <section class="dashboard-mini-panel glass" aria-label="Status">
+              <p>Status</p>
+              <strong id="homeStatusText">Online</strong>
+              <span id="homeFeaturedText">No featured item yet.</span>
+            </section>
+            <section class="dashboard-mini-panel glass" aria-label="Achievements">
+              <p>Achievements</p>
+              <div class="mini-chip-list" id="homeAchievementsList"></div>
+            </section>
+            <section class="dashboard-mini-panel glass" aria-label="Friend activity">
+              <p>Friend activity</p>
+              <div class="mini-activity-list" id="friendActivityList"></div>
+            </section>
+          </div>
         </div>
       </section>
 
       <section class="dashboard-panel dashboard-games" data-dashboard-panel="games" aria-label="Games" hidden>
         <div class="games-layout">
           <div class="games-library">
+            <section class="games-dashboard-widgets" aria-label="Game leaderboards and challenges">
+              <article class="dashboard-mini-panel glass">
+                <p>Daily challenge</p>
+                <strong id="dailyChallengeTitle">Play Wordle today</strong>
+                <span id="dailyChallengeText">Complete one game to start a streak.</span>
+              </article>
+              <article class="dashboard-mini-panel glass">
+                <p>Global leaderboard</p>
+                <div class="leaderboard-list" id="globalLeaderboardList"></div>
+              </article>
+              <article class="dashboard-mini-panel glass">
+                <p>Friend leaderboard</p>
+                <div class="leaderboard-list" id="friendLeaderboardList"></div>
+              </article>
+            </section>
             <div class="games-grid" id="gamesGrid">
             <article class="game-card" data-game-card="snake">
               <button class="game-card-preview" type="button" data-open-game="snake">
@@ -588,12 +618,48 @@
               </label>
               <button class="save-button" type="submit">Send request</button>
             </form>
+            <div class="friend-discovery-grid">
+              <section class="friend-discovery-card">
+                <div class="friends-panel-heading">
+                  <p>Search users</p>
+                  <span>Profiles</span>
+                </div>
+                <label class="tribe-search">
+                  Find by handle, name, or profile link
+                  <input id="friendSearchInput" type="search" placeholder="@handle, name, or /u/handle" />
+                </label>
+                <div class="friends-list mini" id="friendSearchResults" aria-live="polite"></div>
+              </section>
+              <section class="friend-discovery-card">
+                <div class="friends-panel-heading">
+                  <p>Suggestions</p>
+                  <span>For you</span>
+                </div>
+                <div class="friends-list mini" id="friendSuggestionsList" aria-live="polite"></div>
+              </section>
+            </div>
           </section>
 
           <section class="community-panel friends-panel glass" data-community-panel="friends" aria-label="Your friends" hidden>
             <div class="friends-panel-heading">
               <p>Your friends</p>
               <span id="friendsCount">0 friends</span>
+            </div>
+            <div class="friend-discovery-grid">
+              <section class="friend-discovery-card">
+                <div class="friends-panel-heading">
+                  <p>Best friends</p>
+                  <span>Pinned</span>
+                </div>
+                <div class="friends-list mini" id="bestFriendsList" aria-live="polite"></div>
+              </section>
+              <section class="friend-discovery-card">
+                <div class="friends-panel-heading">
+                  <p>Activity</p>
+                  <span>Recent</span>
+                </div>
+                <div class="mini-activity-list" id="communitiesFriendActivityList"></div>
+              </section>
             </div>
             <div class="friends-list" id="communitiesFriendsList" aria-live="polite"></div>
           </section>
@@ -614,6 +680,26 @@
                   <label>
                     Tribe colour
                     <input id="tribeThemeInput" type="color" value="#f5f7fb" />
+                  </label>
+                  <label>
+                    Visibility
+                    <select id="tribeVisibilityInput">
+                      <option value="public">Public</option>
+                      <option value="invite-only">Invite-only</option>
+                      <option value="private">Private</option>
+                    </select>
+                  </label>
+                  <label>
+                    Icon
+                    <input id="tribeIconInput" type="text" maxlength="4" placeholder="F" />
+                  </label>
+                  <label>
+                    Banner image
+                    <input id="tribeBannerInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" />
+                  </label>
+                  <label>
+                    Announcement
+                    <input id="tribeAnnouncementInput" type="text" maxlength="140" placeholder="Pinned tribe announcement" />
                   </label>
                   <div class="tribe-invite-field">
                     <span>Invite friends</span>
@@ -640,6 +726,26 @@
                     Tribe colour
                     <input id="tribeEditThemeInput" type="color" value="#f5f7fb" />
                   </label>
+                  <label>
+                    Visibility
+                    <select id="tribeEditVisibilityInput">
+                      <option value="public">Public</option>
+                      <option value="invite-only">Invite-only</option>
+                      <option value="private">Private</option>
+                    </select>
+                  </label>
+                  <label>
+                    Icon
+                    <input id="tribeEditIconInput" type="text" maxlength="4" />
+                  </label>
+                  <label>
+                    Banner image
+                    <input id="tribeEditBannerInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" />
+                  </label>
+                  <label>
+                    Announcement
+                    <input id="tribeEditAnnouncementInput" type="text" maxlength="140" />
+                  </label>
                   <div class="tribe-action-row">
                     <button class="save-button" type="submit">Save changes</button>
                     <button class="friend-accept" id="showAddTribeMembersButton" type="button">Add Members</button>
@@ -656,6 +762,22 @@
                   <button class="save-button" id="submitTribeAddMembersButton" type="submit">Add selected</button>
                 </form>
 
+                <div class="tribe-announcement" id="tribeAnnouncementPanel" hidden></div>
+                <div class="tribe-banner-preview" id="tribeBannerPreview" hidden></div>
+                <div class="tribe-leaderboard-panel">
+                  <div class="friends-panel-heading">
+                    <p>Tribe leaderboard</p>
+                    <span>Snake</span>
+                  </div>
+                  <div class="leaderboard-list" id="tribeLeaderboardList"></div>
+                </div>
+                <div class="tribe-challenge-panel">
+                  <div class="friends-panel-heading">
+                    <p>Challenges</p>
+                    <span>Foundation</span>
+                  </div>
+                  <div class="mini-chip-list" id="tribeChallengesList"></div>
+                </div>
                 <div class="tribe-member-list" id="tribeMemberList" aria-live="polite"></div>
               </aside>
             </div>
@@ -699,9 +821,15 @@
                 <p id="activeTribeChatName">Tribe chat</p>
                 <button class="friend-remove" id="exitTribeChatButton" type="button">Exit Chat</button>
               </div>
+              <div class="tribe-pinned-messages" id="tribePinnedMessages" aria-live="polite"></div>
               <div class="tribe-chat-messages" id="tribeChatMessages" aria-live="polite"></div>
+              <p class="typing-indicator" id="tribeTypingIndicator" hidden>You are typing...</p>
               <form class="tribe-chat-form" id="tribeChatForm">
                 <input id="tribeChatInput" type="text" maxlength="500" placeholder="Message your tribe" autocomplete="off" />
+                <label class="chat-attachment-button" aria-label="Attach image or GIF">
+                  <input id="tribeChatAttachmentInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" />
+                  +
+                </label>
                 <button class="save-button" type="submit">Send</button>
               </form>
             </section>
@@ -839,6 +967,8 @@
 
           <p class="handle" id="handle">@nightcard</p>
           <h1 id="name">Nova</h1>
+          <p class="profile-status" id="profileStatus">Online</p>
+          <div class="profile-badges" id="profileBadges" aria-label="Profile badges"></div>
           <p class="uid" id="uid">UID 74071</p>
           <p class="bio" id="bio">
             Designer, editor, and late-night internet person. Building sharp little corners of the web.
@@ -849,6 +979,7 @@
             <span>&bull;</span>
             <span id="views">3,520 views</span>
           </div>
+          <div class="profile-visitors" id="profileVisitors" aria-live="polite"></div>
 
           <div class="hover-card" id="hoverCard" tabindex="0" aria-label="Featured profile panel">
             <div>
@@ -940,6 +1071,48 @@
           Location
           <input id="locationInput" type="text" value="Sydney, Australia" maxlength="42" />
         </label>
+        <label>
+          Status / mood
+          <select id="statusInput">
+            <option value="Online">Online</option>
+            <option value="Chilling">Chilling</option>
+            <option value="Gaming">Gaming</option>
+            <option value="Busy">Busy</option>
+            <option value="Listening to music">Listening to music</option>
+          </select>
+        </label>
+        <label>
+          Profile template
+          <select id="templateInput">
+            <option value="dark">Dark</option>
+            <option value="gamer">Gamer</option>
+            <option value="neon">Neon</option>
+            <option value="cute">Cute</option>
+            <option value="anime">Anime</option>
+            <option value="music">Music</option>
+            <option value="creator">Creator</option>
+            <option value="retro">Retro</option>
+          </select>
+        </label>
+        <div class="field">
+          <span>Featured section</span>
+          <div class="social-input-grid">
+            <label>
+              Type
+              <select id="featuredTypeInput">
+                <option value="status">Status</option>
+                <option value="game">Game</option>
+                <option value="song">Song</option>
+                <option value="tribe">Tribe</option>
+                <option value="friend">Friend</option>
+              </select>
+            </label>
+            <label>
+              Text
+              <input id="featuredTextInput" type="text" maxlength="80" placeholder="Pin something to your profile" />
+            </label>
+          </div>
+        </div>
 
         <div class="field social-editor">
           <span>Social accounts</span>
@@ -1019,6 +1192,17 @@
             </button>
           </div>
           <input id="sparkleEffectInput" type="hidden" value="none" />
+        </div>
+        <div class="field">
+          <span>Profile badges</span>
+          <div class="badge-option-grid" id="badgeOptionGrid" aria-label="Choose profile badges">
+            <label><input type="checkbox" value="Early User" /> Early User</label>
+            <label><input type="checkbox" value="Verified Profile" /> Verified Profile</label>
+            <label><input type="checkbox" value="Tribe Owner" /> Tribe Owner</label>
+            <label><input type="checkbox" value="Game Champion" /> Game Champion</label>
+            <label><input type="checkbox" value="Top Friend" /> Top Friend</label>
+            <label><input type="checkbox" value="Profile Creator" /> Profile Creator</label>
+          </div>
         </div>
 
         <div class="field cursor-field">
