@@ -41,6 +41,10 @@
         <path d="M12 3 19 6v5c0 5-3 8-7 10-4-2-7-5-7-10V6l7-3Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
         <path d="M9 12l2 2 4-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
       </symbol>
+      <symbol id="sidebar-icon-trophy" viewBox="0 0 24 24">
+        <path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
       <symbol id="sidebar-icon-log-out" viewBox="0 0 24 24">
         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
       </symbol>
@@ -309,6 +313,12 @@
             </span>
             <span class="sidebar-label">Games</span>
           </button>
+          <button class="account-nav-button" type="button" data-dashboard-target="leaderboards">
+            <span class="sidebar-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><use href="#sidebar-icon-trophy"></use></svg>
+            </span>
+            <span class="sidebar-label">Leaderboards</span>
+          </button>
           <button class="account-nav-button" type="button" data-dashboard-target="communities">
             <span class="sidebar-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24"><use href="#sidebar-icon-users-round"></use></svg>
@@ -328,6 +338,14 @@
             <span class="sidebar-label">Owner</span>
           </button>
         </nav>
+        <button class="sidebar-profile" type="button" data-dashboard-target="bio" aria-label="Open Bio profile editor">
+          <span class="sidebar-profile-avatar" id="sidebarProfileAvatar" aria-hidden="true">N</span>
+          <span class="sidebar-profile-copy">
+            <strong id="sidebarProfileName">Nova</strong>
+            <small id="sidebarProfileHandle">@nightcard</small>
+          </span>
+          <span class="sidebar-status-badge status-online" id="sidebarStatusBadge" aria-label="Online">●</span>
+        </button>
         <button class="sidebar-logout" id="accountLogoutButton" type="button">
           <span class="sidebar-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24"><use href="#sidebar-icon-log-out"></use></svg>
@@ -370,6 +388,11 @@
               <p>Friend activity</p>
               <div class="mini-activity-list" id="friendActivityList"></div>
             </section>
+            <section class="dashboard-mini-panel glass" aria-label="Daily challenge">
+              <p>Daily challenge</p>
+              <strong id="dailyChallengeTitle">Play Wordle today</strong>
+              <span id="dailyChallengeText">Complete one game to start a streak.</span>
+            </section>
           </div>
         </div>
       </section>
@@ -377,21 +400,6 @@
       <section class="dashboard-panel dashboard-games" data-dashboard-panel="games" aria-label="Games" hidden>
         <div class="games-layout">
           <div class="games-library">
-            <section class="games-dashboard-widgets" aria-label="Game leaderboards and challenges">
-              <article class="dashboard-mini-panel glass">
-                <p>Daily challenge</p>
-                <strong id="dailyChallengeTitle">Play Wordle today</strong>
-                <span id="dailyChallengeText">Complete one game to start a streak.</span>
-              </article>
-              <article class="dashboard-mini-panel glass">
-                <p>Global leaderboard</p>
-                <div class="leaderboard-list" id="globalLeaderboardList"></div>
-              </article>
-              <article class="dashboard-mini-panel glass">
-                <p>Friend leaderboard</p>
-                <div class="leaderboard-list" id="friendLeaderboardList"></div>
-              </article>
-            </section>
             <div class="games-grid" id="gamesGrid">
             <article class="game-card" data-game-card="snake">
               <button class="game-card-preview" type="button" data-open-game="snake">
@@ -583,6 +591,67 @@
             </article>
           </div>
           </div>
+        </div>
+      </section>
+
+      <section class="dashboard-panel dashboard-leaderboards" data-dashboard-panel="leaderboards" aria-label="Leaderboards" hidden>
+        <div class="leaderboards-shell">
+          <div class="leaderboards-heading">
+            <p>Scores</p>
+            <h1>Leaderboards</h1>
+          </div>
+
+          <div class="leaderboard-game-grid" id="leaderboardGameGrid" aria-label="Choose a game leaderboard">
+            <button class="leaderboard-game-tile" type="button" data-leaderboard-game="snake">
+              <span>Snake</span>
+              <span class="game-card-box snake-preview" aria-hidden="true"><i></i><i></i><i></i><b></b></span>
+            </button>
+            <button class="leaderboard-game-tile" type="button" data-leaderboard-game="click-rush">
+              <span>Click Rush</span>
+              <span class="game-card-box click-preview" aria-hidden="true"><i></i><i></i><i></i></span>
+            </button>
+            <button class="leaderboard-game-tile" type="button" data-leaderboard-game="wordle">
+              <span>Wordle</span>
+              <span class="game-card-box wordle-preview" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+            </button>
+            <button class="leaderboard-game-tile" type="button" data-leaderboard-game="crossy">
+              <span>Crossy Road</span>
+              <span class="game-card-box crossy-preview" aria-hidden="true"><i></i><i></i><i></i><b></b></span>
+            </button>
+            <button class="leaderboard-game-tile" type="button" data-leaderboard-game="memory">
+              <span>Memory Match</span>
+              <span class="game-card-box memory-preview" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+            </button>
+            <button class="leaderboard-game-tile" type="button" data-leaderboard-game="dodge">
+              <span>Orbit Dodge</span>
+              <span class="game-card-box dodge-preview" aria-hidden="true"><i></i><b></b></span>
+            </button>
+          </div>
+
+          <section class="leaderboard-detail glass" id="leaderboardDetail" hidden>
+            <div class="leaderboard-detail-heading">
+              <button class="friend-jump-button" id="leaderboardBackButton" type="button">Back</button>
+              <div>
+                <p>Game leaderboard</p>
+                <h2 id="leaderboardTitle">Snake</h2>
+              </div>
+            </div>
+            <div class="leaderboard-detail-grid">
+              <article class="dashboard-mini-panel">
+                <p>Global</p>
+                <div class="leaderboard-list" id="leaderboardGlobalList"></div>
+              </article>
+              <article class="dashboard-mini-panel">
+                <p>Friends</p>
+                <div class="leaderboard-list" id="leaderboardFriendList"></div>
+              </article>
+              <article class="dashboard-mini-panel">
+                <p>Your high score</p>
+                <strong id="leaderboardOwnScore">0</strong>
+                <span id="leaderboardStatus">Pick a game to view scores.</span>
+              </article>
+            </div>
+          </section>
         </div>
       </section>
 

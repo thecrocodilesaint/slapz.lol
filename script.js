@@ -102,6 +102,24 @@ const ownerPanel = {
   refreshButton: $("#refreshOwnerUsersButton"),
 };
 
+const sidebarProfile = {
+  avatar: $("#sidebarProfileAvatar"),
+  name: $("#sidebarProfileName"),
+  handle: $("#sidebarProfileHandle"),
+  status: $("#sidebarStatusBadge"),
+};
+
+const leaderboardView = {
+  grid: $("#leaderboardGameGrid"),
+  detail: $("#leaderboardDetail"),
+  backButton: $("#leaderboardBackButton"),
+  title: $("#leaderboardTitle"),
+  global: $("#leaderboardGlobalList"),
+  friends: $("#leaderboardFriendList"),
+  ownScore: $("#leaderboardOwnScore"),
+  status: $("#leaderboardStatus"),
+};
+
 const dashboardButtons = document.querySelectorAll("[data-dashboard-target]");
 const dashboardPanels = document.querySelectorAll("[data-dashboard-panel]");
 const dashboardThemeButtons = document.querySelectorAll("[data-dashboard-theme]");
@@ -736,6 +754,16 @@ const gamesGrid = $("#gamesGrid");
 const gameCards = document.querySelectorAll("[data-game-card]");
 const gameExpandedPanels = document.querySelectorAll("[data-game-expanded]");
 let activeGame = "";
+let activeLeaderboardGame = "";
+
+const leaderboardGameLabels = {
+  snake: "Snake",
+  "click-rush": "Click Rush",
+  wordle: "Wordle",
+  crossy: "Crossy Road",
+  memory: "Memory Match",
+  dodge: "Orbit Dodge",
+};
 
 const publicHandleFromPath = () => {
   const match = location.pathname.match(/^\/u\/([^/]+)/);
@@ -826,6 +854,13 @@ const setDashboardSection = (section) => {
   if (nextSection === "games") {
     loadSnakeBestScore();
     loadClickRushBestScore();
+  }
+
+  if (nextSection === "leaderboards") {
+    loadSnakeBestScore();
+    loadClickRushBestScore();
+    loadCrossyBestScore();
+    loadLeaderboards({ silent: true });
   }
 
   if (nextSection === "settings") {
@@ -1602,6 +1637,12 @@ document.querySelectorAll("[data-open-game]").forEach((button) => {
 document.querySelectorAll("[data-close-game]").forEach((button) => {
   button.addEventListener("click", closeActiveGame);
 });
+
+document.querySelectorAll("[data-leaderboard-game]").forEach((button) => {
+  button.addEventListener("click", () => openLeaderboard(button.dataset.leaderboardGame));
+});
+
+leaderboardView.backButton?.addEventListener("click", closeLeaderboardDetail);
 
 snake.startButton.addEventListener("click", startSnake);
 snake.pauseButton.addEventListener("click", pauseSnake);
@@ -3926,10 +3967,59 @@ function renderLeaderboard(container, rows, emptyText = "No scores yet.") {
   });
 }
 
+function leaderboardOwnScoreFor(game) {
+  if (game === "snake") return snake.bestValue || Number(localStorage.getItem(localSnakeScoreKey()) || 0);
+  if (game === "click-rush") return clickRush.bestValue || Number(localStorage.getItem(localClickRushScoreKey()) || 0);
+  if (game === "crossy") return crossy.bestValue || Number(localStorage.getItem(localCrossyScoreKey()) || 0);
+  return null;
+}
+
+function renderLeaderboardDetail() {
+  if (!activeLeaderboardGame || !leaderboardView.detail) return;
+  const label = leaderboardGameLabels[activeLeaderboardGame] || "Leaderboard";
+  const hasServerScores = activeLeaderboardGame === "snake";
+  const ownScore = leaderboardOwnScoreFor(activeLeaderboardGame);
+
+  leaderboardView.title.textContent = label;
+  renderLeaderboard(
+    leaderboardView.global,
+    hasServerScores ? leaderboards.global : [],
+    hasServerScores ? "No global scores yet." : "Leaderboard coming soon for this game."
+  );
+  renderLeaderboard(
+    leaderboardView.friends,
+    hasServerScores ? leaderboards.friends : [],
+    hasServerScores ? "No friend scores yet." : "Friend leaderboard coming soon for this game."
+  );
+
+  leaderboardView.ownScore.textContent = ownScore === null ? "Coming soon" : String(ownScore);
+  leaderboardView.status.textContent = hasServerScores
+    ? "Snake scores are saved on the server."
+    : ownScore
+      ? "Your local score is shown here until server leaderboards are added."
+      : "Leaderboard coming soon for this game.";
+}
+
 function renderLeaderboards() {
-  renderLeaderboard($("#globalLeaderboardList"), leaderboards.global, "No global scores yet.");
-  renderLeaderboard($("#friendLeaderboardList"), leaderboards.friends, "No friend scores yet.");
+  renderLeaderboardDetail();
   renderLeaderboard($("#tribeLeaderboardList"), leaderboards.tribe, "No tribe scores yet.");
+}
+
+function openLeaderboard(game) {
+  activeLeaderboardGame = game;
+  leaderboardView.grid.hidden = true;
+  leaderboardView.detail.hidden = false;
+  loadSnakeBestScore();
+  loadClickRushBestScore();
+  loadCrossyBestScore();
+  renderLeaderboardDetail();
+  if (game === "snake") loadLeaderboards({ silent: true });
+}
+
+function closeLeaderboardDetail() {
+  activeLeaderboardGame = "";
+  if (leaderboardView.grid) leaderboardView.grid.hidden = false;
+  if (leaderboardView.detail) leaderboardView.detail.hidden = true;
 }
 
 function renderDailyChallenge() {
@@ -4071,6 +4161,32 @@ function updateSettingsDetails() {
   settings.userId.textContent = shortId(accountState.userId);
 }
 
+function statusBadgeFor(value) {
+  const status = sanitizeStatus(value);
+  if (status === "Gaming") return { label: "Gaming", text: "▣", className: "status-gaming" };
+  if (status === "Busy") return { label: "Busy", text: "●", className: "status-busy" };
+  if (status === "Listening to music") return { label: "Listening to music", text: "♪", className: "status-music" };
+  if (status === "Chilling") return { label: "Chilling", text: "◐", className: "status-chilling" };
+  return { label: "Online", text: "●", className: "status-online" };
+}
+
+function syncSidebarProfile() {
+  if (!sidebarProfile.avatar) return;
+  const handle = cleanHandle(inputs.handle.value || accountState.profileHandle) || "nightcard";
+  const name = inputs.name.value.trim() || "Nova";
+  const hasCustomAvatar = Boolean(mediaState.avatarData || mediaState.avatarPath);
+
+  sidebarProfile.name.textContent = name;
+  sidebarProfile.handle.textContent = `@${handle}`;
+  sidebarProfile.avatar.textContent = hasCustomAvatar ? "" : name.slice(0, 1).toUpperCase();
+  sidebarProfile.avatar.style.backgroundImage = hasCustomAvatar ? `url("${$("#avatar").src}")` : "";
+
+  const badge = statusBadgeFor(inputs.status?.value);
+  sidebarProfile.status.textContent = badge.text;
+  sidebarProfile.status.className = `sidebar-status-badge ${badge.className}`;
+  sidebarProfile.status.setAttribute("aria-label", badge.label);
+}
+
 const syncProfile = () => {
   profile.name.textContent = inputs.name.value.trim() || "Nova";
   const handle = cleanHandle(inputs.handle.value) || "nightcard";
@@ -4089,6 +4205,7 @@ const syncProfile = () => {
   syncSocialLinks();
   updatePublicLink();
   updateSettingsDetails();
+  syncSidebarProfile();
   renderProfileCompletion();
 };
 
@@ -4198,9 +4315,11 @@ dashboardButtons.forEach((button) => {
   button.addEventListener("click", () => {
     const target = button.dataset.dashboardTarget;
     if (target !== "games") closeActiveGame();
+    if (target !== "leaderboards") closeLeaderboardDetail();
     setDashboardSection(target);
     if (target === "home" || target === "communities") refreshFriendState();
     if (target === "games") loadLeaderboards({ silent: true });
+    if (target === "leaderboards") loadLeaderboards({ silent: true });
     exitPreview();
     if (target === "bio" && !isPublicProfilePage) {
       showOwnerBioEntryGate();
@@ -4312,7 +4431,7 @@ attachMouseBoxEffect($(".account-sidebar"), { lift: 0.55, tilt: 0.65 });
 document.querySelectorAll(".game-card-preview").forEach((card) => {
   attachMouseBoxEffect(card, { lift: 0.85, tilt: 0.8 });
 });
-document.querySelectorAll(".friends-widget, .notifications-widget, .community-panel, .communities-tab, .owner-notice-composer, .owner-users-panel").forEach((card) => {
+document.querySelectorAll(".friends-widget, .notifications-widget, .dashboard-mini-panel, .leaderboard-game-tile, .community-panel, .communities-tab, .owner-notice-composer, .owner-users-panel").forEach((card) => {
   attachMouseBoxEffect(card, { lift: 0.45, tilt: 0.5 });
 });
 
@@ -4977,6 +5096,7 @@ const setAvatarSource = (src, name = "") => {
     src ||
     "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=320&q=80";
   $("#avatarFileName").textContent = name || "Choose a profile image";
+  syncSidebarProfile();
   renderProfileCompletion();
 };
 
