@@ -1,13 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
   <title id="title">slapz.lol slap mark</title>
   <defs>
-    <linearGradient id="slapzGlow" x1="10" x2="54" y1="54" y2="10" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#ff7a50" />
-      <stop offset="0.52" stop-color="#ffffff" />
-      <stop offset="1" stop-color="#38d4d4" />
+    <linearGradient id="cyanSwoosh" x1="8" x2="59" y1="36" y2="7" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff" />
+      <stop offset="0.2" stop-color="#54f5ff" />
+      <stop offset="1" stop-color="#0397d9" />
+    </linearGradient>
+    <linearGradient id="orangeSwoosh" x1="56" x2="5" y1="28" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff3d6" />
+      <stop offset="0.18" stop-color="#ff9c38" />
+      <stop offset="1" stop-color="#ff4d24" />
     </linearGradient>
     <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="2.2" result="blur" />
+      <feGaussianBlur stdDeviation="2.6" result="blur" />
       <feMerge>
         <feMergeNode in="blur" />
         <feMergeNode in="SourceGraphic" />
@@ -15,7 +20,8 @@
     </filter>
   </defs>
   <rect width="64" height="64" rx="16" fill="#090a10" />
-  <path d="M14 45c11 7 32 4 32-7 0-13-29-4-29-17 0-10 20-13 33-4" fill="none" stroke="url(#slapzGlow)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" filter="url(#softGlow)" />
-  <path d="M14 18 5 15M15 27 4 28M18 36 7 42" fill="none" stroke="#ff8b55" stroke-width="3" stroke-linecap="round" opacity="0.82" />
-  <path d="M48 18h9M45 26h12M43 35h10" fill="none" stroke="#37d5d7" stroke-width="3" stroke-linecap="round" opacity="0.78" />
+  <path d="M10.5 28.2C18.8 12.8 38.2 11.8 58.7 6.8 44.1 13.3 30.2 19.2 25.6 27.4c-3.2 5.8 4.9 8.2 17.2 4.2C34.1 39.5 18 41.7 11.1 35.4c-2.2-2-2.4-4.6-.6-7.2Z" fill="url(#cyanSwoosh)" filter="url(#softGlow)" />
+  <path d="M53.5 35.8C45.2 51.2 25.8 52.2 5.3 57.2c14.6-6.5 28.5-12.4 33.1-20.6 3.2-5.8-4.9-8.2-17.2-4.2 8.7-7.9 24.8-10.1 31.7-3.8 2.2 2 2.4 4.6.6 7.2Z" fill="url(#orangeSwoosh)" filter="url(#softGlow)" />
+  <path d="M45.8 14.4h9.1M39.9 18.9h13.5M35.2 23.5h9.4" fill="none" stroke="#58f7ff" stroke-width="2.2" stroke-linecap="round" opacity="0.82" />
+  <path d="M9.1 44.8h11.2M12.5 49.5h15.8M6.9 54h12.4" fill="none" stroke="#ff7a27" stroke-width="2.2" stroke-linecap="round" opacity="0.82" />
 </svg>

@@ -620,8 +620,8 @@ body.sidebar-collapsed:not(.public-profile):not(.previewing) .shell {
 }
 
 .landing-preview-avatar.brand-mark .slap-logo {
-  width: 3.35rem;
-  height: 3.35rem;
+  width: 3.65rem;
+  height: 3.65rem;
 }
 
 .landing-profile-preview span {
@@ -1110,9 +1110,9 @@ body.sidebar-collapsed .sidebar-head {
   overflow: hidden;
   color: #fff;
   background:
-    radial-gradient(circle at 22% 22%, rgba(56, 213, 215, 0.28), transparent 1.35rem),
-    radial-gradient(circle at 76% 78%, rgba(255, 122, 80, 0.26), transparent 1.45rem),
-    rgba(255, 255, 255, 0.075);
+    radial-gradient(circle at 18% 18%, rgba(44, 220, 255, 0.22), transparent 1.65rem),
+    radial-gradient(circle at 82% 80%, rgba(255, 118, 37, 0.22), transparent 1.75rem),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.035));
 }
 
 .brand-mark::before {
@@ -1134,36 +1134,35 @@ body.sidebar-collapsed .sidebar-head {
 .slap-logo {
   position: relative;
   z-index: 1;
-  width: 1.45rem;
-  height: 1.45rem;
+  width: 1.72rem;
+  height: 1.72rem;
   overflow: visible;
   filter:
-    drop-shadow(0 0 0.3rem rgba(255, 255, 255, 0.72))
-    drop-shadow(0 0 0.75rem color-mix(in srgb, var(--accent) 45%, transparent));
+    drop-shadow(0 0 0.28rem rgba(255, 255, 255, 0.5))
+    drop-shadow(0 0 0.8rem rgba(44, 220, 255, 0.28))
+    drop-shadow(0 0 0.72rem rgba(255, 118, 37, 0.24));
 }
 
-.slap-mark-main,
-.slap-mark-trail {
+.slap-swoosh-cyan {
+  fill: #2cecff;
+}
+
+.slap-swoosh-orange {
+  fill: #ff8f2e;
+}
+
+.slap-speed {
   fill: none;
   stroke-linecap: round;
-  stroke-linejoin: round;
+  stroke-width: 2.2;
 }
 
-.slap-mark-main {
-  stroke: currentColor;
-  stroke-width: 8;
+.slap-speed-cyan {
+  stroke: #5af7ff;
 }
 
-.slap-mark-trail {
-  stroke-width: 3.3;
-}
-
-.slap-mark-trail-left {
-  stroke: #ff865c;
-}
-
-.slap-mark-trail-right {
-  stroke: #38d5d7;
+.slap-speed-orange {
+  stroke: #ff792c;
 }
 
 .brand-wordmark {
@@ -1177,10 +1176,10 @@ body.sidebar-collapsed .sidebar-head {
   color: var(--text);
   font-weight: 950;
   letter-spacing: 0;
+  line-height: 1;
   text-shadow:
-    0 0 0.75rem rgba(255, 255, 255, 0.82),
-    0 0 1.35rem rgba(56, 213, 215, 0.24),
-    0 0 1.2rem rgba(255, 122, 80, 0.18);
+    0 0 0.72rem rgba(255, 255, 255, 0.76),
+    0 0 1.35rem rgba(0, 246, 255, 0.16);
 }
 
 .glitch-wordmark::before,
@@ -1189,19 +1188,21 @@ body.sidebar-collapsed .sidebar-head {
   inset: 0;
   content: attr(data-text);
   pointer-events: none;
-  opacity: 0.62;
+  opacity: 0.72;
+  text-shadow: none;
+  mix-blend-mode: screen;
 }
 
 .glitch-wordmark::before {
-  color: #38d5d7;
-  clip-path: inset(0 0 58% 0);
-  transform: translate(1px, -1px);
+  color: #00f6ff;
+  clip-path: inset(32% 0 54% 0);
+  transform: translate(1px, 0);
 }
 
 .glitch-wordmark::after {
-  color: #ff7a50;
-  clip-path: inset(54% 0 0 0);
-  transform: translate(-1px, 1px);
+  color: #ff2ccf;
+  clip-path: inset(58% 0 29% 0);
+  transform: translate(-1px, 0);
 }
 
 .sidebar-brand:hover .glitch-wordmark::before,
@@ -6395,26 +6396,26 @@ textarea:focus {
 @keyframes logoGlitchTop {
   0%,
   100% {
-    transform: translate(1px, -1px);
+    transform: translate(1px, 0);
   }
   35% {
-    transform: translate(3px, -1px);
+    transform: translate(2px, -0.5px);
   }
   62% {
-    transform: translate(-2px, 0);
+    transform: translate(-1px, 0.5px);
   }
 }
 
 @keyframes logoGlitchBottom {
   0%,
   100% {
-    transform: translate(-1px, 1px);
+    transform: translate(-1px, 0);
   }
   35% {
-    transform: translate(-3px, 1px);
+    transform: translate(-2px, 0.5px);
   }
   62% {
-    transform: translate(2px, 0);
+    transform: translate(1px, -0.5px);
   }
 }
 
