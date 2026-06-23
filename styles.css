@@ -610,6 +610,20 @@ body.sidebar-collapsed:not(.public-profile):not(.previewing) .shell {
   box-shadow: 0 0 2rem color-mix(in srgb, var(--accent) 44%, transparent);
 }
 
+.landing-preview-avatar.brand-mark {
+  color: var(--text);
+  border: 1px solid color-mix(in srgb, #38d5d7 42%, rgba(255, 255, 255, 0.2));
+  background:
+    radial-gradient(circle at 22% 25%, rgba(56, 213, 215, 0.3), transparent 2.8rem),
+    radial-gradient(circle at 78% 72%, rgba(255, 122, 80, 0.28), transparent 2.6rem),
+    rgba(255, 255, 255, 0.08);
+}
+
+.landing-preview-avatar.brand-mark .slap-logo {
+  width: 3.35rem;
+  height: 3.35rem;
+}
+
 .landing-profile-preview span {
   color: var(--accent-2);
   font-weight: 950;
@@ -1091,6 +1105,115 @@ body.sidebar-collapsed .sidebar-head {
   font-weight: 950;
 }
 
+.brand-mark {
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+  background:
+    radial-gradient(circle at 22% 22%, rgba(56, 213, 215, 0.28), transparent 1.35rem),
+    radial-gradient(circle at 76% 78%, rgba(255, 122, 80, 0.26), transparent 1.45rem),
+    rgba(255, 255, 255, 0.075);
+}
+
+.brand-mark::before {
+  position: absolute;
+  inset: -35%;
+  content: "";
+  background: linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.32), transparent 68%);
+  opacity: 0;
+  transform: translateX(-55%) rotate(14deg);
+  transition: opacity 180ms ease, transform 420ms ease;
+}
+
+.sidebar-brand:hover .brand-mark::before,
+.landing-brand:hover .brand-mark::before {
+  opacity: 0.82;
+  transform: translateX(55%) rotate(14deg);
+}
+
+.slap-logo {
+  position: relative;
+  z-index: 1;
+  width: 1.45rem;
+  height: 1.45rem;
+  overflow: visible;
+  filter:
+    drop-shadow(0 0 0.3rem rgba(255, 255, 255, 0.72))
+    drop-shadow(0 0 0.75rem color-mix(in srgb, var(--accent) 45%, transparent));
+}
+
+.slap-mark-main,
+.slap-mark-trail {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.slap-mark-main {
+  stroke: currentColor;
+  stroke-width: 8;
+}
+
+.slap-mark-trail {
+  stroke-width: 3.3;
+}
+
+.slap-mark-trail-left {
+  stroke: #ff865c;
+}
+
+.slap-mark-trail-right {
+  stroke: #38d5d7;
+}
+
+.brand-wordmark {
+  position: relative;
+  display: inline-block;
+  min-width: 0;
+  overflow: visible;
+}
+
+.glitch-wordmark {
+  color: var(--text);
+  font-weight: 950;
+  letter-spacing: 0;
+  text-shadow:
+    0 0 0.75rem rgba(255, 255, 255, 0.82),
+    0 0 1.35rem rgba(56, 213, 215, 0.24),
+    0 0 1.2rem rgba(255, 122, 80, 0.18);
+}
+
+.glitch-wordmark::before,
+.glitch-wordmark::after {
+  position: absolute;
+  inset: 0;
+  content: attr(data-text);
+  pointer-events: none;
+  opacity: 0.62;
+}
+
+.glitch-wordmark::before {
+  color: #38d5d7;
+  clip-path: inset(0 0 58% 0);
+  transform: translate(1px, -1px);
+}
+
+.glitch-wordmark::after {
+  color: #ff7a50;
+  clip-path: inset(54% 0 0 0);
+  transform: translate(-1px, 1px);
+}
+
+.sidebar-brand:hover .glitch-wordmark::before,
+.landing-brand:hover .glitch-wordmark::before {
+  animation: logoGlitchTop 760ms steps(2, end);
+}
+
+.sidebar-brand:hover .glitch-wordmark::after,
+.landing-brand:hover .glitch-wordmark::after {
+  animation: logoGlitchBottom 760ms steps(2, end);
+}
+
 .sidebar-icon svg {
   width: 1.18rem;
   height: 1.18rem;
@@ -1102,6 +1225,12 @@ body.sidebar-collapsed .sidebar-head {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.sidebar-brand .brand-wordmark {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
 }
 
 body.sidebar-collapsed .sidebar-brand,
@@ -6263,7 +6392,40 @@ textarea:focus {
   }
 }
 
+@keyframes logoGlitchTop {
+  0%,
+  100% {
+    transform: translate(1px, -1px);
+  }
+  35% {
+    transform: translate(3px, -1px);
+  }
+  62% {
+    transform: translate(-2px, 0);
+  }
+}
+
+@keyframes logoGlitchBottom {
+  0%,
+  100% {
+    transform: translate(-1px, 1px);
+  }
+  35% {
+    transform: translate(-3px, 1px);
+  }
+  62% {
+    transform: translate(2px, 0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .sidebar-brand:hover .glitch-wordmark::before,
+  .sidebar-brand:hover .glitch-wordmark::after,
+  .landing-brand:hover .glitch-wordmark::before,
+  .landing-brand:hover .glitch-wordmark::after {
+    animation: none;
+  }
+
   *,
   *::before,
   *::after {

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">slapz.lol slap mark</title>
+  <defs>
+    <linearGradient id="slapzGlow" x1="10" x2="54" y1="54" y2="10" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ff7a50" />
+      <stop offset="0.52" stop-color="#ffffff" />
+      <stop offset="1" stop-color="#38d4d4" />
+    </linearGradient>
+    <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2.2" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="#090a10" />
+  <path d="M14 45c11 7 32 4 32-7 0-13-29-4-29-17 0-10 20-13 33-4" fill="none" stroke="url(#slapzGlow)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" filter="url(#softGlow)" />
+  <path d="M14 18 5 15M15 27 4 28M18 36 7 42" fill="none" stroke="#ff8b55" stroke-width="3" stroke-linecap="round" opacity="0.82" />
+  <path d="M48 18h9M45 26h12M43 35h10" fill="none" stroke="#37d5d7" stroke-width="3" stroke-linecap="round" opacity="0.78" />
+</svg>

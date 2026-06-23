@@ -14,10 +14,16 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
+    <link rel="icon" type="image/svg+xml" href="/assets/slapz-mark.svg" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body class="landing-active" data-theme="black">
     <svg class="sidebar-symbols" aria-hidden="true" width="0" height="0" focusable="false">
+      <symbol id="brand-slap-mark" viewBox="0 0 64 64">
+        <path class="slap-mark-trail slap-mark-trail-left" d="M14 18 5 15M15 27 4 28M18 36 7 42" />
+        <path class="slap-mark-main" d="M14 45c11 7 32 4 32-7 0-13-29-4-29-17 0-10 20-13 33-4" />
+        <path class="slap-mark-trail slap-mark-trail-right" d="M48 18h9M45 26h12M43 35h10" />
+      </symbol>
       <symbol id="sidebar-icon-user-round" viewBox="0 0 24 24">
         <path d="M18 20a6 6 0 0 0-12 0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
         <circle cx="12" cy="10" r="4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
@@ -57,8 +63,10 @@
     <section class="landing-page" id="landingPage" aria-label="slapz.lol landing page">
       <header class="landing-nav glass">
         <button class="landing-brand" type="button" aria-label="slapz.lol home">
-          <span class="sidebar-brand-mark" aria-hidden="true">F</span>
-          <span>slapz.lol</span>
+          <span class="sidebar-brand-mark brand-mark" aria-hidden="true">
+            <svg class="slap-logo" viewBox="0 0 64 64"><use href="#brand-slap-mark"></use></svg>
+          </span>
+          <span class="brand-wordmark glitch-wordmark" data-text="slapz.lol">slapz.lol</span>
         </button>
         <nav class="landing-actions" aria-label="Landing navigation">
           <button class="landing-login" type="button" data-landing-auth="login">Login</button>
@@ -81,7 +89,9 @@
           </div>
 
           <article class="landing-profile-preview glass" data-reveal aria-label="slapz.lol profile preview">
-            <div class="landing-preview-avatar" aria-hidden="true">F</div>
+            <div class="landing-preview-avatar brand-mark" aria-hidden="true">
+              <svg class="slap-logo" viewBox="0 0 64 64"><use href="#brand-slap-mark"></use></svg>
+            </div>
             <span>@yourvibe</span>
             <h2>Nova</h2>
             <p>Music on. Background glowing. Friends nearby. Tribe chat open.</p>
@@ -293,8 +303,10 @@
       <aside class="account-sidebar glass" id="accountSidebar" aria-label="Account navigation">
         <div class="sidebar-head">
           <button class="sidebar-brand" type="button" data-dashboard-target="home">
-            <span class="sidebar-brand-mark" aria-hidden="true">F</span>
-            <span class="sidebar-label">slapz.lol</span>
+            <span class="sidebar-brand-mark brand-mark" aria-hidden="true">
+              <svg class="slap-logo" viewBox="0 0 64 64"><use href="#brand-slap-mark"></use></svg>
+            </span>
+            <span class="sidebar-label brand-wordmark glitch-wordmark" data-text="slapz.lol">slapz.lol</span>
           </button>
           <button class="sidebar-collapse-button" id="sidebarCollapseButton" type="button" aria-controls="accountSidebar" aria-expanded="true" aria-label="Collapse sidebar">
             <span id="sidebarCollapseIcon" aria-hidden="true">&lt;</span>
