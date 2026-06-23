@@ -123,11 +123,13 @@ const leaderboardView = {
 
 const dashboardButtons = document.querySelectorAll("[data-dashboard-target]");
 const dashboardPanels = document.querySelectorAll("[data-dashboard-panel]");
+const dashboardAppearanceButtons = document.querySelectorAll("[data-dashboard-appearance]");
 const dashboardThemeButtons = document.querySelectorAll("[data-dashboard-theme]");
 const dashboardCursorButtons = document.querySelectorAll("[data-dashboard-cursor]");
 const cursorColorButtons = document.querySelectorAll("[data-cursor-color]");
 
 const sessionKey = "nightcard-session-token";
+const dashboardAppearanceKey = "funlol-dashboard-appearance";
 const dashboardThemeKey = "funlol-dashboard-theme";
 const dashboardMuteKey = "funlol-dashboard-mute-outside-bio";
 const sidebarCollapsedKey = "funlol-sidebar-collapsed";
@@ -140,6 +142,7 @@ let sessionToken = localStorage.getItem(sessionKey) || "";
 let loadingTimer = null;
 let loadingPercent = 8;
 let profileTheme = document.body.dataset.theme || "black";
+let dashboardAppearance = localStorage.getItem(dashboardAppearanceKey) === "light" ? "light" : "dark";
 let dashboardTheme = localStorage.getItem(dashboardThemeKey) || "black";
 let dashboardMusicMutedOutsideBio = localStorage.getItem(dashboardMuteKey) === "true";
 let sidebarCollapsed = localStorage.getItem(sidebarCollapsedKey) === "true";
@@ -786,9 +789,20 @@ function updateThemeButtons() {
     swatch.classList.toggle("active", swatch.dataset.theme === profileTheme);
   });
 
+  dashboardAppearanceButtons.forEach((button) => {
+    const isActive = button.dataset.dashboardAppearance === dashboardAppearance;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-checked", String(isActive));
+  });
+
   dashboardThemeButtons.forEach((button) => {
     button.classList.toggle("active", button.dataset.dashboardTheme === dashboardTheme);
   });
+}
+
+function applyDashboardAppearance() {
+  document.body.dataset.appearance = dashboardAppearance;
+  updateThemeButtons();
 }
 
 function applyThemeForCurrentSection() {
@@ -874,6 +888,7 @@ const setDashboardSection = (section) => {
   }
 };
 
+applyDashboardAppearance();
 setDashboardSection(isPublicProfilePage ? "bio" : "home");
 syncSidebarCollapsedState();
 
@@ -4471,6 +4486,14 @@ document.querySelectorAll("#badgeOptionGrid input").forEach((input) => {
 });
 
 $("#friendSearchInput")?.addEventListener("input", queueFriendSearch);
+
+dashboardAppearanceButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    dashboardAppearance = button.dataset.dashboardAppearance === "light" ? "light" : "dark";
+    localStorage.setItem(dashboardAppearanceKey, dashboardAppearance);
+    applyDashboardAppearance();
+  });
+});
 
 dashboardThemeButtons.forEach((button) => {
   button.addEventListener("click", () => {

@@ -30,11 +30,11 @@
         <stop offset="1" stop-color="#ff4e22" />
       </linearGradient>
       <symbol id="brand-slap-mark" viewBox="0 0 64 64">
-        <path class="slap-swoosh slap-swoosh-cyan" d="M7.4 40.2C9.5 26.2 28.4 14.3 58.8 7.4 39.1 16.4 28.2 24.8 25.3 33.1c-2.3 6.7 5.3 9.6 18.3 6.3-12 8.8-31.5 9.5-36.2.8Z" />
-        <path class="slap-swoosh slap-swoosh-orange" d="M56.6 24.2C54.5 38.2 35.6 50.1 5.2 57c19.7-9 30.6-17.4 33.5-25.7 2.3-6.7-5.3-9.6-18.3-6.3 12-8.8 31.5-9.5 36.2-.8Z" />
-        <path class="slap-highlight" d="M13.8 36.2C18.7 26.5 33 17.8 51.9 11.8" />
-        <path class="slap-speed slap-speed-cyan" d="M42.7 11.8h15.6M36.7 16.1h18.5M31.8 20.4h12.2" />
-        <path class="slap-speed slap-speed-orange" d="M5.8 46.6h13.8M8.7 51h18.2M4.9 55.4h13.2" />
+        <path class="slap-swoosh slap-swoosh-cyan" d="M6 39.4C15.5 21.5 33.6 12 61 6 40.3 16.4 29 25.5 26.8 34.2c-1.2 4.8 3.9 7.2 14.9 5.3C26.4 48.3 9.7 47.1 6 39.4Z" />
+        <path class="slap-swoosh slap-swoosh-orange" d="M58 24.6C48.5 42.5 30.4 52 3 58c20.7-10.4 32-19.5 34.2-28.2 1.2-4.8-3.9-7.2-14.9-5.3 15.3-8.8 32-7.6 35.7.1Z" />
+        <path class="slap-highlight" d="M13.8 35.8C20 25.4 34.9 16.6 52.8 11.4" />
+        <path class="slap-speed slap-speed-cyan" d="M45.3 11.1h13.7M39.1 15.5h17.4M34 20h11.6" />
+        <path class="slap-speed slap-speed-orange" d="M4.9 47h13.8M7.9 51.3h18.2M3.7 55.6h13.7" />
       </symbol>
       <symbol id="sidebar-icon-user-round" viewBox="0 0 24 24">
         <path d="M18 20a6 6 0 0 0-12 0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
@@ -958,6 +958,13 @@
           </div>
 
           <div class="settings-control-stack" id="dashboardQuickControls" aria-label="Dashboard controls">
+            <section class="dashboard-control-bar dashboard-appearance-bar glass" aria-label="Display mode settings">
+              <span class="dashboard-control-label">Display</span>
+              <div class="dashboard-appearance-picker" role="radiogroup" aria-label="Dashboard display mode">
+                <button class="dashboard-appearance-button active" type="button" data-dashboard-appearance="dark" role="radio" aria-checked="true">Dark</button>
+                <button class="dashboard-appearance-button" type="button" data-dashboard-appearance="light" role="radio" aria-checked="false">Light</button>
+              </div>
+            </section>
             <section class="dashboard-control-bar dashboard-cursor-bar glass" aria-label="Cursor settings">
               <span class="dashboard-control-label">Cursor</span>
               <div class="dashboard-cursor-mode" role="radiogroup" aria-label="Pointer style">

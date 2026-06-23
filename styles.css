@@ -37,6 +37,20 @@ body {
   overflow-x: hidden;
 }
 
+body[data-appearance="light"]:not(.public-profile):not(.previewing) {
+  color-scheme: light;
+  --bg: #f7f8fc;
+  --text: #080a12;
+  --muted: #626777;
+  --line: rgba(8, 12, 24, 0.18);
+  --panel: rgba(255, 255, 255, 0.56);
+  --shadow: rgba(35, 42, 60, 0.18);
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.95), transparent 22rem),
+    radial-gradient(circle at 82% 72%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 26rem),
+    linear-gradient(135deg, #f7f8fc, #e8ecf7 52%, #ffffff);
+}
+
 img,
 video,
 canvas {
@@ -68,6 +82,12 @@ body::before {
   background-size: 72px 72px;
   mask-image: linear-gradient(to bottom, black, transparent 82%);
   pointer-events: none;
+}
+
+body[data-appearance="light"]:not(.public-profile):not(.previewing)::before {
+  background:
+    linear-gradient(rgba(8, 12, 24, 0.065) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(8, 12, 24, 0.065) 1px, transparent 1px);
 }
 
 body[data-theme="aqua"] {
@@ -868,6 +888,36 @@ body.entry-locked .dashboard-quick-controls {
   align-items: center;
 }
 
+.dashboard-appearance-picker {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.dashboard-appearance-button {
+  min-height: 2.25rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0.45rem 0.72rem;
+  color: var(--muted);
+  background: transparent;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.dashboard-appearance-button.active {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--line));
+  background: color-mix(in srgb, var(--accent) 11%, rgba(255, 255, 255, 0.08));
+  box-shadow: 0 0 0.9rem color-mix(in srgb, var(--accent) 18%, transparent);
+  text-shadow: 0 0 0.55rem color-mix(in srgb, var(--accent) 42%, transparent);
+}
+
 .dashboard-cursor-mode,
 .dashboard-cursor-colors {
   display: flex;
@@ -957,6 +1007,14 @@ body.entry-locked .dashboard-quick-controls {
     0 0 0 2px #020204,
     0 0 0 4px color-mix(in srgb, var(--accent) 72%, transparent),
     0 0 1rem color-mix(in srgb, var(--accent) 46%, transparent);
+}
+
+body[data-appearance="light"]:not(.public-profile):not(.previewing) .dashboard-swatch.active,
+body[data-appearance="light"]:not(.public-profile):not(.previewing) .dashboard-cursor-color.active {
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.92),
+    0 0 0 4px color-mix(in srgb, var(--accent) 72%, #111827),
+    0 0 1rem color-mix(in srgb, var(--accent) 32%, transparent);
 }
 
 .account-sidebar {
@@ -3932,6 +3990,12 @@ body[data-account-section="settings"]:not(.public-profile) .background-video {
   backdrop-filter: blur(12px) saturate(165%);
 }
 
+body[data-appearance="light"]:not(.public-profile):not(.previewing) .glass {
+  box-shadow:
+    0 1.25rem 3.8rem var(--shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
 .profile-card {
   width: 100%;
   background: rgba(5, 5, 8, 0.24);
@@ -5336,12 +5400,14 @@ textarea:focus {
     transform: none;
   }
 
+  .dashboard-appearance-button,
   .dashboard-mute-button {
     min-height: 2.1rem;
     padding: 0.45rem 0.6rem;
     font-size: 0.72rem;
   }
 
+  .dashboard-appearance-bar,
   .dashboard-cursor-bar {
     justify-content: center;
   }
@@ -5712,11 +5778,13 @@ textarea:focus {
 
   .dashboard-cursor-mode,
   .dashboard-cursor-colors,
+  .dashboard-appearance-picker,
   .dashboard-theme-picker {
     justify-content: flex-start;
   }
 
   .dashboard-cursor-button,
+  .dashboard-appearance-button,
   .dashboard-mute-button {
     min-height: 2.75rem;
   }
