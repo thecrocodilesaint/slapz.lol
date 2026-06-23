@@ -1,15 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
   <title id="title">slapz.lol slap mark</title>
   <defs>
-    <linearGradient id="cyanSwoosh" x1="8" x2="59" y1="36" y2="7" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#ffffff" />
-      <stop offset="0.2" stop-color="#54f5ff" />
-      <stop offset="1" stop-color="#0397d9" />
+    <linearGradient id="cyanSwoosh" x1="6" x2="59" y1="43" y2="7" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f7ffff" />
+      <stop offset="0.2" stop-color="#4ef4ff" />
+      <stop offset="1" stop-color="#0795e0" />
     </linearGradient>
-    <linearGradient id="orangeSwoosh" x1="56" x2="5" y1="28" y2="58" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#fff3d6" />
-      <stop offset="0.18" stop-color="#ff9c38" />
-      <stop offset="1" stop-color="#ff4d24" />
+    <linearGradient id="orangeSwoosh" x1="58" x2="5" y1="21" y2="59" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff1cf" />
+      <stop offset="0.18" stop-color="#ff9d32" />
+      <stop offset="1" stop-color="#ff4e22" />
     </linearGradient>
     <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="2.6" result="blur" />
@@ -20,8 +20,9 @@
     </filter>
   </defs>
   <rect width="64" height="64" rx="16" fill="#090a10" />
-  <path d="M10.5 28.2C18.8 12.8 38.2 11.8 58.7 6.8 44.1 13.3 30.2 19.2 25.6 27.4c-3.2 5.8 4.9 8.2 17.2 4.2C34.1 39.5 18 41.7 11.1 35.4c-2.2-2-2.4-4.6-.6-7.2Z" fill="url(#cyanSwoosh)" filter="url(#softGlow)" />
-  <path d="M53.5 35.8C45.2 51.2 25.8 52.2 5.3 57.2c14.6-6.5 28.5-12.4 33.1-20.6 3.2-5.8-4.9-8.2-17.2-4.2 8.7-7.9 24.8-10.1 31.7-3.8 2.2 2 2.4 4.6.6 7.2Z" fill="url(#orangeSwoosh)" filter="url(#softGlow)" />
-  <path d="M45.8 14.4h9.1M39.9 18.9h13.5M35.2 23.5h9.4" fill="none" stroke="#58f7ff" stroke-width="2.2" stroke-linecap="round" opacity="0.82" />
-  <path d="M9.1 44.8h11.2M12.5 49.5h15.8M6.9 54h12.4" fill="none" stroke="#ff7a27" stroke-width="2.2" stroke-linecap="round" opacity="0.82" />
+  <path d="M7.4 40.2C9.5 26.2 28.4 14.3 58.8 7.4 39.1 16.4 28.2 24.8 25.3 33.1c-2.3 6.7 5.3 9.6 18.3 6.3-12 8.8-31.5 9.5-36.2.8Z" fill="url(#cyanSwoosh)" filter="url(#softGlow)" />
+  <path d="M56.6 24.2C54.5 38.2 35.6 50.1 5.2 57c19.7-9 30.6-17.4 33.5-25.7 2.3-6.7-5.3-9.6-18.3-6.3 12-8.8 31.5-9.5 36.2-.8Z" fill="url(#orangeSwoosh)" filter="url(#softGlow)" />
+  <path d="M13.8 36.2C18.7 26.5 33 17.8 51.9 11.8" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" opacity="0.62" />
+  <path d="M42.7 11.8h15.6M36.7 16.1h18.5M31.8 20.4h12.2" fill="none" stroke="#58f7ff" stroke-width="2.1" stroke-linecap="round" opacity="0.88" />
+  <path d="M5.8 46.6h13.8M8.7 51h18.2M4.9 55.4h13.2" fill="none" stroke="#ff7a27" stroke-width="2.1" stroke-linecap="round" opacity="0.88" />
 </svg>

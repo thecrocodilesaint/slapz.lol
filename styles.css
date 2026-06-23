@@ -473,7 +473,7 @@ body.sidebar-collapsed:not(.public-profile):not(.previewing) .shell {
 
 .landing-brand {
   display: inline-grid;
-  grid-template-columns: 2rem auto;
+  grid-template-columns: 2.7rem auto;
   gap: 0.65rem;
   align-items: center;
   background: transparent;
@@ -612,11 +612,10 @@ body.sidebar-collapsed:not(.public-profile):not(.previewing) .shell {
 
 .landing-preview-avatar.brand-mark {
   color: var(--text);
-  border: 1px solid color-mix(in srgb, #38d5d7 42%, rgba(255, 255, 255, 0.2));
+  border: 0;
   background:
-    radial-gradient(circle at 22% 25%, rgba(56, 213, 215, 0.3), transparent 2.8rem),
-    radial-gradient(circle at 78% 72%, rgba(255, 122, 80, 0.28), transparent 2.6rem),
-    rgba(255, 255, 255, 0.08);
+    radial-gradient(circle at 40% 36%, rgba(57, 222, 255, 0.28), transparent 2.9rem),
+    radial-gradient(circle at 56% 64%, rgba(255, 127, 37, 0.25), transparent 2.8rem);
 }
 
 .landing-preview-avatar.brand-mark .slap-logo {
@@ -1067,7 +1066,7 @@ body.sidebar-collapsed .sidebar-head {
 
 .sidebar-brand {
   display: grid;
-  grid-template-columns: 2rem minmax(0, 1fr);
+  grid-template-columns: 2.7rem minmax(0, 1fr);
   gap: 0.65rem;
   align-items: center;
   min-height: 3.2rem;
@@ -1105,37 +1104,30 @@ body.sidebar-collapsed .sidebar-head {
   font-weight: 950;
 }
 
+.sidebar-brand .sidebar-brand-mark.brand-mark,
+.landing-brand .sidebar-brand-mark.brand-mark {
+  width: 2.7rem;
+  height: 2.7rem;
+}
+
 .brand-mark {
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   color: #fff;
-  background:
-    radial-gradient(circle at 18% 18%, rgba(44, 220, 255, 0.22), transparent 1.65rem),
-    radial-gradient(circle at 82% 80%, rgba(255, 118, 37, 0.22), transparent 1.75rem),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.035));
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
 }
 
 .brand-mark::before {
-  position: absolute;
-  inset: -35%;
-  content: "";
-  background: linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.32), transparent 68%);
-  opacity: 0;
-  transform: translateX(-55%) rotate(14deg);
-  transition: opacity 180ms ease, transform 420ms ease;
-}
-
-.sidebar-brand:hover .brand-mark::before,
-.landing-brand:hover .brand-mark::before {
-  opacity: 0.82;
-  transform: translateX(55%) rotate(14deg);
+  display: none;
 }
 
 .slap-logo {
   position: relative;
   z-index: 1;
-  width: 1.72rem;
-  height: 1.72rem;
+  width: 2.35rem;
+  height: 2.35rem;
   overflow: visible;
   filter:
     drop-shadow(0 0 0.28rem rgba(255, 255, 255, 0.5))
@@ -1143,18 +1135,29 @@ body.sidebar-collapsed .sidebar-head {
     drop-shadow(0 0 0.72rem rgba(255, 118, 37, 0.24));
 }
 
+.slap-swoosh {
+  stroke: none;
+}
+
 .slap-swoosh-cyan {
-  fill: #2cecff;
+  fill: url(#slapzCyanInline);
 }
 
 .slap-swoosh-orange {
-  fill: #ff8f2e;
+  fill: url(#slapzOrangeInline);
 }
 
 .slap-speed {
   fill: none;
   stroke-linecap: round;
-  stroke-width: 2.2;
+  stroke-width: 2.1;
+}
+
+.slap-highlight {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.68);
+  stroke-linecap: round;
+  stroke-width: 2;
 }
 
 .slap-speed-cyan {
@@ -1174,12 +1177,13 @@ body.sidebar-collapsed .sidebar-head {
 
 .glitch-wordmark {
   color: var(--text);
+  font-family: Georgia, "Times New Roman", serif;
   font-weight: 950;
   letter-spacing: 0;
   line-height: 1;
   text-shadow:
-    0 0 0.72rem rgba(255, 255, 255, 0.76),
-    0 0 1.35rem rgba(0, 246, 255, 0.16);
+    0 0 0.62rem rgba(255, 255, 255, 0.8),
+    0 0 1.15rem rgba(255, 255, 255, 0.28);
 }
 
 .glitch-wordmark::before,
@@ -1195,14 +1199,14 @@ body.sidebar-collapsed .sidebar-head {
 
 .glitch-wordmark::before {
   color: #00f6ff;
-  clip-path: inset(32% 0 54% 0);
-  transform: translate(1px, 0);
+  clip-path: inset(35% 0 52% 0);
+  transform: translate(1.5px, -0.5px);
 }
 
 .glitch-wordmark::after {
   color: #ff2ccf;
-  clip-path: inset(58% 0 29% 0);
-  transform: translate(-1px, 0);
+  clip-path: inset(62% 0 24% 0);
+  transform: translate(-1.5px, 0.5px);
 }
 
 .sidebar-brand:hover .glitch-wordmark::before,
@@ -1307,8 +1311,7 @@ body.sidebar-collapsed .sidebar-status-badge {
 
 .account-nav-button.active .sidebar-icon,
 .account-nav-button:hover .sidebar-icon,
-.sidebar-logout:hover .sidebar-icon,
-.sidebar-brand:hover .sidebar-brand-mark {
+.sidebar-logout:hover .sidebar-icon {
   border-color: color-mix(in srgb, var(--accent) 50%, rgba(255, 255, 255, 0.18));
   box-shadow:
     0 0 0.95rem color-mix(in srgb, var(--accent) 22%, transparent),
