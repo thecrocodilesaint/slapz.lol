@@ -1749,6 +1749,28 @@ addSwipeGameControls(crossy.canvas, ([x, y]) => {
   moveCrossyPlayer(x, y);
 });
 
+const gameDirectionMap = {
+  up: [0, -1],
+  down: [0, 1],
+  left: [-1, 0],
+  right: [1, 0],
+};
+
+document.querySelectorAll("[data-game-control]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const direction = gameDirectionMap[button.dataset.direction];
+    if (!direction || document.body.dataset.accountSection !== "games") return;
+    const [x, y] = direction;
+    if (button.dataset.gameControl === "snake" && activeGame === "snake" && !snake.gameOver) {
+      setSnakeDirection(x, y);
+      if (!snake.running) startSnake();
+    }
+    if (button.dataset.gameControl === "crossy" && activeGame === "crossy") {
+      moveCrossyPlayer(x, y);
+    }
+  });
+});
+
 resetSnake();
 loadWordleDictionary();
 resetWordle();
