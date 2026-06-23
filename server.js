@@ -186,7 +186,8 @@ async function supabaseRequest(table, { method = "GET", query = "", body, prefer
   }
 
   if (response.status === 204) return null;
-  return response.json();
+  const text = await response.text();
+  return text ? JSON.parse(text) : null;
 }
 
 async function supabaseStorageRequest(pathname, { method = "GET", body, contentType, extraHeaders = {} } = {}) {
