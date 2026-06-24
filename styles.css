@@ -4432,6 +4432,17 @@ body[data-sparkle-effect]:not([data-sparkle-effect="none"]) #name::after {
   cursor: pointer;
 }
 
+.music-player .media-button {
+  width: auto;
+  min-width: 4.25rem;
+  height: 2.75rem;
+  padding: 0 0.85rem;
+  white-space: nowrap;
+  font-size: 0.9rem;
+  font-weight: 850;
+  line-height: 1;
+}
+
 .track-info {
   min-width: 0;
 }
