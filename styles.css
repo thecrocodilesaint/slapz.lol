@@ -1193,14 +1193,24 @@ body.sidebar-collapsed .sidebar-head {
     drop-shadow(0 0 0.72rem rgba(255, 118, 37, 0.24));
 }
 
-.slap-swoosh {
+.slap-s-core {
+  fill: none;
+  stroke: url(#slapzSInline);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 10.5;
+}
+
+.slap-s-fill {
   stroke: none;
 }
 
+.slap-s-fill-cyan,
 .slap-swoosh-cyan {
   fill: url(#slapzCyanInline);
 }
 
+.slap-s-fill-orange,
 .slap-swoosh-orange {
   fill: url(#slapzOrangeInline);
 }

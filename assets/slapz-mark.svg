@@ -1,12 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
   <title id="title">slapz.lol slap mark</title>
   <defs>
-    <linearGradient id="cyanSwoosh" x1="6" x2="59" y1="43" y2="7" gradientUnits="userSpaceOnUse">
+    <linearGradient id="slapzS" x1="9" x2="55" y1="8" y2="56" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#59f8ff" />
+      <stop offset="0.46" stop-color="#0bbde8" />
+      <stop offset="0.54" stop-color="#fff7e8" />
+      <stop offset="0.68" stop-color="#ff9b32" />
+      <stop offset="1" stop-color="#ff5229" />
+    </linearGradient>
+    <linearGradient id="cyanSwoosh" x1="17" x2="54" y1="35" y2="12" gradientUnits="userSpaceOnUse">
       <stop stop-color="#f7ffff" />
       <stop offset="0.2" stop-color="#4ef4ff" />
       <stop offset="1" stop-color="#0795e0" />
     </linearGradient>
-    <linearGradient id="orangeSwoosh" x1="58" x2="5" y1="21" y2="59" gradientUnits="userSpaceOnUse">
+    <linearGradient id="orangeSwoosh" x1="47" x2="10" y1="29" y2="52" gradientUnits="userSpaceOnUse">
       <stop stop-color="#fff1cf" />
       <stop offset="0.18" stop-color="#ff9d32" />
       <stop offset="1" stop-color="#ff4e22" />
@@ -20,9 +27,10 @@
     </filter>
   </defs>
   <rect width="64" height="64" rx="16" fill="#090a10" />
-  <path d="M6 39.4C15.5 21.5 33.6 12 61 6 40.3 16.4 29 25.5 26.8 34.2c-1.2 4.8 3.9 7.2 14.9 5.3C26.4 48.3 9.7 47.1 6 39.4Z" fill="url(#cyanSwoosh)" filter="url(#softGlow)" />
-  <path d="M58 24.6C48.5 42.5 30.4 52 3 58c20.7-10.4 32-19.5 34.2-28.2 1.2-4.8-3.9-7.2-14.9-5.3 15.3-8.8 32-7.6 35.7.1Z" fill="url(#orangeSwoosh)" filter="url(#softGlow)" />
-  <path d="M13.8 35.8C20 25.4 34.9 16.6 52.8 11.4" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" opacity="0.62" />
-  <path d="M45.3 11.1h13.7M39.1 15.5h17.4M34 20h11.6" fill="none" stroke="#58f7ff" stroke-width="2.1" stroke-linecap="round" opacity="0.88" />
-  <path d="M4.9 47h13.8M7.9 51.3h18.2M3.7 55.6h13.7" fill="none" stroke="#ff7a27" stroke-width="2.1" stroke-linecap="round" opacity="0.88" />
+  <path d="M53.5 12.7C42.2 6.2 18.4 8 14.5 22.1c-4.8 17.2 36 10.6 34.8 27.1-.9 12.6-26 13.9-39.6 5.4" fill="none" stroke="url(#slapzS)" stroke-width="10.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#softGlow)" />
+  <path d="M17.5 34.4C25.8 24.2 38.3 17 54.4 12.2 41.7 20.5 33 27.7 28.6 34.2c-2.8 4.1-1.1 6.3 5.1 6.7-7.1 2.4-14 .6-16.2-6.5Z" fill="url(#cyanSwoosh)" opacity="0.96" />
+  <path d="M46.5 29.6C38.2 39.8 25.7 47 9.6 51.8c12.7-8.3 21.4-15.5 25.8-22 2.8-4.1 1.1-6.3-5.1-6.7 7.1-2.4 14-.6 16.2 6.5Z" fill="url(#orangeSwoosh)" opacity="0.96" />
+  <path d="M20.2 31.1C27.1 23.2 37.6 17.5 50.7 13.5" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" opacity="0.6" />
+  <path d="M47.2 14.8h11.6M43.1 19h14.2M39.3 23.2h9.5" fill="none" stroke="#58f7ff" stroke-width="2.1" stroke-linecap="round" opacity="0.88" />
+  <path d="M5.2 43.9h11.6M7 48.1h14.2M4.1 52.3h9.5" fill="none" stroke="#ff7a27" stroke-width="2.1" stroke-linecap="round" opacity="0.88" />
 </svg>

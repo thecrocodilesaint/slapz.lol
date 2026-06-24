@@ -29,6 +29,10 @@ const adminEmails = new Set(
 const sessionTtlMs = Number(process.env.SESSION_TTL_MS || 7 * 24 * 60 * 60 * 1000);
 const rateLimitBuckets = new Map();
 const maxFriendCount = 150;
+const dashboardAppearanceOptions = new Set(["dark", "light"]);
+const dashboardThemeOptions = new Set(["black", "violet", "aqua", "ember"]);
+const dashboardCursorModes = new Set(["normal", "dot"]);
+const dashboardCursorColors = new Set(["white", "blue", "pink"]);
 
 const rateLimits = {
   auth: { limit: 12, windowMs: 10 * 60 * 1000 },
@@ -90,6 +94,54 @@ function readUsersFile() {
 function writeUsersFile(users) {
   ensureStore();
   fs.writeFileSync(usersPath, JSON.stringify(users, null, 2), "utf8");
+}
+
+function defaultDashboardSettings() {
+  return {
+    dashboardAppearance: "dark",
+    dashboardTheme: "black",
+    dashboardMusicMutedOutsideBio: false,
+    cursorMode: "normal",
+    cursorColor: "white",
+  };
+}
+
+function parseDashboardSettings(value) {
+  if (!value) return {};
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return {};
+    }
+  }
+  return typeof value === "object" ? value : {};
+}
+
+function sanitizeDashboardSettings(settings = {}, previous = {}) {
+  const incoming = parseDashboardSettings(settings);
+  const base = {
+    ...defaultDashboardSettings(),
+    ...parseDashboardSettings(previous),
+  };
+
+  if (dashboardAppearanceOptions.has(incoming.dashboardAppearance)) {
+    base.dashboardAppearance = incoming.dashboardAppearance;
+  }
+  if (dashboardThemeOptions.has(incoming.dashboardTheme)) {
+    base.dashboardTheme = incoming.dashboardTheme;
+  }
+  if (typeof incoming.dashboardMusicMutedOutsideBio === "boolean") {
+    base.dashboardMusicMutedOutsideBio = incoming.dashboardMusicMutedOutsideBio;
+  }
+  if (dashboardCursorModes.has(incoming.cursorMode)) {
+    base.cursorMode = incoming.cursorMode;
+  }
+  if (dashboardCursorColors.has(incoming.cursorColor)) {
+    base.cursorColor = incoming.cursorColor;
+  }
+
+  return base;
 }
 
 function logSecurity(event, req, details = {}) {
@@ -1100,6 +1152,30 @@ async function saveUserOnboardingStatus(userId, { completed = false, skipped = f
   return { onboardingCompleted, onboardingSkipped, onboardingUpdatedAt };
 }
 
+async function saveUserDashboardSettings(userId, settings) {
+  if (hasSupabase) {
+    const rows = await supabaseRequest("app_users", {
+      query: `?id=eq.${encodeURIComponent(userId)}&select=dashboard_settings&limit=1`,
+    });
+    if (!rows[0]) throw new Error("User not found");
+    const dashboardSettings = sanitizeDashboardSettings(settings, rows[0].dashboard_settings);
+    await supabaseRequest("app_users", {
+      method: "PATCH",
+      query: `?id=eq.${encodeURIComponent(userId)}`,
+      body: { dashboard_settings: dashboardSettings },
+      prefer: "return=minimal",
+    });
+    return dashboardSettings;
+  }
+
+  const store = readUsersFile();
+  if (!store.users[userId]) throw new Error("User not found");
+  const dashboardSettings = sanitizeDashboardSettings(settings, store.users[userId].dashboardSettings);
+  store.users[userId].dashboardSettings = dashboardSettings;
+  writeUsersFile(store);
+  return dashboardSettings;
+}
+
 async function saveUserProfileLink(userId, { handle, origin }) {
   const profilePath = `/u/${handle}`;
   const profileUrl = `${origin}${profilePath}`;
@@ -1351,6 +1427,7 @@ async function findUserByEmail(email) {
             onboardingCompleted: Boolean(user.onboarding_completed),
             onboardingSkipped: Boolean(user.onboarding_skipped),
             onboardingUpdatedAt: user.onboarding_updated_at,
+            dashboardSettings: sanitizeDashboardSettings(user.dashboard_settings),
           },
         ]
       : null;
@@ -1370,6 +1447,7 @@ async function createUser(email, passwordHash) {
         id: userId,
         email,
         password_hash: passwordHash,
+        dashboard_settings: defaultDashboardSettings(),
         created_at: createdAt,
       },
       prefer: "return=representation",
@@ -1386,6 +1464,7 @@ async function createUser(email, passwordHash) {
     onboardingCompleted: false,
     onboardingSkipped: false,
     onboardingUpdatedAt: "",
+    dashboardSettings: defaultDashboardSettings(),
   };
   writeUsersFile(store);
   return userId;
@@ -1742,6 +1821,7 @@ async function getAuthedUser(req) {
       onboardingCompleted: Boolean(user.onboarding_completed),
       onboardingSkipped: Boolean(user.onboarding_skipped),
       onboardingUpdatedAt: user.onboarding_updated_at,
+      dashboardSettings: sanitizeDashboardSettings(user.dashboard_settings),
     };
   }
 
@@ -1768,6 +1848,7 @@ async function getAuthedUser(req) {
     onboardingCompleted: Boolean(user.onboardingCompleted),
     onboardingSkipped: Boolean(user.onboardingSkipped),
     onboardingUpdatedAt: user.onboardingUpdatedAt || "",
+    dashboardSettings: sanitizeDashboardSettings(user.dashboardSettings),
   };
 }
 
@@ -1900,7 +1981,7 @@ const server = http.createServer(async (req, res) => {
   setSecurityHeaders(req, res);
   cleanupRateLimits();
 
-  if (url.pathname.startsWith("/api/admin") || url.pathname === "/api/me" || url.pathname === "/api/my-profile") {
+  if (url.pathname.startsWith("/api/admin") || url.pathname.startsWith("/api/me") || url.pathname === "/api/my-profile") {
     setNoStore(res);
   }
 
@@ -2041,8 +2122,26 @@ const server = http.createServer(async (req, res) => {
       profilePath: authed.profilePath || (profileForOnboarding?.handle ? `/u/${profileForOnboarding.handle}` : ""),
       profileUrl: authed.profileUrl,
       isOwner: isOwnerUser(authed),
+      dashboardSettings: sanitizeDashboardSettings(authed.dashboardSettings),
       ...onboarding,
     });
+    return;
+  }
+
+  if (req.method === "PATCH" && url.pathname === "/api/me/settings") {
+    try {
+      const authed = await getAuthedUser(req);
+      if (!authed) {
+        sendJson(res, 401, { error: "Sign in before updating settings" });
+        return;
+      }
+
+      const body = JSON.parse((await readBody(req)) || "{}");
+      const dashboardSettings = await saveUserDashboardSettings(authed.userId, body.dashboardSettings || body);
+      sendJson(res, 200, { dashboardSettings });
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+    }
     return;
   }
 

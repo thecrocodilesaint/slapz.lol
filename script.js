@@ -135,6 +135,10 @@ const dashboardMuteKey = "funlol-dashboard-mute-outside-bio";
 const sidebarCollapsedKey = "funlol-sidebar-collapsed";
 const dashboardCursorModeKey = "funlol-dashboard-cursor-mode";
 const cursorColorKey = "funlol-cursor-color";
+const dashboardAppearanceValues = new Set(["dark", "light"]);
+const dashboardThemeValues = new Set(["black", "violet", "aqua", "ember"]);
+const cursorModeValues = new Set(["normal", "dot"]);
+const cursorColors = new Set(["white", "blue", "pink"]);
 const finePointerQuery = window.matchMedia ? window.matchMedia("(hover: hover) and (pointer: fine)") : null;
 const canUsePointerEffects = () => (finePointerQuery ? finePointerQuery.matches : true);
 const resetPasswordToken = new URLSearchParams(window.location.search).get("token") || "";
@@ -143,10 +147,12 @@ let loadingTimer = null;
 let loadingPercent = 8;
 let profileTheme = document.body.dataset.theme || "black";
 let dashboardAppearance = localStorage.getItem(dashboardAppearanceKey) === "light" ? "light" : "dark";
-let dashboardTheme = localStorage.getItem(dashboardThemeKey) || "black";
+let dashboardTheme = dashboardThemeValues.has(localStorage.getItem(dashboardThemeKey)) ? localStorage.getItem(dashboardThemeKey) : "black";
 let dashboardMusicMutedOutsideBio = localStorage.getItem(dashboardMuteKey) === "true";
 let sidebarCollapsed = localStorage.getItem(sidebarCollapsedKey) === "true";
-let cursorColor = localStorage.getItem(cursorColorKey) || "white";
+let cursorColor = cursorColors.has(localStorage.getItem(cursorColorKey)) ? localStorage.getItem(cursorColorKey) : "white";
+let dashboardSettingsSaveTimer = null;
+let applyingDashboardSettings = false;
 let activeEntryAnimation = "none";
 let accountState = {
   email: "",
@@ -159,6 +165,7 @@ let accountState = {
   onboardingCompleted: false,
   onboardingSkipped: false,
   needsOnboarding: false,
+  dashboardSettings: {},
 };
 let friends = [];
 let friendRequests = [];
@@ -1935,6 +1942,66 @@ const showAuth = (mode = "signup") => {
 
 const authHeaders = () => (sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {});
 
+const collectDashboardSettings = () => ({
+  dashboardAppearance: dashboardAppearanceValues.has(dashboardAppearance) ? dashboardAppearance : "dark",
+  dashboardTheme: dashboardThemeValues.has(dashboardTheme) ? dashboardTheme : "black",
+  dashboardMusicMutedOutsideBio: Boolean(dashboardMusicMutedOutsideBio),
+  cursorMode: inputs.cursorTrail.value === "dot" ? "dot" : "normal",
+  cursorColor: cursorColors.has(cursorColor) ? cursorColor : "white",
+});
+
+const saveDashboardSettingsNow = async () => {
+  if (!sessionToken || isPublicProfilePage || applyingDashboardSettings) return;
+
+  const response = await fetch("/api/me/settings", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ dashboardSettings: collectDashboardSettings() }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || "Could not save account settings");
+  if (data.dashboardSettings) accountState.dashboardSettings = data.dashboardSettings;
+};
+
+const queueDashboardSettingsSave = () => {
+  if (!sessionToken || isPublicProfilePage || applyingDashboardSettings) return;
+  clearTimeout(dashboardSettingsSaveTimer);
+  dashboardSettingsSaveTimer = setTimeout(() => {
+    saveDashboardSettingsNow().catch((error) => {
+      console.warn("Could not save dashboard settings:", error.message);
+    });
+  }, 250);
+};
+
+const applyDashboardSettings = (settings = {}) => {
+  if (!settings || typeof settings !== "object") return;
+  applyingDashboardSettings = true;
+
+  if (dashboardAppearanceValues.has(settings.dashboardAppearance)) {
+    dashboardAppearance = settings.dashboardAppearance;
+    localStorage.setItem(dashboardAppearanceKey, dashboardAppearance);
+  }
+  if (dashboardThemeValues.has(settings.dashboardTheme)) {
+    dashboardTheme = settings.dashboardTheme;
+    localStorage.setItem(dashboardThemeKey, dashboardTheme);
+  }
+  if (typeof settings.dashboardMusicMutedOutsideBio === "boolean") {
+    dashboardMusicMutedOutsideBio = settings.dashboardMusicMutedOutsideBio;
+    localStorage.setItem(dashboardMuteKey, String(dashboardMusicMutedOutsideBio));
+  }
+  if (cursorModeValues.has(settings.cursorMode) && typeof setCursorMode === "function") {
+    setCursorMode(settings.cursorMode, { persistAccount: false });
+  }
+  if (cursorColors.has(settings.cursorColor) && typeof setCursorColor === "function") {
+    setCursorColor(settings.cursorColor, { persistAccount: false });
+  }
+
+  applyDashboardAppearance();
+  applyThemeForCurrentSection();
+  syncDashboardAudioState();
+  applyingDashboardSettings = false;
+};
+
 const onboardingLocalSkipKey = () => (accountState.userId ? `funlol:onboarding-skipped:${accountState.userId}` : "");
 
 function hasLocalOnboardingSkip() {
@@ -2094,6 +2161,7 @@ const submitAuth = async (mode) => {
     }
     startLoading("Loading your profile...");
     await loadMyProfile();
+    applyDashboardSettings(accountState.dashboardSettings);
     const showOnboardingAfterLoad = shouldShowOnboarding();
     await finishLoadingIntoEditor({ showWelcome: !showOnboardingAfterLoad });
     startFriendRefreshLoop();
@@ -4245,7 +4313,9 @@ const updateAccountState = (data = {}) => {
     onboardingCompleted: data.onboardingCompleted ?? accountState.onboardingCompleted,
     onboardingSkipped: data.onboardingSkipped ?? accountState.onboardingSkipped,
     needsOnboarding: data.needsOnboarding ?? accountState.needsOnboarding,
+    dashboardSettings: data.dashboardSettings ?? accountState.dashboardSettings,
   };
+  if (data.dashboardSettings) applyDashboardSettings(data.dashboardSettings);
   const nextOwner = accountState.userId || accountState.email;
   if (!isPublicProfilePage && nextOwner && nextOwner !== previousOwner && !friends.length) {
     setFriends(loadFriendsLocal(), { persist: false });
@@ -4475,7 +4545,7 @@ inputs.template?.addEventListener("change", () => {
   if (preset) {
     profileTheme = preset.theme;
     setSparkleEffect(preset.sparkle);
-    setCursorMode(preset.cursor);
+    setCursorMode(preset.cursor, { persistAccount: false });
     applyThemeForCurrentSection();
   }
   syncProfile();
@@ -4492,6 +4562,7 @@ dashboardAppearanceButtons.forEach((button) => {
     dashboardAppearance = button.dataset.dashboardAppearance === "light" ? "light" : "dark";
     localStorage.setItem(dashboardAppearanceKey, dashboardAppearance);
     applyDashboardAppearance();
+    queueDashboardSettingsSave();
   });
 });
 
@@ -4500,6 +4571,7 @@ dashboardThemeButtons.forEach((button) => {
     dashboardTheme = button.dataset.dashboardTheme || "black";
     localStorage.setItem(dashboardThemeKey, dashboardTheme);
     applyThemeForCurrentSection();
+    queueDashboardSettingsSave();
   });
 });
 
@@ -4507,6 +4579,7 @@ $("#dashboardMuteButton").addEventListener("click", () => {
   dashboardMusicMutedOutsideBio = !dashboardMusicMutedOutsideBio;
   localStorage.setItem(dashboardMuteKey, String(dashboardMusicMutedOutsideBio));
   syncDashboardAudioState();
+  queueDashboardSettingsSave();
 });
 
 $("#sidebarCollapseButton").addEventListener("click", () => {
@@ -4572,8 +4645,6 @@ inputs.cursorTrail.addEventListener("change", () => {
   setCursorMode(inputs.cursorTrail.value);
 });
 
-const cursorColors = new Set(["white", "blue", "pink"]);
-
 const syncCursorModeButtons = (mode) => {
   document.querySelectorAll(".cursor-option").forEach((button) => {
     const isActive = button.dataset.cursor === mode;
@@ -4587,12 +4658,13 @@ const syncCursorModeButtons = (mode) => {
   });
 };
 
-const setCursorMode = (mode) => {
+const setCursorMode = (mode, { persistAccount = true } = {}) => {
   const nextMode = mode === "dot" ? "dot" : "normal";
   inputs.cursorTrail.value = nextMode;
   localStorage.setItem(dashboardCursorModeKey, nextMode);
   syncCursorModeButtons(nextMode);
   applyCursorTrail(nextMode === "dot");
+  if (persistAccount) queueDashboardSettingsSave();
 };
 
 document.querySelectorAll(".cursor-option").forEach((button) => {
@@ -4603,20 +4675,21 @@ dashboardCursorButtons.forEach((button) => {
   button.addEventListener("click", () => setCursorMode(button.dataset.dashboardCursor));
 });
 
-const setCursorColor = (color) => {
+const setCursorColor = (color, { persistAccount = true } = {}) => {
   cursorColor = cursorColors.has(color) ? color : "white";
   document.body.dataset.cursorColor = cursorColor;
   localStorage.setItem(cursorColorKey, cursorColor);
   cursorColorButtons.forEach((button) => {
     button.classList.toggle("active", button.dataset.cursorColor === cursorColor);
   });
+  if (persistAccount) queueDashboardSettingsSave();
 };
 
 cursorColorButtons.forEach((button) => {
   button.addEventListener("click", () => setCursorColor(button.dataset.cursorColor));
 });
 
-setCursorColor(cursorColor);
+setCursorColor(cursorColor, { persistAccount: false });
 
 const sparkleEffects = new Set(["none", "white", "gold", "pink", "aqua", "purple"]);
 
@@ -5599,8 +5672,8 @@ const applyProfile = (data) => {
   $("#compactToggle").checked = Boolean(data.compactLinks);
   $("#particlesToggle").checked = data.animatedBackground !== false;
   $("#darkenVideoToggle").checked = data.darkVideo !== false;
-  setCursorMode(data.cursorTrail === true || data.cursorTrail === "dot" ? "dot" : "normal");
-  setCursorColor(data.cursorColor || cursorColor || "white");
+  setCursorMode(data.cursorTrail === true || data.cursorTrail === "dot" ? "dot" : "normal", { persistAccount: false });
+  setCursorColor(data.cursorColor || cursorColor || "white", { persistAccount: false });
   setSparkleEffect(data.sparkleEffect || "none");
   setFriends(Array.isArray(data.friends) ? data.friends : loadFriendsLocal(), { persist: false });
   setFriendRequests(Array.isArray(data.friendRequests) ? data.friendRequests : loadFriendRequestsLocal(), { persist: false });
@@ -5688,6 +5761,9 @@ $("#saveButton").addEventListener("click", async () => {
       onboardingPublishPrompted = false;
       hideOnboarding();
     }
+    saveDashboardSettingsNow().catch((error) => {
+      console.warn("Could not sync account settings after profile publish:", error.message);
+    });
     showToast(`Published at ${result.url}`);
   } catch (error) {
     showToast(error.message);
@@ -5731,6 +5807,7 @@ async function loadMyProfile() {
     if (response.status === 404) return;
     if (!response.ok) throw new Error(data.error || "Could not load your profile");
     applyProfile(data);
+    applyDashboardSettings(accountState.dashboardSettings);
     await loadTribes({ silent: true });
     showToast("Loaded your saved profile");
   } catch (error) {
@@ -5803,7 +5880,7 @@ const syncCursorForPointer = () => {
   applyCursorTrail(inputs.cursorTrail.value === "dot");
 };
 
-setCursorMode(localStorage.getItem(dashboardCursorModeKey) || inputs.cursorTrail.value || "normal");
+setCursorMode(localStorage.getItem(dashboardCursorModeKey) || inputs.cursorTrail.value || "normal", { persistAccount: false });
 
 if (finePointerQuery?.addEventListener) {
   finePointerQuery.addEventListener("change", syncCursorForPointer);
