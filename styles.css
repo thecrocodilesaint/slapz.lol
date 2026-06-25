@@ -1080,8 +1080,8 @@ body.sidebar-collapsed .account-sidebar {
 
 .sidebar-head {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 2.55rem;
-  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr) 2.65rem;
+  gap: 0.9rem;
   align-items: center;
 }
 
@@ -1104,7 +1104,7 @@ body.sidebar-collapsed .sidebar-head {
 
 .sidebar-collapse-button {
   display: grid;
-  width: 2.55rem;
+  width: 2.65rem;
   justify-self: end;
   min-height: 2.35rem;
   place-items: center;
@@ -1126,10 +1126,11 @@ body.sidebar-collapsed .sidebar-head {
 
 .sidebar-brand {
   display: grid;
-  grid-template-columns: 2.7rem minmax(0, 1fr);
-  gap: 0.65rem;
+  grid-template-columns: 2.85rem minmax(0, 1fr);
+  gap: 0.9rem;
   align-items: center;
   min-width: 0;
+  padding-right: 0.1rem;
   min-height: 3.2rem;
   text-align: left;
   font-size: 1.35rem;
@@ -1167,8 +1168,8 @@ body.sidebar-collapsed .sidebar-head {
 
 .sidebar-brand .sidebar-brand-mark.brand-mark,
 .landing-brand .sidebar-brand-mark.brand-mark {
-  width: 2.7rem;
-  height: 2.7rem;
+  width: 2.85rem;
+  height: 2.85rem;
 }
 
 .brand-mark {
@@ -1191,9 +1192,9 @@ body.sidebar-collapsed .sidebar-head {
   height: 2.35rem;
   overflow: visible;
   filter:
-    drop-shadow(0 0 0.28rem rgba(255, 255, 255, 0.5))
-    drop-shadow(0 0 0.8rem rgba(44, 220, 255, 0.28))
-    drop-shadow(0 0 0.72rem rgba(255, 118, 37, 0.24));
+    drop-shadow(0 0 0.22rem rgba(255, 255, 255, 0.42))
+    drop-shadow(0 0 0.55rem rgba(44, 220, 255, 0.22))
+    drop-shadow(0 0 0.5rem rgba(255, 118, 37, 0.2));
 }
 
 .slap-s-core {
@@ -1201,43 +1202,56 @@ body.sidebar-collapsed .sidebar-head {
   stroke: url(#slapzSInline);
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 10.5;
+  stroke-width: 12.6;
+  opacity: 0.25;
 }
 
-.slap-s-fill {
+.slap-s-fill,
+.slap-s-stroke {
   stroke: none;
 }
 
+.slap-s-stroke {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 9.6;
+}
+
 .slap-s-fill-cyan,
+.slap-s-stroke-cyan,
 .slap-swoosh-cyan {
-  fill: url(#slapzCyanInline);
+  fill: none;
+  stroke: url(#slapzCyanInline);
 }
 
 .slap-s-fill-orange,
+.slap-s-stroke-orange,
 .slap-swoosh-orange {
-  fill: url(#slapzOrangeInline);
+  fill: none;
+  stroke: url(#slapzOrangeInline);
 }
 
 .slap-speed {
   fill: none;
-  opacity: 0.72;
+  opacity: 0.58;
   stroke-linecap: round;
-  stroke-width: 2.1;
+  stroke-width: 1.8;
 }
 
 .slap-highlight {
   fill: none;
-  stroke: rgba(255, 255, 255, 0.68);
+  stroke: rgba(255, 255, 255, 0.72);
   stroke-linecap: round;
-  stroke-width: 2;
+  stroke-width: 1.85;
 }
 
 .slap-speed-cyan {
-  stroke: #5af7ff;
+  stroke: #f7ffff;
 }
 
 .slap-speed-orange {
-  stroke: #ff792c;
+  stroke: #fff1cf;
 }
 
 .brand-wordmark {
@@ -1329,6 +1343,11 @@ body.sidebar-collapsed .sidebar-icon,
 body.sidebar-collapsed .sidebar-brand-mark {
   width: 2.15rem;
   height: 2.15rem;
+}
+
+body.sidebar-collapsed .sidebar-brand .slap-logo {
+  width: 2.05rem;
+  height: 2.05rem;
 }
 
 body.sidebar-collapsed .sidebar-profile {
