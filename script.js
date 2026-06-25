@@ -2530,6 +2530,10 @@ const sanitizeOwnerUser = (user) => ({
   updatedAt: user?.updatedAt || "",
   hasProfile: Boolean(user?.hasProfile),
   isOwner: Boolean(user?.isOwner),
+  accountStatus: ["active", "suspended", "banned"].includes(String(user?.accountStatus || "").toLowerCase())
+    ? String(user.accountStatus).toLowerCase()
+    : "active",
+  accountStatusUpdatedAt: user?.accountStatusUpdatedAt || "",
 });
 
 const sanitizeTribeColor = (color) => {
@@ -3727,6 +3731,11 @@ function renderOwnerUsers() {
     meta.className = "request-note";
     meta.textContent = user.handle ? `@${user.handle} | ${user.views.toLocaleString()} views` : "No published profile yet";
     copy.append(meta);
+
+    const status = document.createElement("span");
+    status.className = `owner-status-chip ${user.accountStatus}`;
+    status.textContent = user.accountStatus === "banned" ? "Banned" : user.accountStatus === "suspended" ? "Suspended" : "Active";
+    copy.append(status);
     card.append(copy);
 
     const actions = document.createElement("div");
@@ -3749,6 +3758,36 @@ function renderOwnerUsers() {
     const notifyButton = createSmallActionButton("Notify", "friend-accept", () => ownerSendNotice(user));
     notifyButton.disabled = !user.hasProfile;
     actions.append(notifyButton);
+
+    if (user.accountStatus === "active") {
+      const suspendButton = createSmallActionButton("Suspend", "friend-remove owner-warning-button", () =>
+        confirmOwnerAccountStatus(user, "suspended")
+      );
+      suspendButton.disabled = user.isOwner;
+      actions.append(suspendButton);
+    }
+
+    if (user.accountStatus === "suspended") {
+      const unsuspendButton = createSmallActionButton("Unsuspend", "friend-accept", () =>
+        confirmOwnerAccountStatus(user, "active")
+      );
+      unsuspendButton.disabled = user.isOwner;
+      actions.append(unsuspendButton);
+    }
+
+    if (user.accountStatus !== "banned") {
+      const banButton = createSmallActionButton("Ban", "friend-remove owner-danger-button", () =>
+        confirmOwnerAccountStatus(user, "banned")
+      );
+      banButton.disabled = user.isOwner;
+      actions.append(banButton);
+    } else {
+      const reactivateButton = createSmallActionButton("Reactivate", "friend-accept", () =>
+        confirmOwnerAccountStatus(user, "active")
+      );
+      reactivateButton.disabled = user.isOwner;
+      actions.append(reactivateButton);
+    }
 
     const deleteButton = createSmallActionButton("Delete", "friend-remove owner-danger-button", () => confirmOwnerDeleteAccount(user));
     deleteButton.disabled = user.isOwner;
@@ -3810,6 +3849,38 @@ async function ownerSendNotice(user) {
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || "Could not send notification");
     showToast(`Notification sent to ${user.displayName || user.email}`);
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+function confirmOwnerAccountStatus(user, status) {
+  const label = status === "banned" ? "ban" : status === "suspended" ? "suspend" : "reactivate";
+  openConfirmDialog({
+    eyebrow: `${label} account`,
+    title: "Are you sure?",
+    message:
+      status === "active"
+        ? `This will restore access for ${user.email}.`
+        : `This will ${label} ${user.email} and block their account access.`,
+    confirmText: status === "active" ? "Yes, reactivate" : `Yes, ${label}`,
+    onConfirm: () => ownerUpdateAccountStatus(user, status),
+  });
+}
+
+async function ownerUpdateAccountStatus(user, status) {
+  try {
+    const response = await fetch(`/api/admin/users/${encodeURIComponent(user.userId)}/status`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ status }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Could not update account status");
+    const updated = sanitizeOwnerUser(result.user || { ...user, accountStatus: status });
+    ownerUsers = ownerUsers.map((item) => (item.userId === updated.userId ? updated : item));
+    renderOwnerUsers();
+    showToast(`${updated.email} is now ${updated.accountStatus}`);
   } catch (error) {
     showToast(error.message);
   }

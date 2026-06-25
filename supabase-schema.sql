@@ -3,6 +3,8 @@ create table if not exists public.app_users (
   email text unique not null,
   password_hash text not null,
   role text not null default 'user',
+  account_status text not null default 'active',
+  account_status_updated_at timestamptz,
   profile_handle text,
   profile_path text,
   profile_url text,
@@ -20,6 +22,8 @@ alter table public.app_users
   add column if not exists profile_url text,
   add column if not exists dashboard_settings jsonb not null default '{}'::jsonb,
   add column if not exists role text not null default 'user',
+  add column if not exists account_status text not null default 'active',
+  add column if not exists account_status_updated_at timestamptz,
   add column if not exists snake_high_score integer not null default 0,
   add column if not exists onboarding_completed boolean not null default false,
   add column if not exists onboarding_skipped boolean not null default false,
@@ -35,6 +39,19 @@ begin
   ) then
     alter table public.app_users
       add constraint app_users_role_check check (role in ('user', 'admin'));
+  end if;
+end $$;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'app_users_account_status_check'
+      and conrelid = 'public.app_users'::regclass
+  ) then
+    alter table public.app_users
+      add constraint app_users_account_status_check check (account_status in ('active', 'suspended', 'banned'));
   end if;
 end $$;
 
@@ -74,6 +91,8 @@ select
   u.id as user_id,
   u.email,
   u.created_at,
+  u.account_status,
+  u.account_status_updated_at,
   u.snake_high_score,
   u.dashboard_settings,
   u.onboarding_completed,

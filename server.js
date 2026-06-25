@@ -33,6 +33,7 @@ const dashboardAppearanceOptions = new Set(["dark", "light"]);
 const dashboardThemeOptions = new Set(["black", "violet", "aqua", "ember"]);
 const dashboardCursorModes = new Set(["normal", "dot"]);
 const dashboardCursorColors = new Set(["white", "blue", "pink"]);
+const accountStatusOptions = new Set(["active", "suspended", "banned"]);
 
 const rateLimits = {
   auth: { limit: 12, windowMs: 10 * 60 * 1000 },
@@ -142,6 +143,21 @@ function sanitizeDashboardSettings(settings = {}, previous = {}) {
   }
 
   return base;
+}
+
+function sanitizeAccountStatus(value) {
+  const status = String(value || "").trim().toLowerCase();
+  return accountStatusOptions.has(status) ? status : "active";
+}
+
+function accountAccessError(status) {
+  if (status === "banned") return "This account has been banned.";
+  if (status === "suspended") return "This account is suspended.";
+  return "";
+}
+
+function isRestrictedAccountStatus(status) {
+  return status === "banned" || status === "suspended";
 }
 
 function logSecurity(event, req, details = {}) {
@@ -866,6 +882,8 @@ async function findUserById(userId) {
           profilePath: user.profile_path,
           profileUrl: user.profile_url,
           role: user.role || "user",
+          accountStatus: sanitizeAccountStatus(user.account_status),
+          accountStatusUpdatedAt: user.account_status_updated_at || "",
         }
       : null;
   }
@@ -880,6 +898,8 @@ async function findUserById(userId) {
         profilePath: user.profilePath,
         profileUrl: user.profileUrl,
         role: user.role || "user",
+        accountStatus: sanitizeAccountStatus(user.accountStatus),
+        accountStatusUpdatedAt: user.accountStatusUpdatedAt || "",
       }
     : null;
 }
@@ -899,6 +919,8 @@ function profileSummaryForAdmin(user, profile) {
     updatedAt: profile?.updatedAt || "",
     hasProfile: Boolean(profile?.handle),
     isOwner: isAdminUser(user),
+    accountStatus: sanitizeAccountStatus(user.accountStatus),
+    accountStatusUpdatedAt: user.accountStatusUpdatedAt || "",
   };
 }
 
@@ -926,6 +948,8 @@ async function listUsersForAdmin() {
       profilePath: user.profile_path,
       profileUrl: user.profile_url,
       role: user.role || "user",
+      accountStatus: sanitizeAccountStatus(user.account_status),
+      accountStatusUpdatedAt: user.account_status_updated_at || "",
     }));
   } else {
     users = Object.entries(readUsersFile().users).map(([userId, user]) => ({
@@ -936,6 +960,8 @@ async function listUsersForAdmin() {
       profilePath: user.profilePath,
       profileUrl: user.profileUrl,
       role: user.role || "user",
+      accountStatus: sanitizeAccountStatus(user.accountStatus),
+      accountStatusUpdatedAt: user.accountStatusUpdatedAt || "",
     }));
     users.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
   }
@@ -1002,6 +1028,41 @@ async function adminAddFriend(owner, targetUserId) {
   await saveProfile(ownerProfile);
   await saveProfile(targetProfile);
   return { friends: ownerProfile.friends || [] };
+}
+
+async function updateUserAccountStatus(owner, targetUserId, status) {
+  const accountStatus = String(status || "").trim().toLowerCase();
+  if (!accountStatusOptions.has(accountStatus)) throw new Error("Choose active, suspended, or banned");
+  const target = await findUserById(targetUserId);
+  if (!target) throw new Error("User was not found");
+  if (owner.userId === targetUserId) throw new Error("You cannot change your own owner account status");
+  if (isAdminUser(target)) throw new Error("Owner/admin accounts cannot be suspended or banned");
+
+  const accountStatusUpdatedAt = new Date().toISOString();
+
+  if (hasSupabase) {
+    await supabaseRequest("app_users", {
+      method: "PATCH",
+      query: `?id=eq.${encodeURIComponent(targetUserId)}`,
+      body: {
+        account_status: accountStatus,
+        account_status_updated_at: accountStatusUpdatedAt,
+      },
+      prefer: "return=minimal",
+    });
+  } else {
+    const store = readUsersFile();
+    if (!store.users[targetUserId]) throw new Error("User was not found");
+    store.users[targetUserId].accountStatus = accountStatus;
+    store.users[targetUserId].accountStatusUpdatedAt = accountStatusUpdatedAt;
+    writeUsersFile(store);
+  }
+
+  if (accountStatus !== "active") await invalidateUserSessions(targetUserId);
+
+  const updated = await findUserById(targetUserId);
+  const profile = await getProfileByOwner(targetUserId);
+  return profileSummaryForAdmin(updated || target, profile);
 }
 
 async function removeDeletedUserReferences(userId, deletedHandle = "") {
@@ -1424,6 +1485,8 @@ async function findUserByEmail(email) {
             profilePath: user.profile_path,
             profileUrl: user.profile_url,
             role: user.role || "user",
+            accountStatus: sanitizeAccountStatus(user.account_status),
+            accountStatusUpdatedAt: user.account_status_updated_at || "",
             onboardingCompleted: Boolean(user.onboarding_completed),
             onboardingSkipped: Boolean(user.onboarding_skipped),
             onboardingUpdatedAt: user.onboarding_updated_at,
@@ -1447,6 +1510,7 @@ async function createUser(email, passwordHash) {
         id: userId,
         email,
         password_hash: passwordHash,
+        account_status: "active",
         dashboard_settings: defaultDashboardSettings(),
         created_at: createdAt,
       },
@@ -1460,6 +1524,8 @@ async function createUser(email, passwordHash) {
     email,
     passwordHash,
     role: "user",
+    accountStatus: "active",
+    accountStatusUpdatedAt: "",
     createdAt,
     onboardingCompleted: false,
     onboardingSkipped: false,
@@ -1809,6 +1875,11 @@ async function getAuthedUser(req) {
     });
     const user = users[0];
     if (!user) return null;
+    const accountStatus = sanitizeAccountStatus(user.account_status);
+    if (isRestrictedAccountStatus(accountStatus)) {
+      await deleteSessionToken(token);
+      return null;
+    }
     return {
       token,
       userId: user.id,
@@ -1818,6 +1889,8 @@ async function getAuthedUser(req) {
       profilePath: user.profile_path,
       profileUrl: user.profile_url,
       role: user.role || "user",
+      accountStatus,
+      accountStatusUpdatedAt: user.account_status_updated_at || "",
       onboardingCompleted: Boolean(user.onboarding_completed),
       onboardingSkipped: Boolean(user.onboarding_skipped),
       onboardingUpdatedAt: user.onboarding_updated_at,
@@ -1836,6 +1909,12 @@ async function getAuthedUser(req) {
 
   const user = store.users[session.userId];
   if (!user) return null;
+  const accountStatus = sanitizeAccountStatus(user.accountStatus);
+  if (isRestrictedAccountStatus(accountStatus)) {
+    delete store.sessions[token];
+    writeUsersFile(store);
+    return null;
+  }
   return {
     token,
     userId: session.userId,
@@ -1845,6 +1924,8 @@ async function getAuthedUser(req) {
     profilePath: user.profilePath,
     profileUrl: user.profileUrl,
     role: user.role || "user",
+    accountStatus,
+    accountStatusUpdatedAt: user.accountStatusUpdatedAt || "",
     onboardingCompleted: Boolean(user.onboardingCompleted),
     onboardingSkipped: Boolean(user.onboardingSkipped),
     onboardingUpdatedAt: user.onboardingUpdatedAt || "",
@@ -2035,6 +2116,13 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      const accountStatus = sanitizeAccountStatus(entry[1].accountStatus);
+      if (isRestrictedAccountStatus(accountStatus)) {
+        logSecurity("restricted_login_blocked", req, { email: maskEmail(email), accountStatus });
+        sendJson(res, 403, { error: accountAccessError(accountStatus) });
+        return;
+      }
+
       const token = await createSession(entry[0]);
       sendJson(res, 200, { token, email });
     } catch (error) {
@@ -2209,6 +2297,13 @@ const server = http.createServer(async (req, res) => {
         const body = JSON.parse((await readBody(req)) || "{}");
         const notice = await adminSendNotification(targetUserId, body.message);
         sendJson(res, 201, { notice });
+        return;
+      }
+
+      if (req.method === "POST" && action === "status") {
+        const body = JSON.parse((await readBody(req)) || "{}");
+        const user = await updateUserAccountStatus(owner, targetUserId, body.status);
+        sendJson(res, 200, { user });
         return;
       }
 
