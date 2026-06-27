@@ -221,7 +221,22 @@ test("security headers and admin APIs are server-authorized", async ({ request }
   expect(scriptBody).not.toContain(sensitiveOwnerFragment);
   expect(scriptBody).not.toContain("ADMIN_EMAIL");
 
-  await json(await request.get("/api/admin/users"), 401);
+  const assetResponse = await request.get("/assets/slapz-mark.svg");
+  expect(assetResponse.status()).toBe(200);
+
+  for (const blockedPath of ["/data/profiles.json", "/data/users.json", "/server.js", "/package.json", "/.env", "/docs/product-design-document.md"]) {
+    const blocked = await request.get(blockedPath);
+    expect(blocked.status(), `${blockedPath} should not be publicly served`).toBe(404);
+    expect(await blocked.text()).not.toContain("passwordHash");
+  }
+
+  const poisonedHostSitemap = await request.get("/sitemap.xml", { headers: { Host: "evil.example" } });
+  expect(poisonedHostSitemap.status()).toBe(200);
+  expect(await poisonedHostSitemap.text()).toContain("<loc>https://slapz.lol</loc>");
+
+  const adminWithoutAuth = await request.get("/api/admin/users");
+  expect(adminWithoutAuth.status()).toBe(401);
+  expect(adminWithoutAuth.headers()["cache-control"]).toContain("no-store");
 
   const normalUser = await signUp(request, testInfo, "notadmin");
   await publishProfile(request, normalUser);

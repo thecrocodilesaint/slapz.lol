@@ -20,6 +20,13 @@ const resetPasswordSuccessMessage = "If an account exists for this email, a pass
 const resendApiKey = process.env.RESEND_API_KEY;
 const sendgridApiKey = process.env.SENDGRID_API_KEY;
 const passwordResetEmailFrom = process.env.PASSWORD_RESET_FROM || process.env.EMAIL_FROM || "";
+const configuredSiteOrigin = normalizeSiteOrigin(process.env.SITE_URL || process.env.PUBLIC_SITE_URL || process.env.APP_URL || "");
+const allowedSiteHosts = new Set(
+  String(process.env.ALLOWED_HOSTS || "slapz.lol,www.slapz.lol,fun-lol.onrender.com")
+    .split(",")
+    .map((host) => host.trim().toLowerCase())
+    .filter(Boolean)
+);
 const adminEmails = new Set(
   String(process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || process.env.OWNER_EMAIL || "")
     .split(",")
@@ -34,6 +41,16 @@ const dashboardThemeOptions = new Set(["black", "violet", "aqua", "ember"]);
 const dashboardCursorModes = new Set(["normal", "dot"]);
 const dashboardCursorColors = new Set(["white", "blue", "pink"]);
 const accountStatusOptions = new Set(["active", "suspended", "banned"]);
+
+function normalizeSiteOrigin(value) {
+  try {
+    const url = new URL(String(value || "").trim());
+    if (url.protocol !== "http:" && url.protocol !== "https:") return "";
+    return `${url.protocol}//${url.host}`;
+  } catch {
+    return "";
+  }
+}
 
 const rateLimits = {
   auth: { limit: 12, windowMs: 10 * 60 * 1000 },
@@ -1623,7 +1640,17 @@ function isLocalResetLink(resetLink) {
   }
 }
 
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function passwordResetEmailContent(resetLink) {
+  const safeResetLink = escapeHtml(resetLink);
   return {
     subject: "Reset your slapz.lol password",
     text: [
@@ -1638,7 +1665,7 @@ function passwordResetEmailContent(resetLink) {
       <div style="font-family:Inter,Arial,sans-serif;background:#050508;color:#f5f7fb;padding:24px;border-radius:8px">
         <h1 style="margin:0 0 12px;font-size:28px">Reset your slapz.lol password</h1>
         <p style="color:#b8bbc8;line-height:1.5">Use this link to choose a new password. It expires in 30 minutes and can only be used once.</p>
-        <p><a href="${resetLink}" style="display:inline-block;padding:12px 16px;border-radius:8px;background:#f5f7fb;color:#050508;font-weight:800;text-decoration:none">Reset password</a></p>
+        <p><a href="${safeResetLink}" style="display:inline-block;padding:12px 16px;border-radius:8px;background:#f5f7fb;color:#050508;font-weight:800;text-decoration:none">Reset password</a></p>
         <p style="color:#8f95a8;font-size:13px;line-height:1.5">If you did not request this, you can ignore this email.</p>
       </div>
     `,
@@ -1946,6 +1973,7 @@ function verifyPassword(password, storedHash) {
   const [salt, hash] = String(storedHash || "").split(":");
   if (!salt || !hash) return false;
   const testHash = hashPassword(password, salt).split(":")[1];
+  if (hash.length !== testHash.length) return false;
   return crypto.timingSafeEqual(Buffer.from(hash, "hex"), Buffer.from(testHash, "hex"));
 }
 
@@ -1963,8 +1991,20 @@ function sendJson(res, status, payload) {
   res.end(JSON.stringify(payload));
 }
 
+function safeRequestHost(req) {
+  const host = String(req.headers.host || "").trim();
+  if (/^(localhost|127\.0\.0\.1)(:\d{1,5})?$/i.test(host)) return host;
+  if (/^[a-z0-9.-]+(:\d{1,5})?$/i.test(host)) return host;
+  return `localhost:${port}`;
+}
+
 function siteOrigin(req) {
-  const host = req.headers.host || "";
+  if (configuredSiteOrigin) return configuredSiteOrigin;
+  const host = safeRequestHost(req);
+  if (!host.includes("localhost") && !host.startsWith("127.")) {
+    const hostname = host.split(":")[0].toLowerCase();
+    if (!allowedSiteHosts.has(hostname)) return "https://slapz.lol";
+  }
   const protocol = host.includes("localhost") || host.startsWith("127.") ? "http" : req.headers["x-forwarded-proto"] || "https";
   return `${protocol}://${host}`;
 }
@@ -2040,6 +2080,17 @@ function sendFile(res, filePath) {
     res.writeHead(200, { "Content-Type": mimeTypes[ext] || "application/octet-stream" });
     res.end(content);
   });
+}
+
+const publicStaticFiles = new Set(["index.html", "styles.css", "script.js", "words-5.txt", "google8bc067013314ffaf.html"]);
+
+function isPublicStaticPath(safePath) {
+  const normalized = String(safePath || "").replace(/\\/g, "/");
+  if (!normalized || normalized.includes("\0")) return false;
+  if (normalized.startsWith(".") || normalized.includes("/.")) return false;
+  if (normalized.startsWith("assets/")) return true;
+  if (/^google[a-z0-9]+\.html$/i.test(normalized)) return true;
+  return publicStaticFiles.has(normalized);
 }
 
 function readBody(req) {
@@ -3464,6 +3515,12 @@ const server = http.createServer(async (req, res) => {
   if (filePath !== root && !filePath.startsWith(`${root}${path.sep}`)) {
     logSecurity("path_traversal_blocked", req, { path: url.pathname });
     sendJson(res, 403, { error: "Forbidden" });
+    return;
+  }
+
+  if (!isPublicStaticPath(safePath)) {
+    logSecurity("static_file_blocked", req, { path: url.pathname });
+    sendJson(res, 404, { error: "Not found" });
     return;
   }
 

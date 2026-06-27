@@ -1,4 +1,4 @@
-data/users.json
+data/*.json
 node_modules/
 .env
 icon-options.html
