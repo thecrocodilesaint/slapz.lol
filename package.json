@@ -8,7 +8,8 @@
     "test:phase1": "playwright test tests/e2e/phase1-smoke.spec.js",
     "test:phase2": "playwright test tests/api/phase2-api.spec.js",
     "test:phase3": "playwright test tests/visual/phase3-responsive.spec.js",
-    "test:phase3:update": "playwright test tests/visual/phase3-responsive.spec.js --update-snapshots"
+    "test:phase3:update": "playwright test tests/visual/phase3-responsive.spec.js --update-snapshots",
+    "test:responsive": "playwright test tests/visual/phase3-responsive-layout.spec.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.1"
